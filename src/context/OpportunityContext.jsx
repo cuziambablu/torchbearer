@@ -15,7 +15,11 @@ export function OpportunityProvider({ children }) {
   const [opportunities, setOpportunities] = useState(() => {
     try {
       const saved = localStorage.getItem('campuslaunch_opportunities');
-      return saved ? JSON.parse(saved) : ALL_SEED_OPPORTUNITIES;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      return ALL_SEED_OPPORTUNITIES;
     } catch {
       return ALL_SEED_OPPORTUNITIES;
     }
@@ -25,7 +29,11 @@ export function OpportunityProvider({ children }) {
   const [savedIds, setSavedIds] = useState(() => {
     try {
       const saved = localStorage.getItem('campuslaunch_saved_ids');
-      return saved ? JSON.parse(saved) : MOCK_SAVED_IDS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+      return MOCK_SAVED_IDS;
     } catch {
       return MOCK_SAVED_IDS;
     }
@@ -35,7 +43,11 @@ export function OpportunityProvider({ children }) {
   const [applications, setApplications] = useState(() => {
     try {
       const saved = localStorage.getItem('campuslaunch_applications');
-      return saved ? JSON.parse(saved) : MOCK_APPLICATIONS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+      return MOCK_APPLICATIONS;
     } catch {
       return MOCK_APPLICATIONS;
     }
@@ -45,7 +57,11 @@ export function OpportunityProvider({ children }) {
   const [submissions, setSubmissions] = useState(() => {
     try {
       const saved = localStorage.getItem('campuslaunch_submissions');
-      return saved ? JSON.parse(saved) : MOCK_SUBMISSIONS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+      return MOCK_SUBMISSIONS;
     } catch {
       return MOCK_SUBMISSIONS;
     }

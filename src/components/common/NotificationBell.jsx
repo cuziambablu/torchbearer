@@ -15,10 +15,15 @@ export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const safeNotifications = Array.isArray(notifications) ? notifications : [];
+  const unreadCount = safeNotifications.filter((n) => !n.isRead).length;
 
   useEffect(() => {
-    fetchUserNotifications(user?.id).then(setNotifications);
+    fetchUserNotifications(user?.id).then((data) => {
+      setNotifications(Array.isArray(data) ? data : []);
+    }).catch(() => {
+      setNotifications([]);
+    });
   }, [user]);
 
   // Click outside to close

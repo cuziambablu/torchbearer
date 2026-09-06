@@ -37,6 +37,8 @@ export default function HomePage() {
     }
   };
 
+  const safeOpportunities = Array.isArray(opportunities) ? opportunities : [];
+
   const categories = [
     {
       id: 'Internship',
@@ -44,7 +46,7 @@ export default function HomePage() {
       emoji: '💼',
       icon: Briefcase,
       desc: 'Paid industry roles & summer research',
-      count: opportunities.filter((o) => o.type === 'Internship' && o.status === 'published').length
+      count: safeOpportunities.filter((o) => o.type === 'Internship' && o.status === 'published').length
     },
     {
       id: 'Hackathon',
@@ -52,7 +54,7 @@ export default function HomePage() {
       emoji: '🏆',
       icon: Trophy,
       desc: 'National 24-48h hackathons with big prizes',
-      count: opportunities.filter((o) => o.type === 'Hackathon' && o.status === 'published').length
+      count: safeOpportunities.filter((o) => o.type === 'Hackathon' && o.status === 'published').length
     },
     {
       id: 'Competition',
@@ -60,7 +62,7 @@ export default function HomePage() {
       emoji: '💻',
       icon: Code,
       desc: 'DSA & competitive programming battles',
-      count: opportunities.filter((o) => o.type === 'Competition' && o.status === 'published').length
+      count: safeOpportunities.filter((o) => o.type === 'Competition' && o.status === 'published').length
     },
     {
       id: 'Scholarship',
@@ -68,7 +70,7 @@ export default function HomePage() {
       emoji: '🎓',
       icon: GraduationCap,
       desc: 'Merit & tuition funding for students',
-      count: opportunities.filter((o) => o.type === 'Scholarship' && o.status === 'published').length
+      count: safeOpportunities.filter((o) => o.type === 'Scholarship' && o.status === 'published').length
     },
     {
       id: 'Workshop',
@@ -76,7 +78,7 @@ export default function HomePage() {
       emoji: '📚',
       icon: BookOpen,
       desc: 'Hands-on bootcamps with certificates',
-      count: opportunities.filter((o) => o.type === 'Workshop' && o.status === 'published').length
+      count: safeOpportunities.filter((o) => o.type === 'Workshop' && o.status === 'published').length
     },
     {
       id: 'Fellowship',
@@ -84,17 +86,17 @@ export default function HomePage() {
       emoji: '🚀',
       icon: Rocket,
       desc: 'Global open source & research stipends',
-      count: opportunities.filter((o) => o.type === 'Fellowship' && o.status === 'published').length
+      count: safeOpportunities.filter((o) => o.type === 'Fellowship' && o.status === 'published').length
     }
   ];
 
   // Featured opportunities
-  const featuredOpportunities = opportunities
+  const featuredOpportunities = safeOpportunities
     .filter((o) => o.status === 'published' && o.featured)
     .slice(0, 3);
 
   // Closing soon opportunities (sorted by earliest deadline)
-  const closingSoonOpportunities = opportunities
+  const closingSoonOpportunities = safeOpportunities
     .filter((o) => {
       if (o.status !== 'published') return false;
       const d = getDeadlineStatus(o.deadline);
