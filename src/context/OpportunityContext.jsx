@@ -83,7 +83,11 @@ export function OpportunityProvider({ children }) {
 
     // Call Supabase automated expiration stored procedure if configured
     if (isSupabaseConfigured && supabase) {
-      supabase.rpc('expire_past_deadlines').catch(() => {});
+      try {
+        supabase.rpc('expire_past_deadlines').then(() => {}).catch?.(() => {});
+      } catch (err) {
+        // Ignore offline RPC errors
+      }
     }
   }, []);
 
