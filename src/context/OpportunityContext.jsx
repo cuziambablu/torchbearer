@@ -1,22 +1,23 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
-import {
-  INITIAL_OPPORTUNITIES,
-  MOCK_APPLICATIONS,
-  MOCK_SAVED_IDS,
-  MOCK_SUBMISSIONS
-} from '../data/mockOpportunities';
+import { REAL_VERIFIED_OPPORTUNITIES } from '../data/realVerifiedOpportunities';
+import { INITIAL_OPPORTUNITIES, MOCK_APPLICATIONS, MOCK_SAVED_IDS, MOCK_SUBMISSIONS } from '../data/mockOpportunities';
+import { logAdminAction } from '../services/auditService';
+import { createNotification } from '../services/notificationService';
 
 const OpportunityContext = createContext(null);
 
 export function OpportunityProvider({ children }) {
+  // Combine real verified opportunities as primary dataset
+  const ALL_SEED_OPPORTUNITIES = [...REAL_VERIFIED_OPPORTUNITIES, ...INITIAL_OPPORTUNITIES];
+
   // 1. Opportunities State
   const [opportunities, setOpportunities] = useState(() => {
     try {
       const saved = localStorage.getItem('campuslaunch_opportunities');
-      return saved ? JSON.parse(saved) : INITIAL_OPPORTUNITIES;
+      return saved ? JSON.parse(saved) : ALL_SEED_OPPORTUNITIES;
     } catch {
-      return INITIAL_OPPORTUNITIES;
+      return ALL_SEED_OPPORTUNITIES;
     }
   });
 
@@ -52,14 +53,31 @@ export function OpportunityProvider({ children }) {
 
   const [loading, setLoading] = useState(false);
 
-  // Fetch live opportunities from Supabase on mount
+  // Automated Expiration Checker: Run on mount to ensure expired opportunities are marked expired
+  useEffect(() => {
+    const now = new Date();
+    setOpportunities((prev) =>
+      prev.map((opp) => {
+        if (opp.deadline && new Date(opp.deadline) < now && opp.status !== 'expired') {
+          return { ...opp, status: 'expired', verificationStatus: 'expired' };
+        }
+        return opp;
+      })
+    );
+
+    // Call Supabase automated expiration stored procedure if configured
+    if (isSupabaseConfigured && supabase) {
+      supabase.rpc('expire_past_deadlines').catch(() => {});
+    }
+  }, []);
+
+  // Fetch live opportunities from Supabase
   useEffect(() => {
     const fetchCloudData = async () => {
       if (!isSupabaseConfigured || !supabase) return;
 
       try {
         setLoading(true);
-        // Fetch opportunities
         const { data: cloudOpps, error: oppError } = await supabase
           .from('opportunities')
           .select('*')
@@ -74,6 +92,7 @@ export function OpportunityProvider({ children }) {
             location: o.location,
             mode: o.mode,
             stipend: o.stipend,
+            prize: o.prize,
             eligibility: o.eligibility,
             targetBranches: o.target_branches || [],
             targetYears: o.target_years || [],
@@ -84,12 +103,21 @@ export function OpportunityProvider({ children }) {
             benefits: o.benefits || [],
             applicationProcess: o.application_process,
             deadline: o.deadline,
+            start_date: o.start_date,
             applyUrl: o.apply_url,
             sourceUrl: o.source_url,
+            sourceName: o.source_name || 'Official Source',
             imageUrl: o.image_url,
             status: o.status,
+            verificationStatus: o.verification_status || 'verified',
+            verifiedAt: o.verified_at,
+            lastVerifiedAt: o.last_verified_at,
             featured: o.featured,
+            isCollegeExclusive: o.is_college_exclusive,
+            isOfficialCollege: o.is_official_college,
+            collegeName: o.college_name,
             views: o.views,
+            fingerprint: o.fingerprint,
             createdBy: o.created_by,
             createdAt: o.created_at,
             updatedAt: o.updated_at
@@ -98,7 +126,6 @@ export function OpportunityProvider({ children }) {
           localStorage.setItem('campuslaunch_opportunities', JSON.stringify(formattedOpps));
         }
 
-        // Fetch submissions
         const { data: cloudSubs } = await supabase
           .from('opportunity_submissions')
           .select('*')
@@ -164,6 +191,16 @@ export function OpportunityProvider({ children }) {
       nextSaved = savedIds.filter((id) => id !== opportunityId);
     } else {
       nextSaved = [...savedIds, opportunityId];
+      // Create reminder notification if closing soon
+      const opp = opportunities.find((o) => o.id === opportunityId);
+      if (opp && opp.deadline) {
+        createNotification({
+          title: `Bookmarked: ${opp.title}`,
+          message: `We'll notify you before the application deadline on ${new Date(opp.deadline).toLocaleDateString()}.`,
+          type: 'deadline',
+          link: `/opportunities/${opp.id}`
+        });
+      }
     }
 
     setSavedIds(nextSaved);
@@ -227,7 +264,7 @@ export function OpportunityProvider({ children }) {
       description: submissionData.description,
       location: submissionData.location || 'Remote',
       mode: submissionData.mode || 'Remote',
-      stipend: submissionData.stipend || 'Unpaid / Certificate',
+      stipend: submissionData.stipend || null,
       eligibility: submissionData.eligibility || 'All Students',
       skills: submissionData.skills || '',
       deadline: submissionData.deadline,
@@ -239,7 +276,6 @@ export function OpportunityProvider({ children }) {
 
     setSubmissions((prev) => [newSubmission, ...prev]);
 
-    // Live sync to Supabase
     if (isSupabaseConfigured && supabase) {
       try {
         await supabase.from('opportunity_submissions').insert([
@@ -269,7 +305,7 @@ export function OpportunityProvider({ children }) {
     return newSubmission;
   };
 
-  const approveSubmission = async (submissionId) => {
+  const approveSubmission = async (submissionId, adminEmail = 'admin@campuslaunch.org') => {
     const targetSub = submissions.find((s) => s.id === submissionId);
     if (!targetSub) return;
 
@@ -285,6 +321,7 @@ export function OpportunityProvider({ children }) {
       location: targetSub.location || 'Remote',
       mode: targetSub.mode || 'Remote',
       stipend: targetSub.stipend,
+      prize: null,
       deadline: targetSub.deadline ? `${targetSub.deadline}T23:59:59Z` : new Date(Date.now() + 86400000 * 14).toISOString(),
       eligibility: targetSub.eligibility || 'All undergraduate college students',
       targetBranches: ['CSE', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Other'],
@@ -297,12 +334,16 @@ export function OpportunityProvider({ children }) {
       applicationProcess: 'Apply via official application URL provided by submitter.',
       applyUrl: targetSub.applyUrl,
       sourceUrl: targetSub.sourceUrl || targetSub.applyUrl,
-      imageUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=600&q=80',
+      sourceName: 'Student Community Verified',
       status: 'published',
+      verificationStatus: 'verified',
+      verifiedAt: new Date().toISOString(),
+      lastVerifiedAt: new Date().toISOString(),
       featured: false,
-      createdBy: targetSub.submittedBy,
-      createdAt: new Date().toISOString(),
-      views: 1
+      isCollegeExclusive: false,
+      isOfficialCollege: false,
+      views: 1,
+      createdAt: new Date().toISOString()
     };
 
     setOpportunities((prev) => [newOpp, ...prev]);
@@ -310,6 +351,15 @@ export function OpportunityProvider({ children }) {
     setSubmissions((prev) =>
       prev.map((s) => (s.id === submissionId ? { ...s, status: 'approved' } : s))
     );
+
+    // Record audit log
+    await logAdminAction({
+      adminEmail,
+      action: 'SUBMISSION_APPROVED',
+      entity: 'opportunity_submissions',
+      entityId: submissionId,
+      details: { title: newOpp.title, organization: newOpp.organization }
+    });
 
     // Sync to Supabase
     if (isSupabaseConfigured && supabase) {
@@ -334,13 +384,16 @@ export function OpportunityProvider({ children }) {
             deadline: newOpp.deadline,
             apply_url: newOpp.applyUrl,
             source_url: newOpp.sourceUrl,
+            source_name: newOpp.sourceName,
             status: 'published',
+            verification_status: 'verified',
+            verified_at: newOpp.verifiedAt,
+            last_verified_at: newOpp.lastVerifiedAt,
             featured: false,
             views: 1
           }
         ]);
 
-        // If UUID matches cloud submission
         if (!submissionId.startsWith('sub-')) {
           await supabase
             .from('opportunity_submissions')
@@ -353,10 +406,17 @@ export function OpportunityProvider({ children }) {
     }
   };
 
-  const rejectSubmission = async (submissionId) => {
+  const rejectSubmission = async (submissionId, adminEmail = 'admin@campuslaunch.org') => {
     setSubmissions((prev) =>
       prev.map((s) => (s.id === submissionId ? { ...s, status: 'rejected' } : s))
     );
+
+    await logAdminAction({
+      adminEmail,
+      action: 'SUBMISSION_REJECTED',
+      entity: 'opportunity_submissions',
+      entityId: submissionId
+    });
 
     if (isSupabaseConfigured && supabase && !submissionId.startsWith('sub-')) {
       try {
@@ -370,16 +430,27 @@ export function OpportunityProvider({ children }) {
     }
   };
 
-  // Admin Opportunity CRUD with Supabase Sync
-  const createOpportunity = async (oppData) => {
+  // Admin Opportunity CRUD with Supabase & Audit Sync
+  const createOpportunity = async (oppData, adminEmail = 'admin@campuslaunch.org') => {
     const newOpp = {
       id: 'opp-' + Date.now(),
       ...oppData,
       status: oppData.status || 'published',
+      verificationStatus: 'verified',
+      verifiedAt: new Date().toISOString(),
+      lastVerifiedAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
       views: 0
     };
     setOpportunities((prev) => [newOpp, ...prev]);
+
+    await logAdminAction({
+      adminEmail,
+      action: 'OPPORTUNITY_CREATED',
+      entity: 'opportunities',
+      entityId: newOpp.id,
+      details: { title: newOpp.title, organization: newOpp.organization }
+    });
 
     if (isSupabaseConfigured && supabase) {
       try {
@@ -391,6 +462,7 @@ export function OpportunityProvider({ children }) {
             location: oppData.location,
             mode: oppData.mode,
             stipend: oppData.stipend,
+            prize: oppData.prize,
             eligibility: oppData.eligibility,
             target_branches: oppData.targetBranches,
             target_years: oppData.targetYears,
@@ -403,8 +475,15 @@ export function OpportunityProvider({ children }) {
             deadline: oppData.deadline,
             apply_url: oppData.applyUrl,
             source_url: oppData.sourceUrl,
+            source_name: oppData.sourceName || 'Official Source',
             status: oppData.status || 'published',
-            featured: oppData.featured || false
+            verification_status: 'verified',
+            verified_at: new Date().toISOString(),
+            last_verified_at: new Date().toISOString(),
+            featured: oppData.featured || false,
+            is_college_exclusive: oppData.isCollegeExclusive || false,
+            is_official_college: oppData.isOfficialCollege || false,
+            college_name: oppData.collegeName || null
           }
         ]);
       } catch (err) {
@@ -415,10 +494,18 @@ export function OpportunityProvider({ children }) {
     return newOpp;
   };
 
-  const updateOpportunity = async (id, updatedFields) => {
+  const updateOpportunity = async (id, updatedFields, adminEmail = 'admin@campuslaunch.org') => {
     setOpportunities((prev) =>
       prev.map((opp) => (opp.id === id ? { ...opp, ...updatedFields, updatedAt: new Date().toISOString() } : opp))
     );
+
+    await logAdminAction({
+      adminEmail,
+      action: 'OPPORTUNITY_UPDATED',
+      entity: 'opportunities',
+      entityId: id,
+      details: { fields: Object.keys(updatedFields) }
+    });
 
     if (isSupabaseConfigured && supabase && !id.startsWith('opp-')) {
       try {
@@ -431,6 +518,7 @@ export function OpportunityProvider({ children }) {
             location: updatedFields.location,
             mode: updatedFields.mode,
             stipend: updatedFields.stipend,
+            prize: updatedFields.prize,
             eligibility: updatedFields.eligibility,
             target_branches: updatedFields.targetBranches,
             target_years: updatedFields.targetYears,
@@ -444,7 +532,11 @@ export function OpportunityProvider({ children }) {
             apply_url: updatedFields.applyUrl,
             source_url: updatedFields.sourceUrl,
             status: updatedFields.status,
+            verification_status: updatedFields.verificationStatus,
             featured: updatedFields.featured,
+            is_college_exclusive: updatedFields.isCollegeExclusive,
+            is_official_college: updatedFields.isOfficialCollege,
+            college_name: updatedFields.collegeName,
             updated_at: new Date().toISOString()
           })
           .eq('id', id);
@@ -454,9 +546,16 @@ export function OpportunityProvider({ children }) {
     }
   };
 
-  const deleteOpportunity = async (id) => {
+  const deleteOpportunity = async (id, adminEmail = 'admin@campuslaunch.org') => {
     setOpportunities((prev) => prev.filter((opp) => opp.id !== id));
     setSavedIds((prev) => prev.filter((sId) => sId !== id));
+
+    await logAdminAction({
+      adminEmail,
+      action: 'OPPORTUNITY_DELETED',
+      entity: 'opportunities',
+      entityId: id
+    });
 
     if (isSupabaseConfigured && supabase && !id.startsWith('opp-')) {
       try {
@@ -467,7 +566,7 @@ export function OpportunityProvider({ children }) {
     }
   };
 
-  const togglePublishStatus = async (id) => {
+  const togglePublishStatus = async (id, adminEmail = 'admin@campuslaunch.org') => {
     let nextStatus = 'published';
     setOpportunities((prev) =>
       prev.map((opp) => {
@@ -478,6 +577,13 @@ export function OpportunityProvider({ children }) {
         return opp;
       })
     );
+
+    await logAdminAction({
+      adminEmail,
+      action: nextStatus === 'published' ? 'OPPORTUNITY_PUBLISHED' : 'OPPORTUNITY_UNPUBLISHED',
+      entity: 'opportunities',
+      entityId: id
+    });
 
     if (isSupabaseConfigured && supabase && !id.startsWith('opp-')) {
       try {
@@ -495,6 +601,7 @@ export function OpportunityProvider({ children }) {
     <OpportunityContext.Provider
       value={{
         opportunities,
+        setOpportunities,
         savedIds,
         applications,
         submissions,

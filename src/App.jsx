@@ -22,6 +22,8 @@ import ManageOpportunitiesPage from './pages/admin/ManageOpportunitiesPage';
 import CreateOpportunityPage from './pages/admin/CreateOpportunityPage';
 import EditOpportunityPage from './pages/admin/EditOpportunityPage';
 import ReviewSubmissionsPage from './pages/admin/ReviewSubmissionsPage';
+import CsvImportPage from './pages/admin/CsvImportPage';
+import AdminAuditLogsPage from './pages/admin/AdminAuditLogsPage';
 
 export default function App() {
   return (
@@ -47,6 +49,8 @@ export default function App() {
         <Route path="admin/opportunities/new" element={<CreateOpportunityPage />} />
         <Route path="admin/opportunities/:id/edit" element={<EditOpportunityPage />} />
         <Route path="admin/submissions" element={<ReviewSubmissionsPage />} />
+        <Route path="admin/import" element={<CsvImportPage />} />
+        <Route path="admin/logs" element={<AdminAuditLogsPage />} />
 
         {/* Fallback Route */}
         <Route path="*" element={<Navigate to="/" replace />} />

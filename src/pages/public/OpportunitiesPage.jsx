@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, Filter, X, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
+import { Search, Filter, X, SlidersHorizontal, ArrowUpDown, ShieldCheck } from 'lucide-react';
 import OpportunityCard from '../../components/opportunities/OpportunityCard';
 import OpportunityFilters from '../../components/opportunities/OpportunityFilters';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
@@ -14,9 +14,8 @@ const ITEMS_PER_PAGE = 6;
 
 export default function OpportunitiesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { opportunities } = useOpportunities();
+  const { opportunities, loading } = useOpportunities();
 
-  const [isLoading, setIsLoading] = useState(false);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -29,6 +28,8 @@ export default function OpportunitiesPage() {
     year: searchParams.get('year') || 'all',
     deadline: searchParams.get('deadline') || 'all',
     sort: searchParams.get('sort') || 'newest',
+    verifiedOnly: searchParams.get('verified') === 'true',
+    collegeExclusive: searchParams.get('exclusive') === 'true'
   });
 
   // Sync state when URL params change
@@ -42,6 +43,8 @@ export default function OpportunitiesPage() {
       year: searchParams.get('year') || 'all',
       deadline: searchParams.get('deadline') || 'all',
       sort: searchParams.get('sort') || 'newest',
+      verifiedOnly: searchParams.get('verified') === 'true',
+      collegeExclusive: searchParams.get('exclusive') === 'true'
     }));
   }, [searchParams]);
 
@@ -54,8 +57,10 @@ export default function OpportunitiesPage() {
     // Update URL query parameters
     const newParams = new URLSearchParams();
     Object.entries(nextFilters).forEach(([k, v]) => {
-      if (v && v !== 'all') {
-        newParams.set(k, v);
+      if (v && v !== 'all' && v !== false) {
+        if (k === 'verifiedOnly') newParams.set('verified', 'true');
+        else if (k === 'collegeExclusive') newParams.set('exclusive', 'true');
+        else newParams.set(k, v);
       }
     });
     setSearchParams(newParams);
@@ -70,6 +75,8 @@ export default function OpportunitiesPage() {
       year: 'all',
       deadline: 'all',
       sort: 'newest',
+      verifiedOnly: false,
+      collegeExclusive: false
     };
     setFilters(defaultFilters);
     setSearchParams(new URLSearchParams());
@@ -78,48 +85,65 @@ export default function OpportunitiesPage() {
 
   // Filter and sort opportunities
   const filteredOpportunities = useMemo(() => {
+    const now = new Date();
     return opportunities
       .filter((opp) => {
-        // Only published opportunities in public browse
+        // 1. Only published opportunities in public browse
         if (opp.status !== 'published') return false;
 
-        // Search text matching (title, org, skills, description, type)
+        // 2. Automated Expiration: Exclude past deadlines from public discovery
+        if (opp.deadline && new Date(opp.deadline) < now) {
+          return false;
+        }
+
+        // 3. Verified only filter
+        if (filters.verifiedOnly && opp.verificationStatus !== 'verified') {
+          return false;
+        }
+
+        // 4. College exclusive filter
+        if (filters.collegeExclusive && !opp.isCollegeExclusive) {
+          return false;
+        }
+
+        // 5. Search text matching (title, org, skills, description, type, source)
         if (filters.search.trim()) {
           const query = filters.search.toLowerCase();
           const titleMatch = (opp.title || '').toLowerCase().includes(query);
           const orgMatch = (opp.organization || '').toLowerCase().includes(query);
           const descMatch = (opp.description || '').toLowerCase().includes(query);
           const typeMatch = (opp.type || '').toLowerCase().includes(query);
+          const sourceMatch = (opp.sourceName || '').toLowerCase().includes(query);
           const skillMatch = (opp.skills || []).some((s) => s.toLowerCase().includes(query));
 
-          if (!titleMatch && !orgMatch && !descMatch && !typeMatch && !skillMatch) {
+          if (!titleMatch && !orgMatch && !descMatch && !typeMatch && !skillMatch && !sourceMatch) {
             return false;
           }
         }
 
-        // Type filter
+        // 6. Type filter
         if (filters.type !== 'all' && opp.type !== filters.type) {
           return false;
         }
 
-        // Mode filter
+        // 7. Mode filter
         if (filters.mode !== 'all' && opp.mode !== filters.mode) {
           return false;
         }
 
-        // Branch filter
+        // 8. Branch filter
         if (filters.branch !== 'all' && opp.targetBranches && opp.targetBranches.length > 0) {
           const matches = opp.targetBranches.includes(filters.branch) || opp.targetBranches.includes('Other');
           if (!matches) return false;
         }
 
-        // Year filter
+        // 9. Year filter
         if (filters.year !== 'all' && opp.targetYears && opp.targetYears.length > 0) {
           const matches = opp.targetYears.includes(filters.year);
           if (!matches) return false;
         }
 
-        // Deadline filter
+        // 10. Deadline timeframe filter
         if (filters.deadline !== 'all') {
           const dl = getDeadlineStatus(opp.deadline);
           if (dl.isExpired) return false;
@@ -138,7 +162,6 @@ export default function OpportunitiesPage() {
         if (filters.sort === 'popular') {
           return (b.views || 0) - (a.views || 0);
         }
-        // default newest
         return new Date(b.createdAt) - new Date(a.createdAt);
       });
   }, [opportunities, filters]);
@@ -158,6 +181,8 @@ export default function OpportunitiesPage() {
     if (filters.branch !== 'all') pills.push({ key: 'branch', label: `Branch: ${filters.branch}` });
     if (filters.year !== 'all') pills.push({ key: 'year', label: `Year: ${filters.year}` });
     if (filters.deadline !== 'all') pills.push({ key: 'deadline', label: `Deadline: ${filters.deadline}` });
+    if (filters.verifiedOnly) pills.push({ key: 'verifiedOnly', label: '✓ Verified Only' });
+    if (filters.collegeExclusive) pills.push({ key: 'collegeExclusive', label: '🎓 College Exclusive' });
     return pills;
   }, [filters]);
 
@@ -169,7 +194,7 @@ export default function OpportunitiesPage() {
           Explore Opportunities
         </h1>
         <p className="text-sm text-slate-500 mt-2">
-          Discover verified internships, hackathons, scholarships, and fellowships across top tech organizations.
+          Discover active and verified internships, hackathons, scholarships, and fellowships across verified organizations.
         </p>
       </div>
 
@@ -181,7 +206,7 @@ export default function OpportunitiesPage() {
             type="text"
             value={filters.search}
             onChange={(e) => handleFilterChange('search', e.target.value)}
-            placeholder="Search by title, organization, skill (e.g., React, Python, ML)..."
+            placeholder="Search by title, organization, skill (e.g., Python, React, IoT)..."
             className="w-full pl-10 pr-10 py-2.5 text-sm bg-white border border-slate-200/90 rounded-2xl shadow-subtle text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
           />
           {filters.search && (
@@ -220,7 +245,12 @@ export default function OpportunitiesPage() {
               <span>{pill.label}</span>
               <button
                 type="button"
-                onClick={() => handleFilterChange(pill.key, pill.key === 'search' ? '' : 'all')}
+                onClick={() =>
+                  handleFilterChange(
+                    pill.key,
+                    pill.key === 'search' ? '' : pill.key.includes('Only') || pill.key.includes('Exclusive') ? false : 'all'
+                  )
+                }
                 className="hover:text-brand-900"
               >
                 <X className="w-3.5 h-3.5" />
@@ -251,7 +281,7 @@ export default function OpportunitiesPage() {
 
         {/* Opportunities Grid Section */}
         <div className="lg:col-span-3 space-y-6">
-          {isLoading ? (
+          {loading ? (
             <LoadingSkeleton count={6} />
           ) : paginatedOpportunities.length > 0 ? (
             <>
@@ -273,7 +303,7 @@ export default function OpportunitiesPage() {
             </>
           ) : (
             <EmptyState
-              title="No matching opportunities found"
+              title="No active opportunities match your criteria"
               description="We couldn't find any opportunities matching your specific filters. Try clearing some filters or searching for different keywords."
               actionLabel="Reset all filters"
               onAction={handleResetFilters}

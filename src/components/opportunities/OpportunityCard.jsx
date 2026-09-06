@@ -1,6 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Bookmark, MapPin, Building, Sparkles, ExternalLink, ArrowRight, DollarSign, Calendar } from 'lucide-react';
+import {
+  Bookmark,
+  MapPin,
+  Building,
+  Sparkles,
+  ExternalLink,
+  ArrowRight,
+  ShieldCheck,
+  Trophy,
+  GraduationCap
+} from 'lucide-react';
 import Badge from '../common/Badge';
 import DeadlineBadge from './DeadlineBadge';
 import { useOpportunities } from '../../context/OpportunityContext';
@@ -18,7 +28,9 @@ export default function OpportunityCard({ opportunity, showRecommendationBadge =
     e.stopPropagation();
     const willBeSaved = toggleSave(opportunity.id);
     addToast(
-      willBeSaved ? `Saved "${opportunity.title}" to your bookmarks` : `Removed "${opportunity.title}" from saved`,
+      willBeSaved
+        ? `Saved "${opportunity.title}" to your bookmarks`
+        : `Removed "${opportunity.title}" from saved`,
       willBeSaved ? 'success' : 'info'
     );
   };
@@ -63,15 +75,30 @@ export default function OpportunityCard({ opportunity, showRecommendationBadge =
 
       {/* Main Card Body */}
       <div className="p-5 flex-1 flex flex-col">
-        {/* Header: Type Badge & Save Button */}
+        {/* Header: Type Badge, Verification Badge & Save Button */}
         <div className="flex items-center justify-between gap-2 mb-3">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <Badge variant={getTypeColor(opportunity.type)} size="sm">
               {opportunity.type}
             </Badge>
+
             <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
               {opportunity.mode}
             </span>
+
+            {opportunity.verificationStatus === 'verified' && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                <span>Verified</span>
+              </span>
+            )}
+
+            {opportunity.isCollegeExclusive && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200/80">
+                <GraduationCap className="w-3 h-3 text-purple-600" />
+                <span>College Exclusive</span>
+              </span>
+            )}
           </div>
 
           <button
@@ -95,11 +122,18 @@ export default function OpportunityCard({ opportunity, showRecommendationBadge =
           </h3>
         </Link>
 
-        {/* Organization & Location */}
+        {/* Organization, Source & Location */}
         <div className="space-y-1 mb-3 text-xs text-slate-500">
-          <div className="flex items-center gap-1.5 font-medium text-slate-700">
-            <Building className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-            <span className="truncate">{opportunity.organization}</span>
+          <div className="flex items-center justify-between gap-1 font-medium text-slate-700">
+            <div className="flex items-center gap-1.5 truncate">
+              <Building className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+              <span className="truncate">{opportunity.organization}</span>
+            </div>
+            {opportunity.sourceName && (
+              <span className="text-[10px] text-slate-400 truncate max-w-[120px]">
+                via {opportunity.sourceName}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-1.5">
             <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
@@ -132,13 +166,20 @@ export default function OpportunityCard({ opportunity, showRecommendationBadge =
         )}
       </div>
 
-      {/* Card Footer: Stipend, Deadline & Action Button */}
+      {/* Card Footer: Stipend / Prize, Deadline & Action Button */}
       <div className="px-5 py-3.5 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between gap-3">
         <div className="min-w-0">
-          {opportunity.stipend && (
+          {opportunity.stipend ? (
             <div className="text-xs font-bold text-slate-900 truncate">
               {opportunity.stipend}
             </div>
+          ) : opportunity.prize ? (
+            <div className="text-xs font-bold text-amber-700 truncate flex items-center gap-1">
+              <Trophy className="w-3 h-3 text-amber-600" />
+              <span className="truncate">{opportunity.prize}</span>
+            </div>
+          ) : (
+            <div className="text-xs font-medium text-slate-500 truncate">Certificate & Perks</div>
           )}
           <div className="mt-0.5">
             <DeadlineBadge deadline={opportunity.deadline} />

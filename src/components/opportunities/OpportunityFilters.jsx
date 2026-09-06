@@ -1,5 +1,5 @@
 import React from 'react';
-import { Filter, X, RotateCcw, Check, ArrowUpDown } from 'lucide-react';
+import { Filter, X, RotateCcw, Check, ArrowUpDown, ShieldCheck, GraduationCap } from 'lucide-react';
 import { OPPORTUNITY_TYPES, BRANCHES, YEARS, MODES } from '../../data/mockOpportunities';
 
 export default function OpportunityFilters({
@@ -27,6 +27,8 @@ export default function OpportunityFilters({
     filters.branch !== 'all' ||
     filters.year !== 'all' ||
     filters.deadline !== 'all' ||
+    filters.verifiedOnly ||
+    filters.collegeExclusive ||
     filters.search !== '';
 
   return (
@@ -50,6 +52,35 @@ export default function OpportunityFilters({
             Reset all
           </button>
         )}
+      </div>
+
+      {/* Trust & Special Filters */}
+      <div className="space-y-2 p-3 bg-slate-50 rounded-2xl border border-slate-200/80">
+        <label className="flex items-center justify-between cursor-pointer text-xs font-semibold text-slate-700">
+          <span className="flex items-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            Verified Opportunities Only
+          </span>
+          <input
+            type="checkbox"
+            checked={Boolean(filters.verifiedOnly)}
+            onChange={(e) => onFilterChange('verifiedOnly', e.target.checked)}
+            className="rounded text-brand-600 focus:ring-brand-500 w-4 h-4"
+          />
+        </label>
+
+        <label className="flex items-center justify-between cursor-pointer text-xs font-semibold text-slate-700 pt-1 border-t border-slate-200/60">
+          <span className="flex items-center gap-1.5">
+            <GraduationCap className="w-3.5 h-3.5 text-purple-600" />
+            College Exclusive Opportunities
+          </span>
+          <input
+            type="checkbox"
+            checked={Boolean(filters.collegeExclusive)}
+            onChange={(e) => onFilterChange('collegeExclusive', e.target.checked)}
+            className="rounded text-purple-600 focus:ring-purple-500 w-4 h-4"
+          />
+        </label>
       </div>
 
       {/* Sort By */}

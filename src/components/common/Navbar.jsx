@@ -12,10 +12,13 @@ import {
   Menu,
   X,
   Sparkles,
-  ChevronDown
+  ChevronDown,
+  UploadCloud,
+  FileText
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useOpportunities } from '../../context/OpportunityContext';
+import NotificationBell from './NotificationBell';
 import Button from './Button';
 
 export default function Navbar() {
@@ -40,7 +43,7 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/80 transition-all">
+    <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-md border-b border-slate-200/80 transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo */}
@@ -109,6 +112,14 @@ export default function Navbar() {
                     <ShieldAlert className="w-4 h-4" />
                     <span>Submissions</span>
                   </NavLink>
+                  <NavLink to="/admin/import" className={navLinkClass}>
+                    <UploadCloud className="w-4 h-4" />
+                    <span>CSV Import</span>
+                  </NavLink>
+                  <NavLink to="/admin/logs" className={navLinkClass}>
+                    <FileText className="w-4 h-4" />
+                    <span>Audit Logs</span>
+                  </NavLink>
                 </>
               )}
             </nav>
@@ -116,6 +127,9 @@ export default function Navbar() {
 
           {/* Right Action Hub */}
           <div className="hidden md:flex items-center gap-3">
+            {/* In-App Notification Bell */}
+            {isAuthenticated && <NotificationBell />}
+
             {/* Quick Demo Role Switcher Badge */}
             <div className="relative">
               <button
@@ -229,13 +243,29 @@ export default function Navbar() {
                     )}
 
                     {isAdmin && (
-                      <Link
-                        to="/admin"
-                        className="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 transition"
-                      >
-                        <LayoutDashboard className="w-4 h-4 text-slate-400" />
-                        <span>Admin Dashboard</span>
-                      </Link>
+                      <>
+                        <Link
+                          to="/admin"
+                          className="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 transition"
+                        >
+                          <LayoutDashboard className="w-4 h-4 text-slate-400" />
+                          <span>Admin Dashboard</span>
+                        </Link>
+                        <Link
+                          to="/admin/import"
+                          className="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 transition"
+                        >
+                          <UploadCloud className="w-4 h-4 text-slate-400" />
+                          <span>CSV Opportunity Importer</span>
+                        </Link>
+                        <Link
+                          to="/admin/logs"
+                          className="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 transition"
+                        >
+                          <FileText className="w-4 h-4 text-slate-400" />
+                          <span>Admin Audit Logs</span>
+                        </Link>
+                      </>
                     )}
 
                     <div className="border-t border-slate-100 mt-1 pt-1">
@@ -268,6 +298,7 @@ export default function Navbar() {
 
           {/* Mobile menu button */}
           <div className="flex md:hidden items-center gap-2">
+            {isAuthenticated && <NotificationBell />}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100"
@@ -354,6 +385,22 @@ export default function Navbar() {
                 >
                   <ShieldAlert className="w-4 h-4" />
                   <span>Review Submissions</span>
+                </NavLink>
+                <NavLink
+                  to="/admin/import"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={navLinkClass}
+                >
+                  <UploadCloud className="w-4 h-4" />
+                  <span>CSV Opportunity Importer</span>
+                </NavLink>
+                <NavLink
+                  to="/admin/logs"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={navLinkClass}
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Audit Logs</span>
                 </NavLink>
               </>
             )}
