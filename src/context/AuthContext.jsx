@@ -8,9 +8,9 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
       const savedUser = localStorage.getItem('campuslaunch_user');
-      return savedUser ? JSON.parse(savedUser) : MOCK_DEFAULT_STUDENT;
+      return savedUser ? JSON.parse(savedUser) : null;
     } catch {
-      return MOCK_DEFAULT_STUDENT;
+      return null;
     }
   });
 
