@@ -1,15 +1,20 @@
 // Mock Opportunity Dataset for CampusLaunch (Phase 1 preview and testing)
 
 export const OPPORTUNITY_TYPES = [
-  { id: 'all', label: 'All Opportunities', icon: 'Sparkles' },
-  { id: 'Internship', label: 'Internships', icon: 'Briefcase', emoji: '💼' },
-  { id: 'Hackathon', label: 'Hackathons', icon: 'Trophy', emoji: '🏆' },
-  { id: 'Competition', label: 'Coding Competitions', icon: 'Code', emoji: '💻' },
-  { id: 'Scholarship', label: 'Scholarships', icon: 'GraduationCap', emoji: '🎓' },
-  { id: 'Workshop', label: 'Workshops', icon: 'BookOpen', emoji: '📚' },
-  { id: 'Fellowship', label: 'Fellowships', icon: 'Rocket', emoji: '🚀' },
-  { id: 'Placement', label: 'Placements', icon: 'Building2', emoji: '🏢' },
-  { id: 'Certification', label: 'Certifications', icon: 'Award', emoji: '📜' },
+  { id: 'all', label: 'All Opportunities', icon: 'Sparkles', desc: 'Browse all student opportunities' },
+  { id: 'Internship', label: 'Internships', icon: 'Briefcase', emoji: '💼', desc: 'Paid industry roles & summer research' },
+  { id: 'Hackathon', label: 'Hackathons', icon: 'Trophy', emoji: '🏆', desc: 'National 24-48h team hackathons' },
+  { id: 'Job', label: 'Full-Time Jobs', icon: 'Building2', emoji: '🏢', desc: 'Fresher & graduate hiring drives' },
+  { id: 'Freelance', label: 'Freelance & Gigs', icon: 'Zap', emoji: '⚡', desc: 'Student-friendly paid contract projects' },
+  { id: 'Scholarship', label: 'Scholarships', icon: 'GraduationCap', emoji: '🎓', desc: 'Merit & tuition funding for students' },
+  { id: 'Fellowship', label: 'Fellowships', icon: 'Rocket', emoji: '🚀', desc: 'Global open-source & leadership stipends' },
+  { id: 'Competition', label: 'Coding Contests', icon: 'Code', emoji: '💻', desc: 'DSA & competitive programming battles' },
+  { id: 'Research', label: 'Research Grants', icon: 'FlaskConical', emoji: '🔬', desc: 'Academic lab papers & research grants' },
+  { id: 'Workshop', label: 'Workshops', icon: 'BookOpen', emoji: '📚', desc: 'Hands-on bootcamps with certificates' },
+  { id: 'Certification', label: 'Certifications', icon: 'Award', emoji: '📜', desc: 'Free exam fee vouchers & credentials' },
+  { id: 'Open Source', label: 'Open Source', icon: 'GitBranch', emoji: '🌐', desc: 'Contributor cohorts & open-source tracks' },
+  { id: 'Campus Exclusive', label: 'Placement Drives', icon: 'Building', emoji: '🏛️', desc: 'College placement cell exclusive drives' },
+  { id: 'Career Event', label: 'Career Events', icon: 'Calendar', emoji: '🎙️', desc: 'AMA sessions, tech talks & virtual fairs' },
 ];
 
 export const BRANCHES = ['CSE', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Other'];
@@ -474,15 +479,21 @@ export const MOCK_DEFAULT_STUDENT = {
   name: 'Aarav Sharma',
   email: 'aarav.sharma@college.edu',
   college: 'National Institute of Technology, Karnataka',
+  degree: 'B.Tech in Computer Science & Engineering',
   branch: 'CSE',
   year: '3rd Year',
+  cgpa: '8.8',
   role: 'student',
-  skills: ['Python', 'React', 'TypeScript', 'Data Structures', 'Machine Learning', 'FastAPI'],
-  interests: ['AI/ML', 'Full-Stack Development', 'Hackathons', 'Open Source'],
+  skills: ['Python', 'React', 'TypeScript', 'Data Structures', 'Machine Learning', 'FastAPI', 'Docker', 'SQL'],
+  interests: ['AI/ML', 'Full-Stack Development', 'Hackathons', 'Open Source', 'Cloud & DevOps'],
+  preferredMode: 'Hybrid',
+  preferredLocations: ['Bengaluru', 'Remote', 'Hyderabad', 'Pune'],
+  preferredTypes: ['Internship', 'Hackathon', 'Fellowship', 'Job'],
   bio: 'Computer Science student passionate about generative AI applications and high-performance web systems. Active competitive programmer and hackathon builder.',
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
   github: 'https://github.com/aaravsharma-dev',
-  linkedin: 'https://linkedin.com/in/aaravsharma'
+  linkedin: 'https://linkedin.com/in/aaravsharma',
+  portfolio: 'https://aaravsharma.dev'
 };
 
 export const MOCK_ADMIN_USER = {
@@ -496,3 +507,29 @@ export const MOCK_ADMIN_USER = {
   skills: ['Opportunity Curation', 'Moderation', 'Platform Operations'],
   interests: ['Student Success', 'Community Building']
 };
+
+export const MOCK_REPORTS = [
+  {
+    id: 'rep-1',
+    opportunityId: 'opp-1',
+    opportunityTitle: 'AI/ML Research Engineering Intern',
+    reportedBy: 'student-2',
+    reporterEmail: 'priya.patel@engg.edu',
+    reason: 'incorrect_info',
+    details: 'The official portal lists stipend as ₹50,000 instead of ₹45,000 for 4th years.',
+    status: 'pending',
+    createdAt: '2026-09-06T14:20:00Z'
+  },
+  {
+    id: 'rep-2',
+    opportunityId: 'real-opp-10',
+    opportunityTitle: 'GDSC Global Student Tech Summit & Hack',
+    reportedBy: 'student-3',
+    reporterEmail: 'karan.singh@campus.edu',
+    reason: 'duplicate',
+    details: 'This summit registration is also featured under the hackathons section.',
+    status: 'investigating',
+    createdAt: '2026-09-05T11:05:00Z'
+  }
+];
+

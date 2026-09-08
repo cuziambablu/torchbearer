@@ -15,11 +15,17 @@ import Badge from '../common/Badge';
 import DeadlineBadge from './DeadlineBadge';
 import { useOpportunities } from '../../context/OpportunityContext';
 import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
 import { formatDate } from '../../utils/dateUtils';
+import { MOCK_DEFAULT_STUDENT } from '../../data/mockOpportunities';
 
 export default function OpportunityCard({ opportunity, showRecommendationBadge = false }) {
   const { isSaved, toggleSave } = useOpportunities();
   const { addToast } = useToast();
+  const { profile } = useAuth();
+
+  const studentProfile = profile || MOCK_DEFAULT_STUDENT;
+  const userSkills = (studentProfile?.skills || []).map((s) => s.toLowerCase());
 
   const saved = isSaved(opportunity.id);
 
@@ -41,18 +47,29 @@ export default function OpportunityCard({ opportunity, showRecommendationBadge =
         return 'brand';
       case 'Hackathon':
         return 'purple';
-      case 'Competition':
-        return 'indigo';
+      case 'Job':
+        return 'emerald';
+      case 'Freelance':
+        return 'amber';
       case 'Scholarship':
         return 'success';
-      case 'Workshop':
-        return 'sky';
       case 'Fellowship':
         return 'warning';
-      case 'Placement':
-        return 'purple';
+      case 'Competition':
+        return 'indigo';
+      case 'Research':
+        return 'sky';
+      case 'Workshop':
+        return 'indigo';
       case 'Certification':
         return 'brand';
+      case 'Open Source':
+        return 'teal';
+      case 'Campus Exclusive':
+      case 'Placement':
+        return 'purple';
+      case 'Career Event':
+        return 'rose';
       default:
         return 'default';
     }
@@ -149,14 +166,22 @@ export default function OpportunityCard({ opportunity, showRecommendationBadge =
         {/* Skills Chips */}
         {opportunity.skills && opportunity.skills.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-4">
-            {opportunity.skills.slice(0, 3).map((skill, index) => (
-              <span
-                key={index}
-                className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 border border-slate-200"
-              >
-                {skill}
-              </span>
-            ))}
+            {opportunity.skills.slice(0, 3).map((skill, index) => {
+              const isMatched = userSkills.includes(skill.toLowerCase());
+              return (
+                <span
+                  key={index}
+                  className={`text-[11px] font-medium px-2 py-0.5 rounded-md border ${
+                    isMatched
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-slate-50 text-slate-600 border-slate-200'
+                  }`}
+                >
+                  {isMatched && <span className="mr-0.5 text-emerald-600">✓</span>}
+                  {skill}
+                </span>
+              );
+            })}
             {opportunity.skills.length > 3 && (
               <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md text-slate-400">
                 +{opportunity.skills.length - 3}

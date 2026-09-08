@@ -24,12 +24,13 @@ import { OPPORTUNITY_TYPES } from '../../data/mockOpportunities';
 import { getDeadlineStatus, formatDate } from '../../utils/dateUtils';
 
 export default function AdminDashboardPage() {
-  const { opportunities, submissions, savedIds, applications } = useOpportunities();
+  const { opportunities, submissions, savedIds, applications, reports } = useOpportunities();
 
   const totalCount = opportunities.length;
   const publishedCount = opportunities.filter((o) => o.status === 'published').length;
   const verifiedCount = opportunities.filter((o) => o.verificationStatus === 'verified').length;
   const pendingSubmissionsCount = submissions.filter((s) => s.status === 'pending').length;
+  const pendingReportsCount = (reports || []).filter((r) => r.status === 'pending').length;
   const expiredCount = opportunities.filter((o) => {
     if (o.status === 'expired') return true;
     const dl = getDeadlineStatus(o.deadline);
@@ -69,6 +70,16 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
+          <Link to="/admin/reports">
+            <Button
+              variant="outline"
+              size="md"
+              icon={AlertTriangle}
+              className={pendingReportsCount > 0 ? 'border-rose-300 bg-rose-50/50 text-rose-800' : ''}
+            >
+              Reports ({pendingReportsCount})
+            </Button>
+          </Link>
           <Link to="/admin/import">
             <Button variant="outline" size="md" icon={UploadCloud}>
               CSV Import

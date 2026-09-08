@@ -297,7 +297,7 @@ export const REAL_VERIFIED_OPPORTUNITIES = [
     id: 'opp-real-8',
     title: 'Campus Placement Cell Exclusive: Associate Software Engineer 2026-27',
     organization: 'National Placement Consortium & Partner Tech Giants',
-    type: 'Placement',
+    type: 'Campus Exclusive',
     location: 'Bengaluru / Hyderabad / Pune (On-site)',
     mode: 'On-site',
     stipend: '₹14,00,000 - ₹20,00,000 CTC (Full-Time)',
@@ -334,5 +334,211 @@ export const REAL_VERIFIED_OPPORTUNITIES = [
     isOfficialCollege: true,
     collegeName: 'National Institute of Technology',
     views: 7400
+  },
+  {
+    id: 'opp-real-9',
+    title: 'Outreachy Open Source Paid Internship Cohort 2026',
+    organization: 'Outreachy & Software Freedom Conservancy',
+    type: 'Open Source',
+    location: '100% Remote (Global)',
+    mode: 'Remote',
+    stipend: '$7,000 USD Total Stipend + $500 Travel Stipend',
+    prize: null,
+    deadline: '2026-09-22T23:59:59Z',
+    start_date: '2026-10-01T00:00:00Z',
+    eligibility: 'Open to undergraduate students subject to systemic bias and underrepresented tech groups',
+    targetBranches: ['CSE', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Other'],
+    targetYears: ['1st Year', '2nd Year', '3rd Year', '4th Year'],
+    skills: ['Git', 'Python', 'Rust', 'JavaScript', 'Documentation', 'Linux'],
+    description: 'Outreachy provides paid, remote 3-month internships to work on Free and Open Source Software (FOSS) projects under expert mentorship from organizations like Mozilla, Wikimedia, Fedora, and Debian.',
+    responsibilities: [
+      'Contribute code, documentation, and user testing to selected open-source project repository.',
+      'Maintain weekly public technical blog posts detailing engineering milestones and learnings.'
+    ],
+    requirements: [
+      'Pass the initial essay eligibility screening.',
+      'Make at least one recorded contribution to a participating project during contribution period.'
+    ],
+    benefits: [
+      '$7,000 USD direct stipend disbursement upon milestone completions.',
+      'Lifelong alumni network of international FOSS core maintainers and tech leaders.'
+    ],
+    applicationProcess: 'Initial essay application -> Contribution period -> Final intern selection.',
+    applyUrl: 'https://www.outreachy.org/apply/',
+    sourceUrl: 'https://www.outreachy.org/',
+    sourceName: 'Outreachy Official',
+    status: 'published',
+    verificationStatus: 'verified',
+    verifiedAt: '2026-09-07T10:00:00Z',
+    lastVerifiedAt: '2026-09-07T10:00:00Z',
+    featured: true,
+    isCollegeExclusive: false,
+    isOfficialCollege: false,
+    views: 4120
+  },
+  {
+    id: 'opp-real-10',
+    title: 'CERN Summer Student Research Programme in Computing & Physics',
+    organization: 'European Organization for Nuclear Research (CERN)',
+    type: 'Research',
+    location: 'Geneva, Switzerland',
+    mode: 'On-site',
+    stipend: '90 CHF / day Living Allowance + Travel Reimbursement',
+    prize: null,
+    deadline: '2026-10-15T23:59:59Z',
+    start_date: '2027-06-15T09:00:00Z',
+    eligibility: 'Undergraduate students in Computer Science, Physics, Mathematics, or Engineering with at least 3 years of study',
+    targetBranches: ['CSE', 'ECE', 'EEE', 'Mechanical', 'Other'],
+    targetYears: ['3rd Year', '4th Year'],
+    skills: ['C++', 'Python', 'High Performance Computing', 'Distributed Systems', 'Data Analysis'],
+    description: 'Join one of the world’s most prestigious research facilities in Geneva. Spend 8 to 13 weeks participating in the day-to-day experimental work of multidisciplinary teams at the Large Hadron Collider.',
+    responsibilities: [
+      'Collaborate on distributed computing, sensor data pipelines, or algorithmic simulations.',
+      'Attend series of specialized lectures delivered by global scientists and engineers.',
+      'Author a comprehensive student research report at the end of the stay.'
+    ],
+    requirements: [
+      'Enrolled in university bachelor or master degree with excellent academic standing.',
+      'Proficiency in English or French.'
+    ],
+    benefits: [
+      'Daily subsistence allowance covering accommodation and meals in Geneva.',
+      'Full health insurance coverage and roundtrip flight tickets.'
+    ],
+    applicationProcess: 'Online application with CV, transcripts, and 2 reference letters -> CERN selection committee.',
+    applyUrl: 'https://careers.cern/summer',
+    sourceUrl: 'https://home.cern/',
+    sourceName: 'CERN Careers Portal',
+    status: 'published',
+    verificationStatus: 'verified',
+    verifiedAt: '2026-09-07T12:00:00Z',
+    lastVerifiedAt: '2026-09-07T12:00:00Z',
+    featured: false,
+    isCollegeExclusive: false,
+    isOfficialCollege: false,
+    views: 5340
+  },
+  {
+    id: 'opp-real-11',
+    title: 'Junior Cloud Solutions Associate (Graduates 2026-2027)',
+    organization: 'Red Hat Enterprise Open Source',
+    type: 'Job',
+    location: 'Bengaluru / Pune (Hybrid)',
+    mode: 'Hybrid',
+    stipend: '₹12,50,000 - ₹16,00,000 Annual Salary',
+    prize: null,
+    deadline: '2026-10-25T23:59:59Z',
+    start_date: '2027-01-15T09:00:00Z',
+    eligibility: 'B.Tech / B.E. in Computer Science or IT graduating in 2026 or 2027',
+    targetBranches: ['CSE', 'ECE', 'Other'],
+    targetYears: ['4th Year'],
+    skills: ['Linux', 'Kubernetes', 'OpenShift', 'Python', 'Networking', 'Docker', 'Ansible'],
+    description: 'Full-time graduate engineering position at Red Hat. Work directly with enterprise customers to design, deploy, and troubleshoot modern hybrid-cloud container architectures running on Red Hat OpenShift and Linux.',
+    responsibilities: [
+      'Deliver architectural support for enterprise Kubernetes and containerized workloads.',
+      'Develop automated deployment scripts using Ansible, Bash, and Python.',
+      'Collaborate with global site reliability engineering (SRE) teams.'
+    ],
+    requirements: [
+      'Strong fundamental understanding of Linux operating system concepts and TCP/IP networking.',
+      'Basic familiarity with containerization (Docker/Podman/Kubernetes).'
+    ],
+    benefits: [
+      'Competitive compensation with health insurance, wellness stipends, and continuous learning budgets.',
+      'Free Red Hat Certified Engineer (RHCE) certification tracks.'
+    ],
+    applicationProcess: 'Online application -> Technical screening -> Pair troubleshooting interview -> HR round.',
+    applyUrl: 'https://www.redhat.com/en/jobs',
+    sourceUrl: 'https://www.redhat.com/',
+    sourceName: 'Red Hat Careers',
+    status: 'published',
+    verificationStatus: 'verified',
+    verifiedAt: '2026-09-07T14:30:00Z',
+    lastVerifiedAt: '2026-09-07T14:30:00Z',
+    featured: true,
+    isCollegeExclusive: false,
+    isOfficialCollege: false,
+    views: 6200
+  },
+  {
+    id: 'opp-real-12',
+    title: 'Google Developer Student Clubs Global Summit & Hack 2026',
+    organization: 'Google for Developers',
+    type: 'Career Event',
+    location: 'Virtual Broadcast & Regional Hubs',
+    mode: 'Remote',
+    stipend: null,
+    prize: 'Exclusive Google Swag + Cloud Credits + Solution Challenge Grants',
+    deadline: '2026-09-20T18:00:00Z',
+    start_date: '2026-09-22T09:30:00Z',
+    eligibility: 'Open to all university students, GDSC members, and tech enthusiasts',
+    targetBranches: ['CSE', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Other'],
+    targetYears: ['1st Year', '2nd Year', '3rd Year', '4th Year'],
+    skills: ['Generative AI', 'Android', 'Flutter', 'Firebase', 'Google Cloud', 'TensorFlow'],
+    description: 'Annual global summit for student developers featuring keynote talks from Google engineers, hands-on live coding labs in Gemini & Flutter, and direct mentorship on entering the Google Solution Challenge.',
+    responsibilities: [
+      'Attend interactive live sessions and tech talks with Google Developer Advocates.',
+      'Participate in virtual code-along workshops and solution architecture Q&As.'
+    ],
+    requirements: [
+      'Valid student registration and access to a modern web browser.'
+    ],
+    benefits: [
+      'Official Certificate of Attendance from Google for Developers.',
+      'Free Google Cloud Skills Boost credits to access professional on-demand labs.'
+    ],
+    applicationProcess: '1-click registration on the Google Developer Student Summit portal.',
+    applyUrl: 'https://developers.google.com/community/gdsc',
+    sourceUrl: 'https://developers.google.com/',
+    sourceName: 'Google for Developers',
+    status: 'published',
+    verificationStatus: 'verified',
+    verifiedAt: '2026-09-07T16:00:00Z',
+    lastVerifiedAt: '2026-09-07T16:00:00Z',
+    featured: false,
+    isCollegeExclusive: false,
+    isOfficialCollege: false,
+    views: 5800
+  },
+  {
+    id: 'opp-real-13',
+    title: 'CNCF Student Contributor Contract: Interactive Documentation UI',
+    organization: 'Cloud Native Computing Foundation (CNCF)',
+    type: 'Freelance',
+    location: '100% Remote / Flexible Hours',
+    mode: 'Remote',
+    stipend: '$2,500 USD Paid Project Contract (6 Weeks)',
+    prize: null,
+    deadline: '2026-10-05T23:59:59Z',
+    start_date: '2026-10-15T00:00:00Z',
+    eligibility: 'College students proficient with React, MDX, and Tailwind CSS',
+    targetBranches: ['CSE', 'ECE', 'Other'],
+    targetYears: ['2nd Year', '3rd Year', '4th Year'],
+    skills: ['React', 'Next.js', 'Tailwind CSS', 'MDX', 'TypeScript', 'GitHub'],
+    description: 'Paid student freelance contract to build interactive architectural diagrams, dark mode search components, and code playgrounds for CNCF Kubernetes developer documentation.',
+    responsibilities: [
+      'Develop modular React and Tailwind components for technical documentation pages.',
+      'Implement responsive search filter components with seamless keyboard navigation.'
+    ],
+    requirements: [
+      'Prior portfolio examples of clean React / Next.js web development.',
+      'Ability to commit 15-20 flexible hours per week.'
+    ],
+    benefits: [
+      '$2,500 USD direct contractor compensation upon deliverables sign-off.',
+      'Public author credit on the official CNCF cloud-native documentation site.'
+    ],
+    applicationProcess: 'Submit portfolio and GitHub profile on CNCF contractor portal.',
+    applyUrl: 'https://www.cncf.io/community/',
+    sourceUrl: 'https://www.cncf.io/',
+    sourceName: 'Linux Foundation CNCF',
+    status: 'published',
+    verificationStatus: 'verified',
+    verifiedAt: '2026-09-07T18:00:00Z',
+    lastVerifiedAt: '2026-09-07T18:00:00Z',
+    featured: false,
+    isCollegeExclusive: false,
+    isOfficialCollege: false,
+    views: 3670
   }
 ];

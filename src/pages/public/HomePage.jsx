@@ -16,15 +16,22 @@ import {
   Code,
   GraduationCap,
   BookOpen,
-  Rocket
+  Rocket,
+  ShieldCheck,
+  ChevronDown,
+  HelpCircle,
+  Award,
+  Zap
 } from 'lucide-react';
 import OpportunityCard from '../../components/opportunities/OpportunityCard';
 import Button from '../../components/common/Button';
 import { useOpportunities } from '../../context/OpportunityContext';
 import { getDeadlineStatus } from '../../utils/dateUtils';
+import { OPPORTUNITY_TYPES } from '../../data/mockOpportunities';
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [openFaq, setOpenFaq] = useState(null);
   const { opportunities } = useOpportunities();
   const navigate = useNavigate();
 
@@ -39,56 +46,11 @@ export default function HomePage() {
 
   const safeOpportunities = Array.isArray(opportunities) ? opportunities : [];
 
-  const categories = [
-    {
-      id: 'Internship',
-      name: 'Internships',
-      emoji: '💼',
-      icon: Briefcase,
-      desc: 'Paid industry roles & summer research',
-      count: safeOpportunities.filter((o) => o.type === 'Internship' && o.status === 'published').length
-    },
-    {
-      id: 'Hackathon',
-      name: 'Hackathons',
-      emoji: '🏆',
-      icon: Trophy,
-      desc: 'National 24-48h hackathons with big prizes',
-      count: safeOpportunities.filter((o) => o.type === 'Hackathon' && o.status === 'published').length
-    },
-    {
-      id: 'Competition',
-      name: 'Coding Contests',
-      emoji: '💻',
-      icon: Code,
-      desc: 'DSA & competitive programming battles',
-      count: safeOpportunities.filter((o) => o.type === 'Competition' && o.status === 'published').length
-    },
-    {
-      id: 'Scholarship',
-      name: 'Scholarships',
-      emoji: '🎓',
-      icon: GraduationCap,
-      desc: 'Merit & tuition funding for students',
-      count: safeOpportunities.filter((o) => o.type === 'Scholarship' && o.status === 'published').length
-    },
-    {
-      id: 'Workshop',
-      name: 'Workshops',
-      emoji: '📚',
-      icon: BookOpen,
-      desc: 'Hands-on bootcamps with certificates',
-      count: safeOpportunities.filter((o) => o.type === 'Workshop' && o.status === 'published').length
-    },
-    {
-      id: 'Fellowship',
-      name: 'Fellowships',
-      emoji: '🚀',
-      icon: Rocket,
-      desc: 'Global open source & research stipends',
-      count: safeOpportunities.filter((o) => o.type === 'Fellowship' && o.status === 'published').length
-    }
-  ];
+  // 13 Categories with real-time published counts
+  const categories = OPPORTUNITY_TYPES.filter((t) => t.id !== 'all').map((t) => ({
+    ...t,
+    count: safeOpportunities.filter((o) => o.type === t.id && o.status === 'published').length
+  }));
 
   // Featured opportunities
   const featuredOpportunities = safeOpportunities
@@ -208,26 +170,26 @@ export default function HomePage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {categories.map((cat) => (
             <Link
               key={cat.id}
-              to={`/opportunities?type=${cat.id}`}
-              className="group bg-white rounded-2xl border border-slate-200/90 p-5 shadow-card hover:shadow-card-hover hover:border-brand-300 transition-all flex items-start gap-4"
+              to={`/opportunities?type=${encodeURIComponent(cat.id)}`}
+              className="group p-4 bg-white rounded-2xl border border-slate-200/90 hover:border-brand-300 hover:shadow-card transition-all flex items-center gap-3.5"
             >
-              <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform flex-shrink-0">
+              <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-xl group-hover:scale-110 transition-transform flex-shrink-0">
                 {cat.emoji}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-base font-bold text-slate-900 group-hover:text-brand-600 transition">
-                    {cat.name}
+                  <h3 className="text-sm font-bold text-slate-900 group-hover:text-brand-600 transition truncate">
+                    {cat.label || cat.name}
                   </h3>
-                  <span className="text-[11px] font-semibold text-slate-500 px-2 py-0.5 bg-slate-100 rounded-full">
-                    {cat.count} active
+                  <span className="text-[10px] font-semibold text-slate-500 px-2 py-0.5 bg-slate-100 rounded-full">
+                    {cat.count}
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 mt-1 line-clamp-1 leading-relaxed">
+                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1 leading-snug">
                   {cat.desc}
                 </p>
               </div>
@@ -322,7 +284,7 @@ export default function HomePage() {
             </div>
             <h3 className="text-base font-bold text-slate-900 mb-2">Discover</h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Explore verified internships, hackathons, and scholarships tailored to your college branch and graduation year.
+              Explore 100% verified internships, hackathons, and scholarships with direct official application portals.
             </p>
           </div>
 
@@ -330,9 +292,9 @@ export default function HomePage() {
             <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 font-black text-sm flex items-center justify-center mb-4 border border-purple-200">
               2
             </div>
-            <h3 className="text-base font-bold text-slate-900 mb-2">Save</h3>
+            <h3 className="text-base font-bold text-slate-900 mb-2">Analyze Match</h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Bookmark promising opportunities to your personal list and receive automated deadline notifications.
+              Get an instant match score and skill gap breakdown showing which skills you meet and what to learn next.
             </p>
           </div>
 
@@ -342,7 +304,7 @@ export default function HomePage() {
             </div>
             <h3 className="text-base font-bold text-slate-900 mb-2">Apply</h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Submit directly to official application portals without intermediaries, scams, or expired broken links.
+              Submit directly to official portals without intermediaries, login walls, or fake listings.
             </p>
           </div>
 
@@ -350,15 +312,72 @@ export default function HomePage() {
             <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 font-black text-sm flex items-center justify-center mb-4 border border-amber-200">
               4
             </div>
-            <h3 className="text-base font-bold text-slate-900 mb-2">Grow</h3>
+            <h3 className="text-base font-bold text-slate-900 mb-2">Track & Win</h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Track your interview pipeline status (Applied, Interview, Selected) and accelerate your professional career.
+              Organize your applications across 7 stages in a Kanban pipeline and never miss an interview deadline.
             </p>
           </div>
         </div>
       </section>
 
-      {/* 6. BOTTOM CALL TO ACTION */}
+      {/* 6. FREQUENTLY ASKED QUESTIONS */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold mb-3">
+            <HelpCircle className="w-3.5 h-3.5 text-brand-600" />
+            <span>Got Questions?</span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            Frequently Asked Questions
+          </h2>
+        </div>
+
+        <div className="space-y-3">
+          {[
+            {
+              q: 'How are opportunities verified on CampusLaunch?',
+              a: 'Every opportunity is manually reviewed by our moderation team against official corporate career sites, university portals, or verified organizers before being published. No ghost jobs or paid scam listings are permitted.'
+            },
+            {
+              q: 'Is CampusLaunch free for college students?',
+              a: 'Yes, 100% free! Students can search, filter, bookmark, track applications, and receive deadline notifications without any paywalls or subscription fees.'
+            },
+            {
+              q: 'How does the match score & skill gap analysis work?',
+              a: 'Our matching algorithm compares your academic branch, graduation year, and technical skills against the opportunity requirements to provide a percentage score and a clear list of skills you already have vs skills you can learn.'
+            },
+            {
+              q: 'What should I do if an application link is broken or closed?',
+              a: 'You can click the "Report Issue" button on any opportunity page to flag broken links, expired dates, or discrepancies. Our admin moderation team investigates reports within 24 hours.'
+            }
+          ].map((faq, idx) => (
+            <div
+              key={idx}
+              className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-subtle transition"
+            >
+              <button
+                type="button"
+                onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                className="w-full p-4 sm:p-5 text-left font-bold text-sm text-slate-900 flex items-center justify-between gap-4 hover:bg-slate-50/50 transition"
+              >
+                <span>{faq.q}</span>
+                <ChevronDown
+                  className={`w-4 h-4 text-slate-400 flex-shrink-0 transition-transform duration-200 ${
+                    openFaq === idx ? 'rotate-180 text-brand-600' : ''
+                  }`}
+                />
+              </button>
+              {openFaq === idx && (
+                <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 animate-fade-in">
+                  {faq.a}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 7. BOTTOM CALL TO ACTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-brand-700 via-indigo-700 to-slate-900 text-white p-8 sm:p-14 shadow-2xl">
           <div className="absolute -right-10 -bottom-10 w-80 h-80 bg-brand-500/20 rounded-full blur-3xl pointer-events-none" />

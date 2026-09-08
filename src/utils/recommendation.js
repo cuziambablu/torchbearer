@@ -1,87 +1,197 @@
-// Rule-based Opportunity Recommendation Engine
+// Intelligent Recommendation & Skill Gap Analysis Engine for CampusLaunch
 
+/**
+ * Calculates student profile completeness percentage & gives actionable suggestions
+ */
+export function calculateProfileCompleteness(user) {
+  if (!user) return { score: 0, missingFields: [], tips: [] };
+
+  const fields = [
+    { name: 'name', weight: 10, label: 'Full Name' },
+    { name: 'college', weight: 15, label: 'College / University' },
+    { name: 'branch', weight: 15, label: 'Branch / Major' },
+    { name: 'year', weight: 10, label: 'Graduation Year' },
+    { name: 'skills', weight: 20, label: 'Skills (at least 3)', isArray: true, minLen: 3 },
+    { name: 'interests', weight: 10, label: 'Domain Interests', isArray: true, minLen: 1 },
+    { name: 'bio', weight: 5, label: 'Short Bio' },
+    { name: 'github', weight: 5, label: 'GitHub Profile' },
+    { name: 'linkedin', weight: 5, label: 'LinkedIn Profile' },
+    { name: 'portfolio', weight: 5, label: 'Portfolio Website' }
+  ];
+
+  let currentScore = 0;
+  const missingFields = [];
+  const tips = [];
+
+  fields.forEach((field) => {
+    const val = user[field.name];
+    let isFilled = false;
+
+    if (field.isArray) {
+      isFilled = Array.isArray(val) && val.length >= (field.minLen || 1);
+    } else {
+      isFilled = typeof val === 'string' && val.trim().length > 0;
+    }
+
+    if (isFilled) {
+      currentScore += field.weight;
+    } else {
+      missingFields.push(field.label);
+      if (field.name === 'skills') {
+        tips.push('Add your core programming languages & frameworks to unlock accurate opportunity matching.');
+      } else if (field.name === 'github') {
+        tips.push('Add your GitHub profile to showcase open-source contributions to recruiters.');
+      } else if (field.name === 'linkedin') {
+        tips.push('Connect your LinkedIn profile for quick professional verification.');
+      }
+    }
+  });
+
+  if (tips.length === 0 && currentScore < 100) {
+    tips.push('Your profile is in great shape! Keep your skills updated each semester.');
+  }
+
+  return {
+    score: Math.min(currentScore, 100),
+    missingFields,
+    tips
+  };
+}
+
+/**
+ * Calculates detailed match breakdown and skill gaps between a student and an opportunity
+ */
+export function calculateOpportunityMatch(opp, studentProfile) {
+  if (!studentProfile || !opp) {
+    return {
+      matchScore: 0,
+      matchedSkills: [],
+      missingSkills: opp?.skills || [],
+      matchReasons: [],
+      skillMatchRatio: '0/0'
+    };
+  }
+
+  const studentSkills = (studentProfile.skills || []).map((s) => s.trim().toLowerCase());
+  const studentInterests = (studentProfile.interests || []).map((i) => i.trim().toLowerCase());
+  const studentBranch = (studentProfile.branch || '').trim().toLowerCase();
+  const studentYear = (studentProfile.year || '').trim().toLowerCase();
+
+  let score = 0;
+  const reasons = [];
+  const oppSkills = Array.isArray(opp.skills) ? opp.skills : [];
+
+  // 1. Target Branch Match (Weight: 25)
+  if (opp.targetBranches && opp.targetBranches.length > 0) {
+    const matchesBranch = opp.targetBranches.some(
+      (b) => b.toLowerCase() === studentBranch || b.toLowerCase() === 'other' || b.toLowerCase() === 'all'
+    );
+    if (matchesBranch) {
+      score += 25;
+      reasons.push(`Eligible for ${studentProfile.branch || 'your'} branch`);
+    }
+  } else {
+    score += 25;
+  }
+
+  // 2. Target Year Match (Weight: 20)
+  if (opp.targetYears && opp.targetYears.length > 0) {
+    const matchesYear = opp.targetYears.some(
+      (y) => y.toLowerCase() === studentYear || y.toLowerCase() === 'all'
+    );
+    if (matchesYear) {
+      score += 20;
+      reasons.push(`Open for ${studentProfile.year || 'your'} year`);
+    }
+  } else {
+    score += 20;
+  }
+
+  // 3. Technical Skill Matching & Skill Gap Analysis (Weight: 35 max)
+  const matchedSkills = [];
+  const missingSkills = [];
+
+  oppSkills.forEach((skill) => {
+    const skillNorm = skill.trim().toLowerCase();
+    const isMatched = studentSkills.some(
+      (s) => s === skillNorm || s.includes(skillNorm) || skillNorm.includes(s)
+    );
+
+    if (isMatched) {
+      matchedSkills.push(skill);
+    } else {
+      missingSkills.push(skill);
+    }
+  });
+
+  if (oppSkills.length > 0) {
+    const skillRatio = matchedSkills.length / oppSkills.length;
+    score += Math.round(skillRatio * 35);
+    if (matchedSkills.length > 0) {
+      reasons.push(`Matches skills: ${matchedSkills.slice(0, 3).join(', ')}`);
+    }
+  } else {
+    score += 35;
+  }
+
+  // 4. Domain & Opportunity Type Match (Weight: 10)
+  const oppType = (opp.type || '').toLowerCase();
+  const matchesInterest = studentInterests.some(
+    (interest) =>
+      interest.includes(oppType) ||
+      oppType.includes(interest) ||
+      (opp.title || '').toLowerCase().includes(interest) ||
+      (opp.description || '').toLowerCase().includes(interest)
+  );
+
+  if (matchesInterest) {
+    score += 10;
+    reasons.push(`Aligns with your domain interests`);
+  }
+
+  // 5. Work Mode Alignment (Weight: 10)
+  if (studentProfile.preferredMode) {
+    if (opp.mode?.toLowerCase() === studentProfile.preferredMode.toLowerCase()) {
+      score += 10;
+      reasons.push(`Matches preferred ${opp.mode} mode`);
+    }
+  } else {
+    score += 10;
+  }
+
+  const finalScore = Math.min(Math.max(score, 10), 99);
+
+  return {
+    matchScore: finalScore,
+    matchedSkills,
+    missingSkills,
+    matchReasons: reasons.slice(0, 2),
+    skillMatchRatio: `${matchedSkills.length}/${oppSkills.length || 0}`
+  };
+}
+
+/**
+ * Returns top recommended opportunities for a student with calculated match breakdowns
+ */
 export function getRecommendedOpportunities(opportunities, studentProfile, limit = 6) {
-  if (!studentProfile || !opportunities || !opportunities.length) return [];
+  if (!opportunities || !opportunities.length) return [];
 
-  const studentSkills = (studentProfile.skills || []).map(s => s.toLowerCase());
-  const studentInterests = (studentProfile.interests || []).map(i => i.toLowerCase());
-  const studentBranch = (studentProfile.branch || '').toLowerCase();
-  const studentYear = (studentProfile.year || '').toLowerCase();
-
-  const scoredOpportunities = opportunities
-    .filter(opp => opp.status === 'published')
-    .map(opp => {
-      let score = 0;
-      const reasons = [];
-
-      // 1. Target Branch Match (Weight: 30)
-      if (opp.targetBranches && opp.targetBranches.length > 0) {
-        const matchesBranch = opp.targetBranches.some(
-          b => b.toLowerCase() === studentBranch || b.toLowerCase() === 'other'
-        );
-        if (matchesBranch) {
-          score += 30;
-          reasons.push(`Matches your ${studentProfile.branch} branch`);
-        }
-      }
-
-      // 2. Target Year Match (Weight: 20)
-      if (opp.targetYears && opp.targetYears.length > 0) {
-        const matchesYear = opp.targetYears.some(
-          y => y.toLowerCase() === studentYear
-        );
-        if (matchesYear) {
-          score += 20;
-          reasons.push(`Open for ${studentProfile.year} students`);
-        }
-      }
-
-      // 3. Skill Overlap (Weight: 15 per matching skill, up to 45 max)
-      if (opp.skills && opp.skills.length > 0 && studentSkills.length > 0) {
-        let skillMatches = 0;
-        const matchedSkillNames = [];
-
-        opp.skills.forEach(skill => {
-          const skillLower = skill.toLowerCase();
-          if (studentSkills.some(s => s.includes(skillLower) || skillLower.includes(s))) {
-            skillMatches++;
-            matchedSkillNames.push(skill);
-          }
-        });
-
-        if (skillMatches > 0) {
-          const skillPoints = Math.min(skillMatches * 15, 45);
-          score += skillPoints;
-          reasons.push(`Matches skills: ${matchedSkillNames.slice(0, 2).join(', ')}`);
-        }
-      }
-
-      // 4. Interest / Type Overlap (Weight: 15)
-      const oppType = (opp.type || '').toLowerCase();
-      const matchesInterest = studentInterests.some(
-        interest => interest.includes(oppType) || oppType.includes(interest) ||
-                    opp.title.toLowerCase().includes(interest) ||
-                    opp.description.toLowerCase().includes(interest)
-      );
-      if (matchesInterest) {
-        score += 15;
-        reasons.push(`Aligns with your interests`);
-      }
-
-      // 5. Featured boost (Weight: 10)
-      if (opp.featured) {
-        score += 10;
-      }
-
+  const now = new Date();
+  const scored = opportunities
+    .filter((opp) => {
+      if (opp.status !== 'published') return false;
+      if (opp.deadline && new Date(opp.deadline) < now) return false;
+      return true;
+    })
+    .map((opp) => {
+      const match = calculateOpportunityMatch(opp, studentProfile);
       return {
         ...opp,
-        matchScore: Math.min(Math.round((score / 100) * 100), 99), // Percentage 0-99
-        matchReasons: reasons.slice(0, 2)
+        ...match
       };
     });
 
-  // Sort by highest match score descending
-  return scoredOpportunities
-    .sort((a, b) => b.matchScore - a.matchScore)
+  return scored
+    .sort((a, b) => b.matchScore - a.matchScore || (b.views || 0) - (a.views || 0))
     .slice(0, limit);
 }

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 import { REAL_VERIFIED_OPPORTUNITIES } from '../data/realVerifiedOpportunities';
-import { INITIAL_OPPORTUNITIES, MOCK_APPLICATIONS, MOCK_SAVED_IDS, MOCK_SUBMISSIONS } from '../data/mockOpportunities';
+import { INITIAL_OPPORTUNITIES, MOCK_APPLICATIONS, MOCK_SAVED_IDS, MOCK_SUBMISSIONS, MOCK_REPORTS } from '../data/mockOpportunities';
 import { logAdminAction } from '../services/auditService';
 import { createNotification } from '../services/notificationService';
 
@@ -64,6 +64,20 @@ export function OpportunityProvider({ children }) {
       return MOCK_SUBMISSIONS;
     } catch {
       return MOCK_SUBMISSIONS;
+    }
+  });
+
+  // 5. Reports State (for broken links, scam reports, expired listings)
+  const [reports, setReports] = useState(() => {
+    try {
+      const saved = localStorage.getItem('campuslaunch_reports');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+      return MOCK_REPORTS;
+    } catch {
+      return MOCK_REPORTS;
     }
   });
 
@@ -175,6 +189,29 @@ export function OpportunityProvider({ children }) {
           setSubmissions(formattedSubs);
           localStorage.setItem('campuslaunch_submissions', JSON.stringify(formattedSubs));
         }
+
+        const { data: cloudReports } = await supabase
+          .from('reports')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (cloudReports && cloudReports.length > 0) {
+          const formattedReports = cloudReports.map((r) => ({
+            id: r.id,
+            opportunityId: r.opportunity_id,
+            opportunityTitle: r.opportunity_title,
+            reportedBy: r.reported_by,
+            reporterEmail: r.reporter_email,
+            reason: r.reason,
+            details: r.details,
+            status: r.status,
+            adminNotes: r.admin_notes,
+            resolvedAt: r.resolved_at,
+            createdAt: r.created_at
+          }));
+          setReports(formattedReports);
+          localStorage.setItem('campuslaunch_reports', JSON.stringify(formattedReports));
+        }
       } catch (err) {
         console.warn('Live fetch error, falling back to cached state:', err);
       } finally {
@@ -201,6 +238,10 @@ export function OpportunityProvider({ children }) {
   useEffect(() => {
     localStorage.setItem('campuslaunch_submissions', JSON.stringify(submissions));
   }, [submissions]);
+
+  useEffect(() => {
+    localStorage.setItem('campuslaunch_reports', JSON.stringify(reports));
+  }, [reports]);
 
   // Saved Actions
   const toggleSave = (opportunityId) => {
@@ -617,6 +658,116 @@ export function OpportunityProvider({ children }) {
     }
   };
 
+  // Student Reporting Actions (Broken link, Scam, Expired, Incorrect Info)
+  const reportOpportunity = async ({ opportunityId, opportunityTitle, reason, details, reportedBy, reporterEmail }) => {
+    const newReport = {
+      id: 'rep-' + Date.now(),
+      opportunityId,
+      opportunityTitle: opportunityTitle || 'Opportunity',
+      reportedBy: reportedBy || 'student-user',
+      reporterEmail: reporterEmail || 'student@college.edu',
+      reason,
+      details: details || '',
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
+
+    setReports((prev) => [newReport, ...prev]);
+
+    // Send admin notification
+    createNotification({
+      title: 'Report Submitted',
+      message: `Your report for "${opportunityTitle || 'Opportunity'}" has been submitted for moderation.`,
+      type: 'report',
+      link: `/opportunities/${opportunityId}`
+    });
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('reports').insert([
+          {
+            opportunity_id: opportunityId.startsWith('opp-') || opportunityId.startsWith('real-opp-') ? null : opportunityId,
+            opportunity_title: opportunityTitle,
+            reporter_email: reporterEmail,
+            reason,
+            details,
+            status: 'pending'
+          }
+        ]);
+      } catch (err) {
+        console.warn('Supabase insert report error:', err);
+      }
+    }
+
+    return newReport;
+  };
+
+  const resolveReport = async (reportId, actionTaken = 'resolved', adminNotes = '', adminEmail = 'admin@campuslaunch.org') => {
+    setReports((prev) =>
+      prev.map((r) =>
+        r.id === reportId
+          ? { ...r, status: 'resolved', adminNotes, resolvedAt: new Date().toISOString() }
+          : r
+      )
+    );
+
+    await logAdminAction({
+      adminEmail,
+      action: 'REPORT_RESOLVED',
+      entity: 'reports',
+      entityId: reportId,
+      details: { actionTaken, adminNotes }
+    });
+
+    if (isSupabaseConfigured && supabase && !reportId.startsWith('rep-')) {
+      try {
+        await supabase
+          .from('reports')
+          .update({
+            status: 'resolved',
+            admin_notes: adminNotes,
+            resolved_at: new Date().toISOString()
+          })
+          .eq('id', reportId);
+      } catch (err) {
+        console.warn('Supabase resolve report error:', err);
+      }
+    }
+  };
+
+  const dismissReport = async (reportId, adminNotes = 'Deemed accurate after review', adminEmail = 'admin@campuslaunch.org') => {
+    setReports((prev) =>
+      prev.map((r) =>
+        r.id === reportId
+          ? { ...r, status: 'dismissed', adminNotes, resolvedAt: new Date().toISOString() }
+          : r
+      )
+    );
+
+    await logAdminAction({
+      adminEmail,
+      action: 'REPORT_DISMISSED',
+      entity: 'reports',
+      entityId: reportId,
+      details: { adminNotes }
+    });
+
+    if (isSupabaseConfigured && supabase && !reportId.startsWith('rep-')) {
+      try {
+        await supabase
+          .from('reports')
+          .update({
+            status: 'dismissed',
+            admin_notes: adminNotes,
+            resolved_at: new Date().toISOString()
+          })
+          .eq('id', reportId);
+      } catch (err) {
+        console.warn('Supabase dismiss report error:', err);
+      }
+    }
+  };
+
   return (
     <OpportunityContext.Provider
       value={{
@@ -625,6 +776,7 @@ export function OpportunityProvider({ children }) {
         savedIds,
         applications,
         submissions,
+        reports,
         loading,
         toggleSave,
         isSaved,
@@ -637,7 +789,10 @@ export function OpportunityProvider({ children }) {
         createOpportunity,
         updateOpportunity,
         deleteOpportunity,
-        togglePublishStatus
+        togglePublishStatus,
+        reportOpportunity,
+        resolveReport,
+        dismissReport
       }}
     >
       {children}

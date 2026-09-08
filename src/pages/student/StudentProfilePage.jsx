@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { User, Mail, Building, GraduationCap, Plus, X, Save, Sparkles, Github, Linkedin, ShieldCheck } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { User, Mail, Building, GraduationCap, Plus, X, Save, Sparkles, Github, Linkedin, ShieldCheck, CheckCircle, AlertCircle } from 'lucide-react';
 import Button from '../../components/common/Button';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { BRANCHES, YEARS } from '../../data/mockOpportunities';
+import { calculateProfileCompleteness } from '../../utils/recommendation';
 
 const SUGGESTED_SKILLS = [
   'Python', 'React', 'TypeScript', 'Node.js', 'FastAPI', 'PyTorch',
@@ -32,6 +33,10 @@ export default function StudentProfilePage() {
     github: user?.github || '',
     linkedin: user?.linkedin || ''
   });
+
+  const completeness = useMemo(() => {
+    return calculateProfileCompleteness(formData);
+  }, [formData]);
 
   const [newSkill, setNewSkill] = useState('');
   const [newInterest, setNewInterest] = useState('');
@@ -73,7 +78,7 @@ export default function StudentProfilePage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
         <div>
@@ -90,6 +95,32 @@ export default function StudentProfilePage() {
             These preferences power your personalized opportunity recommendations and matching engine.
           </p>
         </div>
+      </div>
+
+      {/* Profile Completeness Banner */}
+      <div className="bg-gradient-to-br from-brand-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 shadow-xl space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="w-5 h-5 text-amber-400" />
+            <h3 className="font-bold text-sm">Profile Completeness</h3>
+          </div>
+          <span className="text-lg font-black text-amber-300">{completeness.score}% Complete</span>
+        </div>
+
+        {/* Progress bar */}
+        <div className="w-full h-2.5 bg-white/20 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-amber-400 to-emerald-400 rounded-full transition-all duration-500"
+            style={{ width: `${completeness.score}%` }}
+          />
+        </div>
+
+        {completeness.tips.length > 0 && (
+          <div className="text-xs text-slate-300 flex items-start gap-2 pt-1">
+            <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+            <span>{completeness.tips[0]}</span>
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
