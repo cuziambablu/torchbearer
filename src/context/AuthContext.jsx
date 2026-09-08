@@ -128,6 +128,11 @@ export function AuthProvider({ children }) {
 
     if (isSupabaseConfigured && supabase) {
       try {
+        // Clear any active session first to guarantee a new separate account is created
+        try {
+          await supabase.auth.signOut();
+        } catch (_) {}
+
         const { data, error } = await supabase.auth.signUp({
           email: userData.email,
           password: userData.password,
@@ -144,7 +149,12 @@ export function AuthProvider({ children }) {
           }
         });
 
-        if (!error && data?.user) {
+        if (error) {
+          setLoading(false);
+          throw new Error(error.message);
+        }
+
+        if (data?.user) {
           const newUser = {
             id: data.user.id,
             name: userData.name,
@@ -156,12 +166,33 @@ export function AuthProvider({ children }) {
             skills: userData.skills,
             interests: userData.interests
           };
+
+          // Also upsert directly to public.profiles
+          try {
+            await supabase.from('profiles').upsert({
+              id: data.user.id,
+              name: userData.name,
+              email: userData.email,
+              college: userData.college,
+              branch: userData.branch,
+              year: userData.year,
+              role: 'student',
+              skills: userData.skills,
+              interests: userData.interests,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+          } catch (profileErr) {
+            console.warn('Profile direct upsert note:', profileErr);
+          }
+
           setUser(newUser);
           setLoading(false);
           return newUser;
         }
       } catch (err) {
-        console.warn('Supabase registration error, falling back to local user:', err);
+        setLoading(false);
+        throw err;
       }
     }
 

@@ -63,7 +63,7 @@ export default function StudentSignupPage() {
       addToast('Account created successfully! Welcome to CampusLaunch.', 'success');
       navigate('/student/dashboard', { replace: true });
     } catch (err) {
-      setErrorMsg('Registration failed. Please try again.');
+      setErrorMsg(err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
