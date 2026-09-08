@@ -21,10 +21,15 @@ export default function StudentLoginPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const { login } = useAuth();
+  const { isAuthenticated, isAdmin, login } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // If already logged in, route directly to the respective portal
+  if (isAuthenticated) {
+    return <Navigate to={isAdmin ? '/admin/dashboard' : '/student/dashboard'} replace />;
+  }
 
   const redirectPath = location.state?.from?.pathname || '/student/dashboard';
 

@@ -55,12 +55,10 @@ export default function App() {
   return (
     <Routes>
       {/* ========================================================= */}
-      {/* 1. FRONT ENTRANCE: LOGIN & REGISTRATION GATEWAY           */}
+      {/* 1. FIRST ENTRANCE: STUDENT LOGIN & AUTH                   */}
       {/* ========================================================= */}
-      <Route path="/" element={<AuthLandingPage />} />
-
-      {/* Standalone Auth Routes */}
-      <Route path="/student/login" element={<StudentLoginPage />} />
+      <Route path="/" element={<StudentLoginPage />} />
+      <Route path="/student/login" element={<Navigate to="/" replace />} />
       <Route path="/student/signup" element={<StudentSignupPage />} />
       <Route path="/student/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/admin/login" element={<AdminLoginPage />} />
