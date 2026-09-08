@@ -47,6 +47,7 @@ import ReviewReportsPage from './pages/admin/ReviewReportsPage';
 import AdminAnalyticsPage from './pages/admin/AdminAnalyticsPage';
 import AdminNotificationsPage from './pages/admin/AdminNotificationsPage';
 import AdminSettingsPage from './pages/admin/AdminSettingsPage';
+import AuthLandingPage from './pages/public/AuthLandingPage';
 import AdminAuditLogsPage from './pages/admin/AdminAuditLogsPage';
 import CsvImportPage from './pages/admin/CsvImportPage';
 
@@ -54,15 +55,18 @@ export default function App() {
   return (
     <Routes>
       {/* ========================================================= */}
-      {/* 1. STANDALONE AUTHENTICATION ROUTES                       */}
+      {/* 1. FRONT ENTRANCE: LOGIN & REGISTRATION GATEWAY           */}
       {/* ========================================================= */}
+      <Route path="/" element={<AuthLandingPage />} />
+
+      {/* Standalone Auth Routes */}
       <Route path="/student/login" element={<StudentLoginPage />} />
       <Route path="/student/signup" element={<StudentSignupPage />} />
       <Route path="/student/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/admin/login" element={<AdminLoginPage />} />
 
       {/* Aliases for quick access */}
-      <Route path="/login" element={<Navigate to="/student/login" replace />} />
+      <Route path="/login" element={<Navigate to="/" replace />} />
       <Route path="/register" element={<Navigate to="/student/signup" replace />} />
       <Route path="/signup" element={<Navigate to="/student/signup" replace />} />
 
@@ -70,7 +74,7 @@ export default function App() {
       {/* 2. PUBLIC WEBSITE (PublicLayout)                          */}
       {/* ========================================================= */}
       <Route element={<PublicLayout />}>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/home" element={<HomePage />} />
         <Route path="/opportunities" element={<OpportunitiesPage />} />
         <Route path="/opportunities/:id" element={<OpportunityDetailPage />} />
         <Route path="/about" element={<AboutPage />} />
