@@ -33,7 +33,7 @@ export default function StudentLayout() {
 
   const handleLogout = async () => {
     await logout();
-    navigate('/student/login');
+    navigate('/');
   };
 
   const primaryNav = [

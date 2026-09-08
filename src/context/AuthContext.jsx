@@ -8,7 +8,19 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
       const savedUser = localStorage.getItem('campuslaunch_user');
-      return savedUser ? JSON.parse(savedUser) : null;
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        if (
+          parsed?.email === 'aarav.sharma@nitk.edu.in' ||
+          parsed?.id === 'student-1' ||
+          parsed?.name === 'Aarav Sharma'
+        ) {
+          localStorage.removeItem('campuslaunch_user');
+          return null;
+        }
+        return parsed;
+      }
+      return null;
     } catch {
       return null;
     }
