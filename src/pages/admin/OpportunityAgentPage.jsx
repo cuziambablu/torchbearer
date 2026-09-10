@@ -128,6 +128,30 @@ export default function OpportunityAgentPage() {
         </div>
       </div>
 
+      {/* AI Model Engine Banner */}
+      <div className="flex flex-wrap items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-brand-950/40 via-slate-900 to-indigo-950/40 border border-brand-500/20 gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-400">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-xs font-black text-white flex items-center gap-2">
+              <span>Active Model: <code className="px-2 py-0.5 rounded bg-brand-900/50 text-brand-300 font-mono text-[11px]">z-ai/glm-5.3-free</code></span>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-ping"></span>
+                Connected
+              </span>
+            </div>
+            <div className="text-[11px] text-slate-400">
+              Gateway: <span className="font-mono text-slate-300">https://api.tokenrouter.com/v1</span> • Autonomous Opportunity Enrichment & Smart Categorization
+            </div>
+          </div>
+        </div>
+        <div className="text-[11px] text-slate-400 font-medium">
+          Automated Catalog Updates & Student Match Guidance
+        </div>
+      </div>
+
       {/* 2. Top Metric KPI Gauges */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">

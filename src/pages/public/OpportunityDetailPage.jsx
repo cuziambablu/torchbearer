@@ -331,6 +331,37 @@ export default function OpportunityDetailPage() {
             </p>
           </div>
 
+          {/* AI Advisor Prep Card */}
+          {((opportunity.preparationTips && opportunity.preparationTips.length > 0) || (opportunity.aiSummary && opportunity.aiSummary !== opportunity.description)) && (
+            <div className="bg-gradient-to-r from-brand-50/80 via-indigo-50/60 to-purple-50/80 rounded-3xl border border-brand-200/80 p-6 sm:p-8 shadow-card space-y-4">
+              <div className="flex items-center gap-2 text-brand-900 pb-2 border-b border-brand-200/50">
+                <Sparkles className="w-5 h-5 text-brand-600" />
+                <h2 className="text-lg font-black tracking-tight">AI Preparation & Application Strategy</h2>
+                <span className="ml-auto text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-brand-200/80 text-brand-900 font-mono">
+                  {opportunity.aiModel || 'z-ai/glm-5.3-free'}
+                </span>
+              </div>
+              {opportunity.aiSummary && opportunity.aiSummary !== opportunity.description && (
+                <p className="text-sm text-slate-700 leading-relaxed font-medium bg-white/80 p-4 rounded-2xl border border-brand-100">
+                  💡 {opportunity.aiSummary}
+                </p>
+              )}
+              {Array.isArray(opportunity.preparationTips) && opportunity.preparationTips.length > 0 && (
+                <div className="space-y-2.5 pt-1">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-brand-950">Recommended Preparation:</h3>
+                  <ul className="space-y-2">
+                    {opportunity.preparationTips.map((tip, idx) => (
+                      <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-700 bg-white/70 p-3 rounded-xl border border-brand-100">
+                        <span className="font-black text-brand-600 flex-shrink-0">0{idx + 1}.</span>
+                        <span>{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Responsibilities */}
           {(() => {
             const safeResp = Array.isArray(opportunity.responsibilities)

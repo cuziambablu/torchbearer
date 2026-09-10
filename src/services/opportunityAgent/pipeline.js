@@ -8,6 +8,8 @@ import { calculateVerificationScore } from './verifier.js';
 import { deduplicateBatch, createOpportunityFingerprint } from './deduplicator.js';
 import { calculateQualityScore } from './scorer.js';
 import { auditCatalogFreshness } from './freshnessEngine.js';
+import { enrichOpportunityWithLLM } from './llmEnricher.js';
+import { DEFAULT_MODEL, DEFAULT_BASE_URL } from '../llmClient.js';
 import { supabase, isSupabaseConfigured } from '../supabase.js';
 
 export class OpportunityAgentPipeline {
@@ -67,6 +69,7 @@ export class OpportunityAgentPipeline {
       // -------------------------------------------------------------
       // STAGE 1: DISCOVER
       // -------------------------------------------------------------
+      logEvent('DISCOVER', 'info', `AI Agent Engine: ${DEFAULT_MODEL} (${DEFAULT_BASE_URL})`, { percent: 5 });
       logEvent('DISCOVER', 'info', 'Generating search vectors and querying registered source endpoints...', { percent: 10 });
       const queries = generateDiscoveryQueries();
       const activeSources = VERIFIED_OPPORTUNITY_SOURCES.filter((s) => s.enabled && this.config.enabledSources.includes(s.id));
