@@ -332,21 +332,31 @@ export default function OpportunityDetailPage() {
           </div>
 
           {/* Responsibilities */}
-          {opportunity.responsibilities && opportunity.responsibilities.length > 0 && (
-            <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-card space-y-4">
-              <h2 className="text-lg font-bold text-slate-900 pb-2 border-b border-slate-100">
-                Key Responsibilities & Deliverables
-              </h2>
-              <ul className="space-y-2.5">
-                {opportunity.responsibilities.map((resp, idx) => (
-                  <li key={idx} className="flex items-start gap-2.5 text-sm text-slate-600">
-                    <CheckCircle2 className="w-4 h-4 text-brand-600 flex-shrink-0 mt-0.5" />
-                    <span>{resp}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          {(() => {
+            const safeResp = Array.isArray(opportunity.responsibilities)
+              ? opportunity.responsibilities
+              : typeof opportunity.responsibilities === 'string'
+              ? opportunity.responsibilities.split('\n').map((r) => r.trim().replace(/^[-*•]\s*/, '')).filter(Boolean)
+              : [];
+
+            if (safeResp.length === 0) return null;
+
+            return (
+              <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-card space-y-4">
+                <h2 className="text-lg font-bold text-slate-900 pb-2 border-b border-slate-100">
+                  Key Responsibilities & Deliverables
+                </h2>
+                <ul className="space-y-2.5">
+                  {safeResp.map((resp, idx) => (
+                    <li key={idx} className="flex items-start gap-2.5 text-sm text-slate-600">
+                      <CheckCircle2 className="w-4 h-4 text-brand-600 flex-shrink-0 mt-0.5" />
+                      <span>{resp}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })()}
 
           {/* Requirements & Eligibility */}
           <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-card space-y-4">
@@ -354,38 +364,58 @@ export default function OpportunityDetailPage() {
               Eligibility & Prerequisites
             </h2>
             <p className="text-sm font-medium text-slate-800 bg-slate-50 p-3 rounded-xl border border-slate-200/80">
-              🎓 {opportunity.eligibility}
+              🎓 {opportunity.eligibility || 'Open to all college students'}
             </p>
 
-            {opportunity.requirements && opportunity.requirements.length > 0 && (
-              <ul className="space-y-2.5 pt-2">
-                {opportunity.requirements.map((req, idx) => (
-                  <li key={idx} className="flex items-start gap-2.5 text-sm text-slate-600">
-                    <div className="w-1.5 h-1.5 rounded-full bg-brand-500 mt-2 flex-shrink-0" />
-                    <span>{req}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
+            {(() => {
+              const safeReqs = Array.isArray(opportunity.requirements)
+                ? opportunity.requirements
+                : typeof opportunity.requirements === 'string'
+                ? opportunity.requirements.split('\n').map((r) => r.trim().replace(/^[-*•]\s*/, '')).filter(Boolean)
+                : [];
+
+              if (safeReqs.length === 0) return null;
+
+              return (
+                <ul className="space-y-2.5 pt-2">
+                  {safeReqs.map((req, idx) => (
+                    <li key={idx} className="flex items-start gap-2.5 text-sm text-slate-600">
+                      <div className="w-1.5 h-1.5 rounded-full bg-brand-500 mt-2 flex-shrink-0" />
+                      <span>{req}</span>
+                    </li>
+                  ))}
+                </ul>
+              );
+            })()}
           </div>
 
           {/* Benefits & Perks */}
-          {opportunity.benefits && opportunity.benefits.length > 0 && (
-            <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-card space-y-4">
-              <h2 className="text-lg font-bold text-slate-900 pb-2 border-b border-slate-100 flex items-center gap-2">
-                <Award className="w-5 h-5 text-amber-500" />
-                Benefits & Perks
-              </h2>
-              <ul className="space-y-2.5">
-                {opportunity.benefits.map((benefit, idx) => (
-                  <li key={idx} className="flex items-start gap-2.5 text-sm text-slate-600">
-                    <Sparkles className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                    <span>{benefit}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          {(() => {
+            const safeBenefits = Array.isArray(opportunity.benefits)
+              ? opportunity.benefits
+              : typeof opportunity.benefits === 'string'
+              ? opportunity.benefits.split('\n').map((b) => b.trim().replace(/^[-*•]\s*/, '')).filter(Boolean)
+              : [];
+
+            if (safeBenefits.length === 0) return null;
+
+            return (
+              <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-card space-y-4">
+                <h2 className="text-lg font-bold text-slate-900 pb-2 border-b border-slate-100 flex items-center gap-2">
+                  <Award className="w-5 h-5 text-amber-500" />
+                  Benefits & Perks
+                </h2>
+                <ul className="space-y-2.5">
+                  {safeBenefits.map((benefit, idx) => (
+                    <li key={idx} className="flex items-start gap-2.5 text-sm text-slate-600">
+                      <Sparkles className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <span>{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })()}
 
           {/* Application Process */}
           {opportunity.applicationProcess && (
@@ -472,7 +502,12 @@ export default function OpportunityDetailPage() {
               Required Skills
             </h3>
             <div className="flex flex-wrap gap-2">
-              {opportunity.skills?.map((skill, idx) => (
+              {(Array.isArray(opportunity.skills)
+                ? opportunity.skills
+                : typeof opportunity.skills === 'string'
+                ? opportunity.skills.split(',').map((s) => s.trim()).filter(Boolean)
+                : []
+              ).map((skill, idx) => (
                 <span
                   key={idx}
                   className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 border border-slate-200"

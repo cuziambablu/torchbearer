@@ -827,13 +827,45 @@ export function OpportunityProvider({ children }) {
       });
 
       if (result.success) {
-        // Merge newly published opportunities into catalog
+        // Merge newly published opportunities into catalog & sync to Supabase
         if (result.publishedOpportunities && result.publishedOpportunities.length > 0) {
           setOpportunities((prev) => {
             const combined = [...result.publishedOpportunities, ...prev];
             localStorage.setItem('campuslaunch_opportunities', JSON.stringify(combined));
             return combined;
           });
+
+          if (isSupabaseConfigured && supabase) {
+            try {
+              const rows = result.publishedOpportunities.map((opp) => ({
+                title: opp.title,
+                organization: opp.company || opp.organization,
+                description: opp.description,
+                category: opp.category || 'Software Development',
+                skills: Array.isArray(opp.skills) ? opp.skills : [],
+                location: opp.location || 'Remote',
+                mode: opp.workMode || opp.mode || 'Remote',
+                stipend: opp.stipend || 'Competitive Stipend',
+                stipend_amount: opp.stipendAmount || null,
+                currency: opp.currency || 'INR',
+                duration: opp.duration || '3 Months',
+                deadline: opp.deadline || opp.applicationDeadline || null,
+                apply_url: opp.applyUrl || opp.applicationUrl,
+                source_url: opp.sourceUrl || null,
+                source_name: opp.sourceName || 'Opportunity Agent',
+                verification_score: opp.verificationScore || 90,
+                quality_score: opp.qualityScore || 90,
+                verification_status: 'verified',
+                status: 'published',
+                ai_summary: opp.aiSummary || null,
+                ai_tags: opp.aiTags || [],
+                last_verified_at: new Date().toISOString()
+              }));
+              await supabase.from('opportunities').upsert(rows, { onConflict: 'apply_url', ignoreDuplicates: true });
+            } catch (dbInsertErr) {
+              console.warn('Supabase opportunities upsert note:', dbInsertErr);
+            }
+          }
         }
 
         // Add any flagged review queue items

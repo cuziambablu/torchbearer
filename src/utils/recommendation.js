@@ -72,18 +72,44 @@ export function calculateOpportunityMatch(opp, studentProfile) {
     };
   }
 
-  const studentSkills = (studentProfile.skills || []).map((s) => s.trim().toLowerCase());
-  const studentInterests = (studentProfile.interests || []).map((i) => i.trim().toLowerCase());
+  const studentSkills = Array.isArray(studentProfile.skills)
+    ? studentProfile.skills.map((s) => String(s).trim().toLowerCase())
+    : typeof studentProfile.skills === 'string'
+    ? studentProfile.skills.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
+    : [];
+
+  const studentInterests = Array.isArray(studentProfile.interests)
+    ? studentProfile.interests.map((i) => String(i).trim().toLowerCase())
+    : typeof studentProfile.interests === 'string'
+    ? studentProfile.interests.split(',').map((i) => i.trim().toLowerCase()).filter(Boolean)
+    : [];
+
   const studentBranch = (studentProfile.branch || '').trim().toLowerCase();
   const studentYear = (studentProfile.year || '').trim().toLowerCase();
 
   let score = 0;
   const reasons = [];
-  const oppSkills = Array.isArray(opp.skills) ? opp.skills : [];
+  const oppSkills = Array.isArray(opp.skills)
+    ? opp.skills
+    : typeof opp.skills === 'string'
+    ? opp.skills.split(',').map((s) => s.trim()).filter(Boolean)
+    : [];
+
+  const oppTargetBranches = Array.isArray(opp.targetBranches)
+    ? opp.targetBranches
+    : typeof opp.targetBranches === 'string'
+    ? opp.targetBranches.split(',').map((b) => b.trim()).filter(Boolean)
+    : [];
+
+  const oppTargetYears = Array.isArray(opp.targetYears)
+    ? opp.targetYears
+    : typeof opp.targetYears === 'string'
+    ? opp.targetYears.split(',').map((y) => y.trim()).filter(Boolean)
+    : [];
 
   // 1. Target Branch Match (Weight: 25)
-  if (opp.targetBranches && opp.targetBranches.length > 0) {
-    const matchesBranch = opp.targetBranches.some(
+  if (oppTargetBranches.length > 0) {
+    const matchesBranch = oppTargetBranches.some(
       (b) => b.toLowerCase() === studentBranch || b.toLowerCase() === 'other' || b.toLowerCase() === 'all'
     );
     if (matchesBranch) {
@@ -95,8 +121,8 @@ export function calculateOpportunityMatch(opp, studentProfile) {
   }
 
   // 2. Target Year Match (Weight: 20)
-  if (opp.targetYears && opp.targetYears.length > 0) {
-    const matchesYear = opp.targetYears.some(
+  if (oppTargetYears.length > 0) {
+    const matchesYear = oppTargetYears.some(
       (y) => y.toLowerCase() === studentYear || y.toLowerCase() === 'all'
     );
     if (matchesYear) {

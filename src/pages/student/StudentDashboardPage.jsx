@@ -24,7 +24,11 @@ import { getDeadlineStatus, formatDate } from '../../utils/dateUtils';
 
 export default function StudentDashboardPage() {
   const { user } = useAuth();
-  const { opportunities, savedIds, applications } = useOpportunities();
+  const { opportunities = [], savedIds = [], applications = [] } = useOpportunities();
+
+  const safeOpportunities = Array.isArray(opportunities) ? opportunities : [];
+  const safeSavedIds = Array.isArray(savedIds) ? savedIds : [];
+  const safeApplications = Array.isArray(applications) ? applications : [];
 
   // Greeting based on time of day
   const hour = new Date().getHours();
@@ -32,13 +36,16 @@ export default function StudentDashboardPage() {
 
   // Saved Opportunities list
   const savedOpportunities = useMemo(() => {
-    return opportunities.filter((o) => savedIds.includes(o.id));
-  }, [opportunities, savedIds]);
+    return safeOpportunities.filter((o) => safeSavedIds.includes(o.id));
+  }, [safeOpportunities, safeSavedIds]);
 
   // Upcoming deadlines from saved & applied opportunities
   const trackedOpportunities = useMemo(() => {
-    const trackedIds = new Set([...savedIds, ...applications.map((a) => a.opportunityId)]);
-    return opportunities
+    const trackedIds = new Set([
+      ...safeSavedIds,
+      ...safeApplications.map((a) => a?.opportunityId).filter(Boolean)
+    ]);
+    return safeOpportunities
       .filter((o) => trackedIds.has(o.id) && o.status === 'published')
       .map((o) => ({
         ...o,
@@ -47,12 +54,12 @@ export default function StudentDashboardPage() {
       .filter((o) => !o.deadlineInfo.isExpired)
       .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
       .slice(0, 4);
-  }, [opportunities, savedIds, applications]);
+  }, [safeOpportunities, safeSavedIds, safeApplications]);
 
   // Personalized Recommended Opportunities
   const recommendedOpportunities = useMemo(() => {
-    return getRecommendedOpportunities(opportunities, user, 4);
-  }, [opportunities, user]);
+    return getRecommendedOpportunities(safeOpportunities, user, 4);
+  }, [safeOpportunities, user]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10">

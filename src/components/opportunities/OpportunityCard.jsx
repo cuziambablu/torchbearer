@@ -27,7 +27,11 @@ export default function OpportunityCard({ opportunity, showRecommendationBadge =
   const { profile } = useAuth();
 
   const studentProfile = profile || MOCK_DEFAULT_STUDENT;
-  const userSkills = (studentProfile?.skills || []).map((s) => s.toLowerCase());
+  const userSkills = Array.isArray(studentProfile?.skills)
+    ? studentProfile.skills.map((s) => String(s).toLowerCase())
+    : typeof studentProfile?.skills === 'string'
+    ? studentProfile.skills.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
+    : [];
 
   const saved = isSaved(opportunity.id);
   const workMode = opportunity.workMode || opportunity.mode || 'Remote';
@@ -175,31 +179,41 @@ export default function OpportunityCard({ opportunity, showRecommendationBadge =
         </p>
 
         {/* Skills Chips */}
-        {opportunity.skills && opportunity.skills.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {opportunity.skills.slice(0, 3).map((skill, index) => {
-              const isMatched = userSkills.includes(skill.toLowerCase());
-              return (
-                <span
-                  key={index}
-                  className={`text-[11px] font-medium px-2 py-0.5 rounded-md border ${
-                    isMatched
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                      : 'bg-slate-50 text-slate-600 border-slate-200'
-                  }`}
-                >
-                  {isMatched && <span className="mr-0.5 text-emerald-600">✓</span>}
-                  {skill}
+        {(() => {
+          const safeSkills = Array.isArray(opportunity.skills)
+            ? opportunity.skills
+            : typeof opportunity.skills === 'string'
+            ? opportunity.skills.split(',').map((s) => s.trim()).filter(Boolean)
+            : [];
+
+          if (safeSkills.length === 0) return null;
+
+          return (
+            <div className="flex flex-wrap gap-1.5 mb-4">
+              {safeSkills.slice(0, 3).map((skill, index) => {
+                const isMatched = userSkills.includes(String(skill).toLowerCase());
+                return (
+                  <span
+                    key={index}
+                    className={`text-[11px] font-medium px-2 py-0.5 rounded-md border ${
+                      isMatched
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-slate-50 text-slate-600 border-slate-200'
+                    }`}
+                  >
+                    {isMatched && <span className="mr-0.5 text-emerald-600">✓</span>}
+                    {skill}
+                  </span>
+                );
+              })}
+              {safeSkills.length > 3 && (
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md text-slate-400">
+                  +{safeSkills.length - 3}
                 </span>
-              );
-            })}
-            {opportunity.skills.length > 3 && (
-              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md text-slate-400">
-                +{opportunity.skills.length - 3}
-              </span>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Card Footer: Stipend / Prize, Deadline & Action Button */}
