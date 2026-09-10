@@ -127,7 +127,8 @@ export default function OpportunitiesPage() {
         }
 
         // 7. Mode filter
-        if (filters.mode !== 'all' && opp.mode !== filters.mode) {
+        const oppMode = opp.workMode || opp.work_mode || opp.mode;
+        if (filters.mode !== 'all' && oppMode !== filters.mode) {
           return false;
         }
 

@@ -1,0 +1,305 @@
+/**
+ * CampusLaunch AI Opportunity Agent — Legitimate Sources & Dynamic Query Registry
+ */
+
+export const OPPORTUNITY_CATEGORIES = [
+  'Software Development',
+  'Web Development',
+  'App Development',
+  'AI / ML',
+  'Data Science',
+  'Cybersecurity',
+  'Cloud',
+  'DevOps',
+  'Electronics',
+  'Mechanical',
+  'Civil',
+  'Electrical',
+  'Business',
+  'Marketing',
+  'Finance',
+  'HR',
+  'Design',
+  'Research',
+  'Other'
+];
+
+export const WORK_MODES = ['Remote', 'On-site', 'Hybrid'];
+
+export const VERIFIED_OPPORTUNITY_SOURCES = [
+  {
+    id: 'src-gsoc',
+    name: 'Google Summer of Code (GSoC)',
+    organization: 'Google Open Source Programs',
+    type: 'api',
+    category: 'Open Source',
+    baseUrl: 'https://summerofcode.withgoogle.com',
+    trustScore: 98,
+    enabled: true,
+    feedUrl: 'https://summerofcode.withgoogle.com/api/organizations/',
+    sampleOpportunities: [
+      {
+        title: 'Google Summer of Code 2026 Contributor Intern',
+        company: 'Google / Open Source Consortium',
+        companyLogo: 'https://images.unsplash.com/photo-1572021335469-31706a17aaef?w=128&auto=format&fit=crop&q=80',
+        companyDescription: 'Global mentorship program introducing students to open source software development with direct mentor guidance.',
+        description: 'Spend your summer working on real-world open-source codebases under the guidance of experienced community mentors. Full stipend provided for successful milestone deliverables.',
+        internshipType: 'Internship',
+        category: 'Software Development',
+        skills: ['Python', 'Git', 'Open Source', 'Data Structures', 'C++', 'JavaScript'],
+        location: 'Remote (Global)',
+        workMode: 'Remote',
+        country: 'Global',
+        stipend: '₹1,80,000 - ₹2,50,000 Total Stipend (Indexed to Purchasing Power)',
+        stipendAmount: 200000,
+        currency: 'INR',
+        duration: '12-22 Weeks (Summer)',
+        eligibility: 'Open to university students and open source beginners aged 18+ worldwide',
+        educationLevel: 'Undergraduate / Postgraduate',
+        branches: ['CSE', 'IT', 'ECE', 'All Engineering Streams'],
+        graduationYear: ['2025', '2026', '2027', '2028'],
+        experienceRequired: 'Basic Git & programming experience',
+        applicationDeadline: '2026-11-15T23:59:59Z',
+        applicationUrl: 'https://summerofcode.withgoogle.com',
+        sourceUrl: 'https://summerofcode.withgoogle.com',
+        sourceName: 'Google Summer of Code Official Portal',
+        verificationScore: 98,
+        qualityScore: 96,
+        aiSummary: 'Premier global open-source fellowship by Google with competitive stipend and international engineering mentorship.',
+        aiTags: ['Google', 'Open Source', 'High Stipend', 'Remote']
+      }
+    ]
+  },
+  {
+    id: 'src-microsoft-imagine',
+    name: 'Microsoft Student Programs & Imagine Cup',
+    organization: 'Microsoft Corporation',
+    type: 'partner',
+    category: 'Hackathons & Research',
+    baseUrl: 'https://imaginecup.microsoft.com',
+    trustScore: 97,
+    enabled: true,
+    sampleOpportunities: [
+      {
+        title: 'Microsoft Imagine Cup Global Tech Challenge 2026',
+        company: 'Microsoft Corporation',
+        companyLogo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=128&auto=format&fit=crop&q=80',
+        companyDescription: 'Microsoft global premier student technology competition empowering purpose-driven AI innovation.',
+        description: 'Build innovative software solutions using Azure AI, Cloud and modern development tools. Includes 1:1 mentorship from Microsoft engineers, Azure Cloud credits, and global finals.',
+        internshipType: 'Internship',
+        category: 'AI / ML',
+        skills: ['Azure Cloud', 'Python', 'Machine Learning', 'Full-Stack', 'UI/UX'],
+        location: 'Hybrid / Remote',
+        workMode: 'Hybrid',
+        country: 'India / Global',
+        stipend: '₹10,00,000 Grand Prize Pool + Microsoft Mentorship',
+        stipendAmount: 1000000,
+        currency: 'INR',
+        duration: '6 Months Project Lifecycle',
+        eligibility: 'Enrolled college students aged 16+ across all branches',
+        educationLevel: 'Undergraduate / Graduate',
+        branches: ['CSE', 'ECE', 'EEE', 'Mechanical', 'All Branches'],
+        graduationYear: ['2025', '2026', '2027', '2028'],
+        experienceRequired: 'None (Students / Freshers)',
+        applicationDeadline: '2026-10-31T23:59:59Z',
+        applicationUrl: 'https://imaginecup.microsoft.com',
+        sourceUrl: 'https://imaginecup.microsoft.com',
+        sourceName: 'Microsoft Imagine Cup Portal',
+        verificationScore: 97,
+        qualityScore: 95,
+        aiSummary: 'Global AI & Cloud innovation competition with direct access to Microsoft executive mentorship and grant funding.',
+        aiTags: ['Microsoft', 'Azure', 'AI', 'Grand Prize']
+      }
+    ]
+  },
+  {
+    id: 'src-aicte-portal',
+    name: 'AICTE / MoE National Internship Portal',
+    organization: 'Ministry of Education & AICTE',
+    type: 'manual',
+    category: 'Government & Public Sector',
+    baseUrl: 'https://internship.aicte-india.org',
+    trustScore: 95,
+    enabled: true,
+    sampleOpportunities: [
+      {
+        title: 'Smart India Hackathon (SIH) Technical Project Intern',
+        company: 'Ministry of Education Innovation Cell & AICTE',
+        companyLogo: 'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?w=128&auto=format&fit=crop&q=80',
+        companyDescription: 'National technical initiative by Ministry of Education addressing real problem statements from government departments.',
+        description: 'Collaborate in interdisciplinary teams tackling hardware and software problem statements directly provided by government ministries, defense, and public sector undertakings.',
+        internshipType: 'Internship',
+        category: 'Software Development',
+        skills: ['Full Stack', 'IoT', 'Embedded Systems', 'Python', 'React', 'Mobile Apps'],
+        location: 'All-India Nodal Centers / Hybrid',
+        workMode: 'Hybrid',
+        country: 'India',
+        stipend: '₹1,00,000 Prize per Problem Statement + Government Project Certification',
+        stipendAmount: 100000,
+        currency: 'INR',
+        duration: 'National Grand Finale + 3 Month Project Incubation',
+        eligibility: 'Bonafide college students enrolled in AICTE/UGC recognized institutes',
+        educationLevel: 'Undergraduate',
+        branches: ['CSE', 'ECE', 'EEE', 'Mechanical', 'Civil', 'All Streams'],
+        graduationYear: ['2025', '2026', '2027', '2028'],
+        experienceRequired: 'College enrollment & team endorsement',
+        applicationDeadline: '2026-10-15T23:59:59Z',
+        applicationUrl: 'https://sih.gov.in',
+        sourceUrl: 'https://sih.gov.in',
+        sourceName: 'AICTE Innovation Portal',
+        verificationScore: 96,
+        qualityScore: 94,
+        aiSummary: 'Nationwide flagship technical innovation challenge with government recognition and enterprise incubation.',
+        aiTags: ['Government', 'AICTE', 'SIH', 'Hardware', 'Software']
+      }
+    ]
+  },
+  {
+    id: 'src-outreachy',
+    name: 'Outreachy Open Source Internships',
+    organization: 'Software Freedom Conservancy',
+    type: 'rss',
+    category: 'Open Source',
+    baseUrl: 'https://www.outreachy.org',
+    trustScore: 99,
+    enabled: true,
+    sampleOpportunities: [
+      {
+        title: 'Outreachy Remote Open Source Fellow / Intern',
+        company: 'Outreachy & Software Freedom Conservancy',
+        companyLogo: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=128&auto=format&fit=crop&q=80',
+        companyDescription: 'Diversity-focused paid open source internships providing 3 months of remote work with seasoned technical mentors.',
+        description: 'Work full-time or part-time on open source software development, documentation, UI/UX design, or data science under paid international stipends.',
+        internshipType: 'Internship',
+        category: 'Software Development',
+        skills: ['Python', 'Rust', 'JavaScript', 'Linux', 'Technical Writing', 'Git'],
+        location: 'Remote (Worldwide)',
+        workMode: 'Remote',
+        country: 'Global',
+        stipend: '₹5,80,000 ($7,000 USD Total Stipend + $500 Travel/Hardware Grant)',
+        stipendAmount: 580000,
+        currency: 'INR',
+        duration: '3 Months (Full-Time Remote)',
+        eligibility: 'Underrepresented groups in tech aged 18+ worldwide',
+        educationLevel: 'All College Students & Graduates',
+        branches: ['CSE', 'IT', 'ECE', 'All Streams'],
+        graduationYear: ['2025', '2026', '2027', '2028'],
+        experienceRequired: 'Completion of initial contribution period',
+        applicationDeadline: '2026-10-22T23:59:59Z',
+        applicationUrl: 'https://www.outreachy.org/apply/',
+        sourceUrl: 'https://www.outreachy.org',
+        sourceName: 'Outreachy Official Portal',
+        verificationScore: 99,
+        qualityScore: 98,
+        aiSummary: 'Internationally funded remote fellowship offering $7,000 USD stipend and dedicated 1:1 engineering mentorship.',
+        aiTags: ['Outreachy', 'Remote', 'High Stipend', 'Diversity']
+      }
+    ]
+  },
+  {
+    id: 'src-redhat-intern',
+    name: 'Red Hat Open Source Cloud & Kernel Internships',
+    organization: 'Red Hat / IBM',
+    type: 'partner',
+    category: 'Cloud & Infrastructure',
+    baseUrl: 'https://www.redhat.com/en/jobs',
+    trustScore: 94,
+    enabled: true,
+    sampleOpportunities: [
+      {
+        title: 'Graduate Cloud Platform & Kubernetes Engineering Intern',
+        company: 'Red Hat (an IBM Company)',
+        companyLogo: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=128&auto=format&fit=crop&q=80',
+        companyDescription: 'Global leader in enterprise open source software solutions including Red Hat Enterprise Linux and OpenShift.',
+        description: 'Join the OpenShift development team. Design cloud-native distributed systems, automate CI/CD pipelines, and contribute directly to upstream Kubernetes and Linux kernel modules.',
+        internshipType: 'Internship',
+        category: 'Cloud',
+        skills: ['Go', 'Kubernetes', 'Linux', 'Docker', 'Python', 'CI/CD', 'Cloud Native'],
+        location: 'Bangalore / Pune / Hybrid',
+        workMode: 'Hybrid',
+        country: 'India',
+        stipend: '₹55,000 / month + Full Benefits & PPO Opportunity',
+        stipendAmount: 55000,
+        currency: 'INR',
+        duration: '6 Months (Jan - June 2027)',
+        eligibility: 'Final & Pre-Final Year B.Tech/M.Tech Computer Science/IT/ECE students',
+        educationLevel: 'B.Tech / M.Tech',
+        branches: ['CSE', 'IT', 'ECE'],
+        graduationYear: ['2026', '2027'],
+        experienceRequired: 'Proficiency in Linux & Go / C++ / Python',
+        applicationDeadline: '2026-11-20T23:59:59Z',
+        applicationUrl: 'https://www.redhat.com/en/jobs',
+        sourceUrl: 'https://www.redhat.com/en/jobs',
+        sourceName: 'Red Hat Careers',
+        verificationScore: 94,
+        qualityScore: 93,
+        aiSummary: 'Pre-placement offer opportunity working on core cloud-native Kubernetes & Linux enterprise infrastructure.',
+        aiTags: ['Red Hat', 'Kubernetes', 'Cloud', 'Bangalore', 'PPO']
+      }
+    ]
+  },
+  {
+    id: 'src-cern-summer',
+    name: 'CERN Summer Student Research Programme',
+    organization: 'CERN European Organization for Nuclear Research',
+    type: 'partner',
+    category: 'Research',
+    baseUrl: 'https://careers.cern',
+    trustScore: 99,
+    enabled: true,
+    sampleOpportunities: [
+      {
+        title: 'CERN Summer Student Research Fellow (High Energy Physics & Computing)',
+        company: 'CERN (European Council for Nuclear Research)',
+        companyLogo: 'https://images.unsplash.com/photo-1507668077129-56e32842fceb?w=128&auto=format&fit=crop&q=80',
+        companyDescription: 'World-renowned physics research laboratory based in Geneva, Switzerland, hosting the Large Hadron Collider.',
+        description: 'Spend 8 to 13 weeks in Geneva working on multidisciplinary data science, high-performance computing, distributed algorithms, detector instrumentation, and quantum computing.',
+        internshipType: 'Internship',
+        category: 'Research',
+        skills: ['C++', 'Python', 'High Performance Computing', 'Distributed Systems', 'Physics Simulation', 'Data Analysis'],
+        location: 'Geneva, Switzerland (Full Travel & Living Allowance)',
+        workMode: 'On-site',
+        country: 'Switzerland',
+        stipend: '90 CHF / day (~₹2,40,000 / month living stipend + flights covered)',
+        stipendAmount: 240000,
+        currency: 'INR',
+        duration: '8-13 Weeks (June - Sept)',
+        eligibility: 'Enrolled Bachelor or Master students in Physics, Computing, or Engineering having completed at least 3 years of study',
+        educationLevel: '3rd / 4th Year Undergraduate or Masters',
+        branches: ['CSE', 'ECE', 'EEE', 'Applied Physics', 'Mechanical'],
+        graduationYear: ['2026', '2027'],
+        experienceRequired: 'Strong academic record in technical/computational courses',
+        applicationDeadline: '2026-12-31T23:59:59Z',
+        applicationUrl: 'https://careers.cern/summer',
+        sourceUrl: 'https://careers.cern/summer',
+        sourceName: 'CERN Official Career Portal',
+        verificationScore: 99,
+        qualityScore: 99,
+        aiSummary: 'Prestigious global research fellowship at CERN Geneva with fully sponsored international travel, daily allowance, and advanced compute lab access.',
+        aiTags: ['CERN', 'Switzerland', 'Research', 'High Stipend', 'Prestigious']
+      }
+    ]
+  }
+];
+
+/**
+ * Dynamically generates search discovery queries
+ */
+export function generateDiscoveryQueries(customKeywords = []) {
+  const currentYear = new Date().getFullYear();
+  const nextYear = currentYear + 1;
+
+  const baseQueries = [
+    `Software Engineering Intern ${currentYear} ${nextYear} India`,
+    `AI ML Research Internship ${nextYear} Bangalore`,
+    `Web Development Intern Remote Summer ${nextYear}`,
+    `Data Science Internship college students ${currentYear}`,
+    `Cybersecurity Summer Intern ${nextYear} India`,
+    `Cloud DevOps Intern Kubernetes ${nextYear}`,
+    `Open Source Fellowship ${nextYear} paid stipend`,
+    `Electronics Hardware Internship VLSI ${nextYear}`,
+    ...customKeywords
+  ];
+
+  return baseQueries;
+}

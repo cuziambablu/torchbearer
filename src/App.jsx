@@ -50,6 +50,8 @@ import AdminSettingsPage from './pages/admin/AdminSettingsPage';
 import AuthLandingPage from './pages/public/AuthLandingPage';
 import AdminAuditLogsPage from './pages/admin/AdminAuditLogsPage';
 import CsvImportPage from './pages/admin/CsvImportPage';
+import OpportunityAgentPage from './pages/admin/OpportunityAgentPage';
+import AdminReviewQueuePage from './pages/admin/AdminReviewQueuePage';
 
 export default function App() {
   return (
@@ -138,6 +140,8 @@ export default function App() {
         <Route path="audit-logs" element={<AdminAuditLogsPage />} />
         <Route path="logs" element={<Navigate to="/admin/audit-logs" replace />} />
         <Route path="import" element={<CsvImportPage />} />
+        <Route path="agent" element={<OpportunityAgentPage />} />
+        <Route path="review-queue" element={<AdminReviewQueuePage />} />
       </Route>
 
       {/* ========================================================= */}

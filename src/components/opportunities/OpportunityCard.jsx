@@ -19,6 +19,8 @@ import { useAuth } from '../../context/AuthContext';
 import { formatDate } from '../../utils/dateUtils';
 import { MOCK_DEFAULT_STUDENT } from '../../data/mockOpportunities';
 
+import { formatRelativeVerificationTime } from '../../services/opportunityAgent/freshnessEngine';
+
 export default function OpportunityCard({ opportunity, showRecommendationBadge = false }) {
   const { isSaved, toggleSave } = useOpportunities();
   const { addToast } = useToast();
@@ -28,6 +30,9 @@ export default function OpportunityCard({ opportunity, showRecommendationBadge =
   const userSkills = (studentProfile?.skills || []).map((s) => s.toLowerCase());
 
   const saved = isSaved(opportunity.id);
+  const workMode = opportunity.workMode || opportunity.mode || 'Remote';
+  const verificationScore = opportunity.verificationScore || opportunity.verification_score;
+  const lastVerified = opportunity.lastVerifiedAt || opportunity.last_verified_at;
 
   const handleSaveClick = (e) => {
     e.preventDefault();
@@ -100,13 +105,19 @@ export default function OpportunityCard({ opportunity, showRecommendationBadge =
             </Badge>
 
             <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
-              {opportunity.mode}
+              {workMode}
             </span>
 
             {opportunity.verificationStatus === 'verified' && (
               <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/80">
                 <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                <span>Verified</span>
+                <span>{verificationScore ? `Verified ${verificationScore}%` : 'Verified'}</span>
+              </span>
+            )}
+
+            {lastVerified && (
+              <span className="text-[10px] text-slate-400 font-medium">
+                {formatRelativeVerificationTime(lastVerified)}
               </span>
             )}
 

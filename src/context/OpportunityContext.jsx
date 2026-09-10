@@ -4,6 +4,8 @@ import { REAL_VERIFIED_OPPORTUNITIES } from '../data/realVerifiedOpportunities';
 import { INITIAL_OPPORTUNITIES, MOCK_APPLICATIONS, MOCK_SAVED_IDS, MOCK_SUBMISSIONS, MOCK_REPORTS } from '../data/mockOpportunities';
 import { logAdminAction } from '../services/auditService';
 import { createNotification } from '../services/notificationService';
+import { defaultAgentPipeline } from '../services/opportunityAgent/pipeline';
+import { agentScheduler } from '../services/opportunityAgent/scheduler';
 
 const OpportunityContext = createContext(null);
 
@@ -80,6 +82,36 @@ export function OpportunityProvider({ children }) {
       return MOCK_REPORTS;
     }
   });
+
+  // 6. Review Queue State (for AI opportunities requiring human review)
+  const [reviewQueue, setReviewQueue] = useState(() => {
+    try {
+      const saved = localStorage.getItem('campuslaunch_review_queue');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  });
+
+  // 7. Opportunity Agent State & Logs
+  const [isAgentRunning, setIsAgentRunning] = useState(false);
+  const [agentLogs, setAgentLogs] = useState([]);
+  const [agentProgress, setAgentProgress] = useState({ stage: 'IDLE', percent: 0 });
+  const [agentStats, setAgentStats] = useState({
+    discovered: 0,
+    extracted: 0,
+    duplicatesRemoved: 0,
+    verified: 0,
+    needsReview: 0,
+    rejected: 0,
+    published: 0,
+    failedSources: 0
+  });
+  const [schedulerStatus, setSchedulerStatus] = useState(agentScheduler.getStatus());
 
   const [loading, setLoading] = useState(false);
 
@@ -768,6 +800,164 @@ export function OpportunityProvider({ children }) {
     }
   };
 
+  // -------------------------------------------------------------
+  // OPPORTUNITY AGENT & REVIEW QUEUE HANDLERS
+  // -------------------------------------------------------------
+  const runAgentNow = async (customConfig = {}) => {
+    if (isAgentRunning) return;
+    setIsAgentRunning(true);
+    setAgentProgress({ stage: 'INITIALIZING', percent: 5 });
+
+    try {
+      if (customConfig) {
+        Object.assign(defaultAgentPipeline.config, customConfig);
+      }
+
+      const result = await defaultAgentPipeline.run({
+        existingCatalog: opportunities,
+        onProgress: ({ stage, percent, log, stats }) => {
+          setAgentProgress({ stage, percent });
+          if (log) {
+            setAgentLogs((prev) => [log, ...prev].slice(0, 100));
+          }
+          if (stats) {
+            setAgentStats({ ...stats });
+          }
+        }
+      });
+
+      if (result.success) {
+        // Merge newly published opportunities into catalog
+        if (result.publishedOpportunities && result.publishedOpportunities.length > 0) {
+          setOpportunities((prev) => {
+            const combined = [...result.publishedOpportunities, ...prev];
+            localStorage.setItem('campuslaunch_opportunities', JSON.stringify(combined));
+            return combined;
+          });
+        }
+
+        // Add any flagged review queue items
+        if (result.reviewQueueItems && result.reviewQueueItems.length > 0) {
+          setReviewQueue((prev) => {
+            const updatedQueue = [...result.reviewQueueItems, ...prev];
+            localStorage.setItem('campuslaunch_review_queue', JSON.stringify(updatedQueue));
+            return updatedQueue;
+          });
+        }
+
+        await logAdminAction({
+          adminEmail: 'agent@campuslaunch.org',
+          action: 'AGENT_RUN_COMPLETED',
+          entity: 'agent_runs',
+          entityId: result.runId,
+          details: { stats: result.stats }
+        });
+      }
+
+      setIsAgentRunning(false);
+      return result;
+    } catch (err) {
+      setIsAgentRunning(false);
+      console.error('Agent execution error:', err);
+      throw err;
+    }
+  };
+
+  const approveReviewItem = async (queueId, overrideData = null, adminEmail = 'admin@campuslaunch.org') => {
+    const queueItem = reviewQueue.find((item) => item.id === queueId || item.opportunity_data?.id === queueId);
+    if (!queueItem) return;
+
+    const baseData = queueItem.opportunity_data || queueItem;
+    const approvedOpp = {
+      ...baseData,
+      ...(overrideData || {}),
+      status: 'published',
+      verificationStatus: 'verified',
+      verifiedAt: new Date().toISOString(),
+      lastVerifiedAt: new Date().toISOString()
+    };
+
+    // Add to opportunities catalog
+    setOpportunities((prev) => {
+      const updated = [approvedOpp, ...prev];
+      localStorage.setItem('campuslaunch_opportunities', JSON.stringify(updated));
+      return updated;
+    });
+
+    // Remove from review queue
+    setReviewQueue((prev) => {
+      const updatedQueue = prev.filter((item) => item.id !== queueId && item.opportunity_data?.id !== queueId);
+      localStorage.setItem('campuslaunch_review_queue', JSON.stringify(updatedQueue));
+      return updatedQueue;
+    });
+
+    await logAdminAction({
+      adminEmail,
+      action: 'REVIEW_QUEUE_APPROVED',
+      entity: 'opportunities',
+      entityId: approvedOpp.id,
+      details: { title: approvedOpp.title, company: approvedOpp.company }
+    });
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('review_queue').update({ status: 'approved', reviewed_at: new Date().toISOString() }).eq('id', queueId);
+        await supabase.from('opportunities').upsert({
+          id: undefined,
+          title: approvedOpp.title,
+          organization: approvedOpp.company || approvedOpp.organization,
+          type: approvedOpp.internshipType || approvedOpp.type || 'Internship',
+          location: approvedOpp.location,
+          mode: approvedOpp.workMode || approvedOpp.mode,
+          stipend: approvedOpp.stipend,
+          skills: approvedOpp.skills,
+          description: approvedOpp.description,
+          deadline: approvedOpp.deadline || approvedOpp.applicationDeadline,
+          apply_url: approvedOpp.applyUrl || approvedOpp.applicationUrl,
+          status: 'published',
+          verification_status: 'verified',
+          verification_score: approvedOpp.verificationScore || 85
+        });
+      } catch (e) {
+        console.warn('Supabase review approval write note:', e);
+      }
+    }
+  };
+
+  const rejectReviewItem = async (queueId, reason = 'Did not meet authenticity standards', adminEmail = 'admin@campuslaunch.org') => {
+    setReviewQueue((prev) => {
+      const updatedQueue = prev.filter((item) => item.id !== queueId && item.opportunity_data?.id !== queueId);
+      localStorage.setItem('campuslaunch_review_queue', JSON.stringify(updatedQueue));
+      return updatedQueue;
+    });
+
+    await logAdminAction({
+      adminEmail,
+      action: 'REVIEW_QUEUE_REJECTED',
+      entity: 'review_queue',
+      entityId: queueId,
+      details: { reason }
+    });
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('review_queue').update({ status: 'rejected', admin_notes: reason, reviewed_at: new Date().toISOString() }).eq('id', queueId);
+      } catch (e) {
+        console.warn('Supabase review reject write note:', e);
+      }
+    }
+  };
+
+  const startAgentScheduler = (intervalHours = 6, runImmediately = false) => {
+    agentScheduler.startSchedule(intervalHours, runImmediately, () => runAgentNow());
+    setSchedulerStatus(agentScheduler.getStatus());
+  };
+
+  const stopAgentScheduler = () => {
+    agentScheduler.stopSchedule();
+    setSchedulerStatus(agentScheduler.getStatus());
+  };
+
   return (
     <OpportunityContext.Provider
       value={{
@@ -777,6 +967,12 @@ export function OpportunityProvider({ children }) {
         applications,
         submissions,
         reports,
+        reviewQueue,
+        isAgentRunning,
+        agentLogs,
+        agentProgress,
+        agentStats,
+        schedulerStatus,
         loading,
         toggleSave,
         isSaved,
@@ -792,7 +988,12 @@ export function OpportunityProvider({ children }) {
         togglePublishStatus,
         reportOpportunity,
         resolveReport,
-        dismissReport
+        dismissReport,
+        runAgentNow,
+        approveReviewItem,
+        rejectReviewItem,
+        startAgentScheduler,
+        stopAgentScheduler
       }}
     >
       {children}

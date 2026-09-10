@@ -19,7 +19,9 @@ import {
   ExternalLink,
   ChevronRight,
   Database,
-  Clock
+  Clock,
+  Bot,
+  ShieldAlert
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useOpportunities } from '../context/OpportunityContext';
@@ -28,7 +30,7 @@ import { isSupabaseConfigured } from '../services/supabase';
 export default function AdminLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
-  const { submissions, reports } = useOpportunities();
+  const { submissions, reports, reviewQueue, isAgentRunning } = useOpportunities();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -39,9 +41,12 @@ export default function AdminLayout() {
 
   const pendingSubmissions = (submissions || []).filter((s) => s.status === 'pending').length;
   const pendingReports = (reports || []).filter((r) => r.status === 'pending').length;
+  const pendingReviews = (reviewQueue || []).length;
 
   const adminNav = [
     { label: 'Overview & KPIs', path: '/admin/dashboard', icon: LayoutDashboard },
+    { label: 'AI Opportunity Agent', path: '/admin/agent', icon: Bot, badge: isAgentRunning ? 'Running' : undefined, badgeColor: 'bg-emerald-500/20 text-emerald-300' },
+    { label: 'AI Review Queue', path: '/admin/review-queue', icon: ShieldAlert, badge: pendingReviews, badgeColor: 'bg-amber-500/20 text-amber-300' },
     { label: 'Opportunities', path: '/admin/opportunities', icon: Compass },
     { label: 'Verification Center', path: '/admin/verification', icon: CheckCircle2 },
     { label: 'Sources & Feeds', path: '/admin/sources', icon: Globe },
