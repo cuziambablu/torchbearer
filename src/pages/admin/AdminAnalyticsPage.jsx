@@ -87,7 +87,7 @@ export default function AdminAnalyticsPage() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `campuslaunch-analytics-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `torchbearer-ai-analytics-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
   };
 

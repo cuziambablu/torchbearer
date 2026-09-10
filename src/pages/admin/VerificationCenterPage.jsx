@@ -66,7 +66,7 @@ export default function VerificationCenterPage() {
           verifiedAt: newStatus === 'verified' ? new Date().toISOString() : null,
           lastVerifiedAt: new Date().toISOString()
         },
-        user?.email || 'admin@campuslaunch.org'
+        user?.email || 'admin@torchbearer.ai'
       );
 
       addToast(`Updated status to ${newStatus.toUpperCase()}`, 'success');

@@ -13,6 +13,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import Footer from '../components/common/Footer';
+import BrandLogo from '../components/common/BrandLogo';
 import { useAuth } from '../context/AuthContext';
 
 export default function PublicLayout() {
@@ -32,18 +33,8 @@ export default function PublicLayout() {
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Brand Logo */}
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform">
-              <Sparkles className="w-5 h-5 text-amber-300" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-black text-lg tracking-tight text-slate-900 group-hover:text-brand-600 transition leading-none">
-                Campus<span className="text-brand-600">Launch</span>
-              </span>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-                Student Opportunity Platform
-              </span>
-            </div>
+          <Link to="/" className="flex items-center">
+            <BrandLogo size="md" />
           </Link>
 
           {/* Desktop Nav Links */}

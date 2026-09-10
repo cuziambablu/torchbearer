@@ -59,7 +59,7 @@ export default function AdminSettingsPage() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `campuslaunch-complete-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `torchbearer-ai-complete-backup-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     addToast('Platform database backup successfully downloaded.', 'success');
   };

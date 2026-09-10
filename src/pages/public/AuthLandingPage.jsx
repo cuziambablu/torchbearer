@@ -13,6 +13,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import Button from '../../components/common/Button';
+import BrandLogo from '../../components/common/BrandLogo';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { BRANCHES, YEARS, MOCK_DEFAULT_STUDENT } from '../../data/mockOpportunities';
@@ -122,14 +123,9 @@ export default function AuthLandingPage() {
 
       {/* Brand Header */}
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center relative z-10">
-        <Link to="/" className="inline-flex items-center gap-2.5 group mb-3">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-brand-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/25 group-hover:scale-105 transition-transform">
-            <Sparkles className="w-6 h-6 text-amber-300" />
-          </div>
-          <span className="font-black text-2xl sm:text-3xl tracking-tight text-white">
-            Campus<span className="text-brand-400">Launch</span>
-          </span>
-        </Link>
+        <div className="flex justify-center mb-3">
+          <BrandLogo size="lg" isDark={true} />
+        </div>
         <p className="text-xs sm:text-sm text-slate-400 max-w-sm mx-auto">
           Discover verified internships, hackathons, jobs, scholarships & career opportunities.
         </p>

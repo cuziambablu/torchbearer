@@ -13,6 +13,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import Button from '../../components/common/Button';
+import BrandLogo from '../../components/common/BrandLogo';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { BRANCHES, YEARS, MOCK_DEFAULT_STUDENT } from '../../data/mockOpportunities';
@@ -130,14 +131,9 @@ export default function StudentLoginPage() {
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-10 sm:px-6 lg:px-8 animate-fade-in">
       {/* Brand Header */}
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <Link to="/" className="inline-flex items-center gap-2.5 group mb-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform">
-            <Sparkles className="w-5 h-5 text-amber-300" />
-          </div>
-          <span className="font-black text-2xl tracking-tight text-slate-900">
-            Campus<span className="text-brand-600">Launch</span>
-          </span>
-        </Link>
+        <div className="flex justify-center mb-3">
+          <BrandLogo size="lg" />
+        </div>
         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
           {activeTab === 'login' ? 'Find Your Next Opportunity' : 'Create Your Student Account'}
         </h1>
