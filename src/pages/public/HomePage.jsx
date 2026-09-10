@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Search,
@@ -6,7 +6,6 @@ import {
   Sparkles,
   Compass,
   BookmarkCheck,
-  Send,
   TrendingUp,
   Flame,
   CheckCircle2,
@@ -21,19 +20,36 @@ import {
   ChevronDown,
   HelpCircle,
   Award,
-  Zap
+  Zap,
+  Bot,
+  Activity,
+  Globe,
+  Check,
+  Clock,
+  Layers,
+  Cpu,
+  RefreshCw,
+  ExternalLink,
+  ChevronRight
 } from 'lucide-react';
 import OpportunityCard from '../../components/opportunities/OpportunityCard';
 import Button from '../../components/common/Button';
 import { useOpportunities } from '../../context/OpportunityContext';
+import { useAuth } from '../../context/AuthContext';
 import { getDeadlineStatus } from '../../utils/dateUtils';
-import { OPPORTUNITY_TYPES } from '../../data/mockOpportunities';
+import { OPPORTUNITY_TYPES, MOCK_DEFAULT_STUDENT } from '../../data/mockOpportunities';
+import { calculateOpportunityMatch } from '../../utils/recommendation';
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [openFaq, setOpenFaq] = useState(null);
-  const { opportunities } = useOpportunities();
+  const [activeCategoryTab, setActiveCategoryTab] = useState('all');
+  const { opportunities, isAgentRunning, agentStats } = useOpportunities();
+  const { profile } = useAuth();
   const navigate = useNavigate();
+
+  const studentProfile = profile || MOCK_DEFAULT_STUDENT;
+  const safeOpportunities = Array.isArray(opportunities) ? opportunities : [];
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -44,331 +60,517 @@ export default function HomePage() {
     }
   };
 
-  const safeOpportunities = Array.isArray(opportunities) ? opportunities : [];
+  const handleQuickSearch = (term) => {
+    navigate(`/opportunities?search=${encodeURIComponent(term)}`);
+  };
 
-  // 13 Categories with real-time published counts
-  const categories = OPPORTUNITY_TYPES.filter((t) => t.id !== 'all').map((t) => ({
-    ...t,
-    count: safeOpportunities.filter((o) => o.type === t.id && o.status === 'published').length
-  }));
+  // 1. Trending Opportunities (Featured + High Views)
+  const trendingOpportunities = useMemo(() => {
+    return safeOpportunities
+      .filter((o) => o.status === 'published')
+      .sort((a, b) => (b.views || 0) - (a.views || 0))
+      .slice(0, 6);
+  }, [safeOpportunities]);
 
-  // Featured opportunities
-  const featuredOpportunities = safeOpportunities
-    .filter((o) => o.status === 'published' && o.featured)
-    .slice(0, 3);
+  // 2. Freshly Added by AI
+  const freshOpportunities = useMemo(() => {
+    return safeOpportunities
+      .filter((o) => o.status === 'published')
+      .sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0))
+      .slice(0, 6);
+  }, [safeOpportunities]);
 
-  // Closing soon opportunities (sorted by earliest deadline)
-  const closingSoonOpportunities = safeOpportunities
-    .filter((o) => {
-      if (o.status !== 'published') return false;
-      const d = getDeadlineStatus(o.deadline);
-      return !d.isExpired && d.daysLeft <= 10;
-    })
-    .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
-    .slice(0, 3);
+  // 3. Closing Soon (Earliest active deadlines)
+  const closingSoonOpportunities = useMemo(() => {
+    return safeOpportunities
+      .filter((o) => {
+        if (o.status !== 'published') return false;
+        const d = getDeadlineStatus(o.deadline);
+        return !d.isExpired && d.daysLeft !== null && d.daysLeft <= 45;
+      })
+      .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
+      .slice(0, 6);
+  }, [safeOpportunities]);
+
+  // 4. AI Recommended for You
+  const recommendedOpportunities = useMemo(() => {
+    return safeOpportunities
+      .filter((o) => o.status === 'published')
+      .map((opp) => {
+        const match = calculateOpportunityMatch(opp, studentProfile);
+        return { ...opp, matchScore: match.score, matchReasons: match.reasons };
+      })
+      .sort((a, b) => b.matchScore - a.matchScore)
+      .slice(0, 6);
+  }, [safeOpportunities, studentProfile]);
+
+  // 5. Hackathons & Competitions
+  const hackathons = useMemo(() => {
+    return safeOpportunities
+      .filter((o) => o.status === 'published' && (o.type === 'Hackathon' || o.type === 'Competition'))
+      .slice(0, 6);
+  }, [safeOpportunities]);
+
+  // 6. Research Fellowships & Grants
+  const researchOpportunities = useMemo(() => {
+    return safeOpportunities
+      .filter((o) => o.status === 'published' && (o.type === 'Research' || o.type === 'Fellowship'))
+      .slice(0, 6);
+  }, [safeOpportunities]);
+
+  // 7. Remote Opportunities
+  const remoteOpportunities = useMemo(() => {
+    return safeOpportunities
+      .filter((o) => o.status === 'published' && (o.mode === 'Remote' || o.location?.toLowerCase().includes('remote')))
+      .slice(0, 6);
+  }, [safeOpportunities]);
+
+  const toggleFaq = (index) => {
+    setOpenFaq(openFaq === index ? null : index);
+  };
+
+  const faqs = [
+    {
+      q: 'How does CampusLaunch verify that opportunities are genuine?',
+      a: 'Our autonomous AI Opportunity Agent continuously scans registered official foundations, universities, ministries, and enterprise career portals. Every listing undergoes multi-factor verification: URL domain verification, deadline validity, stipend authentication, and duplicate filtering before being published.'
+    },
+    {
+      q: 'Are all application links directly to the official portals?',
+      a: 'Yes, 100%. CampusLaunch does not redirect you through intermediary spam walls or affiliate gateways. Clicking "Apply Now" connects you directly to the official organization or government application portal.'
+    },
+    {
+      q: 'How does the AI recommendation match score work?',
+      a: 'The engine compares your academic branch, graduation year, core technical skills, and career interests against the structured requirements of each posting using semantic alignment.'
+    },
+    {
+      q: 'Is CampusLaunch completely free for students?',
+      a: 'Yes, CampusLaunch is 100% free and open for college students across all engineering and technical disciplines.'
+    },
+    {
+      q: 'How often is the opportunity database refreshed?',
+      a: 'The autonomous AI agent audits and refreshes the database every 6 hours, detecting newly released cohorts and automatically archiving expired deadlines.'
+    }
+  ];
 
   return (
-    <div className="space-y-20 pb-20">
+    <div className="space-y-24 pb-24 overflow-hidden">
+      {/* ========================================================================= */}
       {/* 1. HERO SECTION */}
-      <section className="relative overflow-hidden pt-12 pb-16 md:pt-20 md:pb-24 bg-gradient-to-b from-white via-slate-50/50 to-slate-50 border-b border-slate-200/60">
-        {/* Subtle background glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-br from-brand-100/40 via-indigo-50/20 to-transparent blur-3xl -z-10 pointer-events-none" />
+      {/* ========================================================================= */}
+      <section className="relative pt-12 pb-20 md:pt-20 md:pb-28 overflow-hidden bg-gradient-to-b from-white via-slate-50/70 to-slate-100/50 border-b border-slate-200/80">
+        {/* Subtle Ambient Background Gradients */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[500px] bg-gradient-to-tr from-brand-100/50 via-indigo-100/30 to-purple-100/40 blur-3xl -z-10 pointer-events-none rounded-full animate-pulse-glow" />
+        <div className="absolute top-40 right-10 w-72 h-72 bg-emerald-100/30 blur-3xl -z-10 pointer-events-none rounded-full" />
 
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          {/* Tagline Pill */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-200/80 text-brand-700 text-xs font-semibold mb-6 shadow-subtle animate-fade-in">
-            <Sparkles className="w-3.5 h-3.5 text-brand-600" />
-            <span>CampusLaunch — Discover. Apply. Grow.</span>
-          </div>
-
-          {/* Main Headline */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 tracking-tight leading-[1.15] mb-6">
-            Your next opportunity <br className="hidden sm:inline" />
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-brand-600 via-indigo-600 to-brand-700">
-              starts here.
-            </span>
-          </h1>
-
-          {/* Subheadline */}
-          <p className="text-base sm:text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Discover internships, hackathons, competitions and career opportunities made for students.
-          </p>
-
-          {/* Large Search Bar */}
-          <form
-            onSubmit={handleSearchSubmit}
-            className="max-w-2xl mx-auto relative flex items-center bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-200/90 p-2 mb-8 focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/10 transition-all"
-          >
-            <div className="pl-3 pr-2 text-slate-400">
-              <Search className="w-5 h-5" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col items-center text-center max-w-4xl mx-auto space-y-8">
+            {/* Live Agent Pulse Badge */}
+            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/90 border border-slate-200 shadow-subtle text-slate-700 text-xs font-bold tracking-wide animate-fade-in backdrop-blur-md">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              <span className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px]">AI Engine Active</span>
+              <span className="text-slate-300">•</span>
+              <span className="text-slate-500 font-medium">100% Official Verified Portals</span>
             </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search internships, hackathons, companies, or skills (e.g., Python)..."
-              className="w-full text-sm sm:text-base text-slate-800 placeholder-slate-400 bg-transparent focus:outline-none py-2"
-            />
-            <Button type="submit" variant="primary" size="md" className="flex-shrink-0 shadow-none">
-              <span>Search</span>
-            </Button>
-          </form>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <Link to="/opportunities">
-              <Button variant="secondary" size="lg" icon={ArrowRight} iconPosition="right">
-                Explore Opportunities
-              </Button>
-            </Link>
-            <Link to="/submit">
-              <Button variant="outline" size="lg" icon={PlusCircle}>
-                Submit an Opportunity
-              </Button>
-            </Link>
-          </div>
+            {/* Main Headline */}
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-slate-900 tracking-tight leading-[1.1] sm:leading-[1.1] animate-fade-up">
+              Find Your Next <br className="hidden sm:inline" />
+              <span className="text-gradient">
+                Opportunity.
+              </span>
+            </h1>
 
-          {/* Trust stats row */}
-          <div className="mt-12 pt-8 border-t border-slate-200/60 grid grid-cols-2 sm:grid-cols-4 gap-4 text-left sm:text-center">
-            <div>
-              <p className="text-2xl font-black text-slate-900">500+</p>
-              <p className="text-xs text-slate-500 font-medium">Curated Opportunities</p>
+            {/* Subheadline */}
+            <p className="text-base sm:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed font-normal">
+              Internships, hackathons, research programs, fellowships, and scholarships — discovered, verified, and categorized by AI.
+            </p>
+
+            {/* Modern Search Box with Quick Tags */}
+            <div className="w-full max-w-2xl space-y-3">
+              <form
+                onSubmit={handleSearchSubmit}
+                className="relative flex items-center bg-white rounded-3xl shadow-xl shadow-slate-200/70 border border-slate-200/90 p-2.5 focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/10 transition-all duration-300"
+              >
+                <div className="pl-3.5 pr-2 text-slate-400">
+                  <Search className="w-5 h-5 text-brand-600" />
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search internships, hackathons, skills, or companies (e.g. Python, GSoC, AICTE)..."
+                  className="w-full text-sm sm:text-base text-slate-900 placeholder-slate-400 bg-transparent focus:outline-none py-2"
+                />
+                <Button type="submit" variant="primary" size="md" className="flex-shrink-0 font-bold px-6 shadow-md shadow-brand-600/20">
+                  <span>Explore</span>
+                </Button>
+              </form>
+
+              {/* Quick Search Chips */}
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-xs text-slate-500">
+                <span className="font-semibold text-slate-400">Trending searches:</span>
+                {[
+                  { label: '🔥 Google Summer of Code', query: 'Google Summer of Code' },
+                  { label: '🏆 Smart India Hackathon', query: 'Smart India Hackathon' },
+                  { label: '🔬 CERN Research', query: 'CERN' },
+                  { label: '💼 Amazon WOW', query: 'Amazon WOW' },
+                  { label: '🌐 Remote', query: 'Remote' }
+                ].map((chip, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleQuickSearch(chip.query)}
+                    className="px-3 py-1 rounded-full bg-white hover:bg-brand-50 hover:text-brand-700 hover:border-brand-300 text-slate-600 font-medium border border-slate-200/80 transition shadow-xs text-[11px]"
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-black text-slate-900">₹25L+</p>
-              <p className="text-xs text-slate-500 font-medium">Prizes & Stipends</p>
+
+            {/* Primary Action Buttons */}
+            <div className="flex flex-wrap items-center justify-center gap-3.5 pt-2">
+              <Link to="/opportunities">
+                <Button variant="primary" size="lg" icon={ArrowRight} iconPosition="right" className="font-extrabold px-8 shadow-lg shadow-brand-600/25">
+                  Explore All Opportunities
+                </Button>
+              </Link>
+              <Link to="/submit">
+                <Button variant="outline" size="lg" icon={PlusCircle} className="font-bold border-slate-300 hover:bg-slate-50">
+                  Submit an Opportunity
+                </Button>
+              </Link>
             </div>
-            <div>
-              <p className="text-2xl font-black text-slate-900">100%</p>
-              <p className="text-xs text-slate-500 font-medium">Official Links</p>
+
+            {/* Interactive Live AI Engine Flow Graphic */}
+            <div className="w-full pt-8 sm:pt-12">
+              <div className="p-6 sm:p-8 rounded-3xl bg-slate-900 text-white shadow-2xl border border-slate-800 relative overflow-hidden text-left">
+                {/* Background glow and grid overlay */}
+                <div className="absolute -right-20 -top-20 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-brand-400">
+                      <Cpu className="w-5 h-5 animate-pulse" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-black uppercase tracking-widest text-brand-400">
+                        Autonomous Ingestion Flow
+                      </div>
+                      <div className="text-base sm:text-lg font-black text-white">
+                        How CampusLaunch AI Discovers & Verifies
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 bg-emerald-950/40 px-3 py-1.5 rounded-xl border border-emerald-800/40">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>Continuous Radar: 100% Real-Time</span>
+                  </div>
+                </div>
+
+                {/* 5 Pipeline Stages Visual */}
+                <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 pt-6">
+                  {[
+                    { step: '01', title: 'DISCOVER', desc: 'Scan official portals & foundations', icon: Globe, color: 'text-sky-400' },
+                    { step: '02', title: 'UNDERSTAND', desc: 'LLM extracts skills & deadlines', icon: Bot, color: 'text-indigo-400' },
+                    { step: '03', title: 'VERIFY', desc: 'Multi-point domain authenticity', icon: ShieldCheck, color: 'text-emerald-400' },
+                    { step: '04', title: 'MATCH', desc: 'Student branch & skill alignment', icon: Sparkles, color: 'text-amber-400' },
+                    { step: '05', title: 'YOUR FUTURE', desc: 'Apply directly on official link', icon: Rocket, color: 'text-rose-400' }
+                  ].map((st, i) => (
+                    <div key={i} className="p-4 rounded-2xl bg-slate-800/60 border border-slate-700/50 hover:border-brand-500/50 transition relative group">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-mono font-bold text-slate-400">{st.step}</span>
+                        <st.icon className={`w-4 h-4 ${st.color}`} />
+                      </div>
+                      <h4 className="text-xs font-black tracking-wide text-white mb-1">{st.title}</h4>
+                      <p className="text-[11px] text-slate-400 leading-snug font-medium">{st.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-black text-slate-900">24/7</p>
-              <p className="text-xs text-slate-500 font-medium">Deadline Tracking</p>
+
+            {/* Live Trust Metrics Bar */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full pt-4">
+              <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-card text-center">
+                <div className="text-2xl sm:text-3xl font-black text-slate-900">{safeOpportunities.length}+</div>
+                <div className="text-xs font-bold text-slate-500 mt-1">Verified Real Opportunities</div>
+              </div>
+              <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-card text-center">
+                <div className="text-2xl sm:text-3xl font-black text-brand-600">100%</div>
+                <div className="text-xs font-bold text-slate-500 mt-1">Authentic Official Links</div>
+              </div>
+              <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-card text-center">
+                <div className="text-2xl sm:text-3xl font-black text-emerald-600">₹1 Cr+</div>
+                <div className="text-xs font-bold text-slate-500 mt-1">Stipends & Prizes Pool</div>
+              </div>
+              <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-card text-center">
+                <div className="text-2xl sm:text-3xl font-black text-indigo-600">6 Hours</div>
+                <div className="text-xs font-bold text-slate-500 mt-1">Automated Refresh Cycle</div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 2. OPPORTUNITY CATEGORIES */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 gap-3">
+      {/* ========================================================================= */}
+      {/* 2. 🔥 TRENDING OPPORTUNITIES SECTION */}
+      {/* ========================================================================= */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2 border-b border-slate-200">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-              Opportunity Categories
+            <div className="inline-flex items-center gap-1.5 text-xs font-extrabold text-amber-600 uppercase tracking-wider mb-1">
+              <Flame className="w-4 h-4 fill-current animate-bounce" />
+              <span>High Student Demand</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Trending Opportunities
             </h2>
-            <p className="text-sm text-slate-500 mt-1">
-              Select a domain tailored to your college career milestones
+            <p className="text-sm text-slate-500 mt-1 font-medium">
+              Most viewed and actively shared opportunities by engineering students this week.
             </p>
           </div>
           <Link
             to="/opportunities"
-            className="text-xs font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1 group"
+            className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-brand-600 hover:text-brand-800 transition"
           >
-            <span>View all categories</span>
-            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {categories.map((cat) => (
-            <Link
-              key={cat.id}
-              to={`/opportunities?type=${encodeURIComponent(cat.id)}`}
-              className="group p-4 bg-white rounded-2xl border border-slate-200/90 hover:border-brand-300 hover:shadow-card transition-all flex items-center gap-3.5"
-            >
-              <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-xl group-hover:scale-110 transition-transform flex-shrink-0">
-                {cat.emoji}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-slate-900 group-hover:text-brand-600 transition truncate">
-                    {cat.label || cat.name}
-                  </h3>
-                  <span className="text-[10px] font-semibold text-slate-500 px-2 py-0.5 bg-slate-100 rounded-full">
-                    {cat.count}
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1 leading-snug">
-                  {cat.desc}
-                </p>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* 3. FEATURED OPPORTUNITIES */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 gap-3">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Sparkles className="w-4 h-4 text-amber-500" />
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-600">
-                Editor's Choice
-              </span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-              Featured Opportunities
-            </h2>
-          </div>
-          <Link
-            to="/opportunities"
-            className="text-xs font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1 group"
-          >
-            <span>Explore all listings</span>
-            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+            <span>View All ({safeOpportunities.length})</span>
+            <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featuredOpportunities.map((opp) => (
+          {trendingOpportunities.map((opp) => (
             <OpportunityCard key={opp.id} opportunity={opp} />
           ))}
         </div>
       </section>
 
-      {/* 4. CLOSING SOON (Approaching Deadlines) */}
+      {/* ========================================================================= */}
+      {/* 3. 🤖 AI RECOMMENDED FOR YOU SECTION */}
+      {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-amber-50/50 rounded-3xl border border-amber-200/80 p-6 sm:p-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 gap-3">
-            <div>
-              <div className="flex items-center gap-2 mb-1 text-amber-700">
-                <Flame className="w-4 h-4 text-amber-600 animate-pulse" />
-                <span className="text-xs font-bold uppercase tracking-wider">
-                  Urgent Deadlines
-                </span>
+        <div className="p-8 sm:p-10 rounded-3xl bg-gradient-to-br from-indigo-950 via-slate-900 to-brand-950 text-white shadow-2xl border border-indigo-900/50 space-y-8 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-indigo-800/40">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30 text-xs font-bold">
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <span>Smart Academic Matching</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-                Closing Soon
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+                Recommended For You
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
-                Don't miss the window — these applications close within days
+              <p className="text-sm text-slate-300">
+                Matched against {studentProfile.branch} • {studentProfile.year} • {Array.isArray(studentProfile.skills) ? studentProfile.skills.slice(0, 4).join(', ') : 'Tech Skills'}
               </p>
             </div>
             <Link
-              to="/opportunities?deadline=week"
-              className="text-xs font-semibold text-amber-800 hover:text-amber-900 flex items-center gap-1 group bg-white px-3 py-1.5 rounded-xl border border-amber-200 shadow-subtle"
+              to="/opportunities"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/10 transition backdrop-blur-sm self-start sm:self-auto"
             >
-              <span>View this week's deadlines</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              <span>Explore All Matches</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {closingSoonOpportunities.map((opp) => (
-              <OpportunityCard key={opp.id} opportunity={opp} />
+            {recommendedOpportunities.map((opp) => (
+              <OpportunityCard key={opp.id} opportunity={opp} showRecommendationBadge={true} />
             ))}
           </div>
         </div>
       </section>
 
-      {/* 5. HOW IT WORKS */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <span className="text-xs font-bold uppercase tracking-wider text-brand-600 mb-2 block">
-            Streamlined Career Journey
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-            How CampusLaunch Works
-          </h2>
-          <p className="text-sm text-slate-500 mt-2">
-            A frictionless workflow designed to take you from discovery to selection
-          </p>
+      {/* ========================================================================= */}
+      {/* 4. ⏰ CLOSING SOON (URGENT DEADLINES) SECTION */}
+      {/* ========================================================================= */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2 border-b border-slate-200">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-extrabold text-rose-600 uppercase tracking-wider mb-1">
+              <Clock className="w-4 h-4 text-rose-500" />
+              <span>Time-Sensitive Cohorts</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Closing Soon
+            </h2>
+            <p className="text-sm text-slate-500 mt-1 font-medium">
+              Verified deadlines approaching. Make sure to complete your applications before portals close.
+            </p>
+          </div>
+          <Link
+            to="/opportunities"
+            className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-brand-600 hover:text-brand-800 transition"
+          >
+            <span>View All Deadlines</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-card relative">
-            <div className="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 font-black text-sm flex items-center justify-center mb-4 border border-brand-200">
-              1
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {closingSoonOpportunities.map((opp) => (
+            <OpportunityCard key={opp.id} opportunity={opp} />
+          ))}
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 5. 🏆 HACKATHONS & CODING BATTLES */}
+      {/* ========================================================================= */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2 border-b border-slate-200">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-extrabold text-purple-600 uppercase tracking-wider mb-1">
+              <Trophy className="w-4 h-4 text-purple-500" />
+              <span>National & Global Hackathons</span>
             </div>
-            <h3 className="text-base font-bold text-slate-900 mb-2">Discover</h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Explore 100% verified internships, hackathons, and scholarships with direct official application portals.
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Hackathons & Competitions
+            </h2>
+            <p className="text-sm text-slate-500 mt-1 font-medium">
+              Build prototypes, win grand prize pools, and secure fast-track interview rounds.
+            </p>
+          </div>
+          <Link
+            to="/opportunities?type=Hackathon"
+            className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-brand-600 hover:text-brand-800 transition"
+          >
+            <span>View All Hackathons</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {hackathons.map((opp) => (
+            <OpportunityCard key={opp.id} opportunity={opp} />
+          ))}
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 6. 🔬 RESEARCH FELLOWSHIPS & GRANTS */}
+      {/* ========================================================================= */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2 border-b border-slate-200">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-extrabold text-sky-600 uppercase tracking-wider mb-1">
+              <BookOpen className="w-4 h-4 text-sky-500" />
+              <span>Premier Academic Laboratories</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Research Programs & Fellowships
+            </h2>
+            <p className="text-sm text-slate-500 mt-1 font-medium">
+              Paid academic research summer internships at CERN, ISRO, DRDO, IIT Bombay, and IISc.
+            </p>
+          </div>
+          <Link
+            to="/opportunities?type=Research"
+            className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-brand-600 hover:text-brand-800 transition"
+          >
+            <span>View All Research Fellowships</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {researchOpportunities.map((opp) => (
+            <OpportunityCard key={opp.id} opportunity={opp} />
+          ))}
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 7. "MEET YOUR OPPORTUNITY AI" SECTION */}
+      {/* ========================================================================= */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-slate-900 rounded-3xl p-8 sm:p-12 text-white border border-slate-800 relative overflow-hidden shadow-2xl">
+          <div className="max-w-3xl space-y-4 mb-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30 text-xs font-bold">
+              <Bot className="w-4 h-4 text-brand-400" />
+              <span>CampusLaunch Intelligence Engine</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
+              Meet Your Opportunity AI
+            </h2>
+            <p className="text-sm sm:text-base text-slate-300 leading-relaxed font-normal">
+              Unlike traditional job portals loaded with outdated ads and expired links, CampusLaunch runs an 11-stage autonomous agent pipeline to keep every opportunity genuine, active, and tailored for college students.
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-card relative">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 font-black text-sm flex items-center justify-center mb-4 border border-purple-200">
-              2
+          {/* 3 Value Proposition Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-6 rounded-2xl bg-slate-800/70 border border-slate-700/60 space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-black text-white">Zero Fake Links Policy</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Automated multi-point verification blocks spam and enforces that every application URL directly opens authentic official portals.
+              </p>
             </div>
-            <h3 className="text-base font-bold text-slate-900 mb-2">Analyze Match</h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Get an instant match score and skill gap breakdown showing which skills you meet and what to learn next.
-            </p>
-          </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-card relative">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 font-black text-sm flex items-center justify-center mb-4 border border-emerald-200">
-              3
+            <div className="p-6 rounded-2xl bg-slate-800/70 border border-slate-700/60 space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-black text-white">AI Strategy & Interview Prep</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Powered by GLM 5.3, the agent analyzes job requirements and generates custom interview study plans and key skill focus areas.
+              </p>
             </div>
-            <h3 className="text-base font-bold text-slate-900 mb-2">Apply</h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Submit directly to official portals without intermediaries, login walls, or fake listings.
-            </p>
-          </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-card relative">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 font-black text-sm flex items-center justify-center mb-4 border border-amber-200">
-              4
+            <div className="p-6 rounded-2xl bg-slate-800/70 border border-slate-700/60 space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <Clock className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-black text-white">Automated Freshness Engine</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Past deadlines are automatically transitioned to Expired so you never waste time applying to closed opportunities.
+              </p>
             </div>
-            <h3 className="text-base font-bold text-slate-900 mb-2">Track & Win</h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Organize your applications across 7 stages in a Kanban pipeline and never miss an interview deadline.
-            </p>
           </div>
         </div>
       </section>
 
-      {/* 6. FREQUENTLY ASKED QUESTIONS */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold mb-3">
-            <HelpCircle className="w-3.5 h-3.5 text-brand-600" />
+      {/* ========================================================================= */}
+      {/* 8. FAQ ACCORDION SECTION */}
+      {/* ========================================================================= */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="text-center space-y-2 mb-8">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 uppercase tracking-wider">
+            <HelpCircle className="w-4 h-4" />
             <span>Got Questions?</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
             Frequently Asked Questions
           </h2>
         </div>
 
         <div className="space-y-3">
-          {[
-            {
-              q: 'How are opportunities verified on CampusLaunch?',
-              a: 'Every opportunity is manually reviewed by our moderation team against official corporate career sites, university portals, or verified organizers before being published. No ghost jobs or paid scam listings are permitted.'
-            },
-            {
-              q: 'Is CampusLaunch free for college students?',
-              a: 'Yes, 100% free! Students can search, filter, bookmark, track applications, and receive deadline notifications without any paywalls or subscription fees.'
-            },
-            {
-              q: 'How does the match score & skill gap analysis work?',
-              a: 'Our matching algorithm compares your academic branch, graduation year, and technical skills against the opportunity requirements to provide a percentage score and a clear list of skills you already have vs skills you can learn.'
-            },
-            {
-              q: 'What should I do if an application link is broken or closed?',
-              a: 'You can click the "Report Issue" button on any opportunity page to flag broken links, expired dates, or discrepancies. Our admin moderation team investigates reports within 24 hours.'
-            }
-          ].map((faq, idx) => (
+          {faqs.map((faq, idx) => (
             <div
               key={idx}
               className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-subtle transition"
             >
               <button
                 type="button"
-                onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                className="w-full p-4 sm:p-5 text-left font-bold text-sm text-slate-900 flex items-center justify-between gap-4 hover:bg-slate-50/50 transition"
+                onClick={() => toggleFaq(idx)}
+                className="w-full px-6 py-4.5 text-left flex items-center justify-between gap-4 hover:bg-slate-50 transition"
               >
-                <span>{faq.q}</span>
+                <span className="text-sm sm:text-base font-bold text-slate-900">{faq.q}</span>
                 <ChevronDown
-                  className={`w-4 h-4 text-slate-400 flex-shrink-0 transition-transform duration-200 ${
-                    openFaq === idx ? 'rotate-180 text-brand-600' : ''
+                  className={`w-4 h-4 text-slate-400 transition-transform duration-300 flex-shrink-0 ${
+                    openFaq === idx ? 'transform rotate-180 text-brand-600' : ''
                   }`}
                 />
               </button>
               {openFaq === idx && (
-                <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 animate-fade-in">
+                <div className="px-6 pb-5 pt-1 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 bg-slate-50/50">
                   {faq.a}
                 </div>
               )}
@@ -377,33 +579,30 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 7. BOTTOM CALL TO ACTION */}
+      {/* ========================================================================= */}
+      {/* 9. BOTTOM CALL TO ACTION */}
+      {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-brand-700 via-indigo-700 to-slate-900 text-white p-8 sm:p-14 shadow-2xl">
-          <div className="absolute -right-10 -bottom-10 w-80 h-80 bg-brand-500/20 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative z-10 max-w-2xl">
-            <span className="text-xs font-bold uppercase tracking-wider text-brand-200 mb-2 block">
-              Level up your student journey
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-4 leading-tight">
-              Don't miss your next opportunity.
+        <div className="p-8 sm:p-12 rounded-3xl bg-gradient-to-r from-brand-600 via-indigo-600 to-purple-600 text-white text-center shadow-xl space-y-6 relative overflow-hidden">
+          <div className="max-w-2xl mx-auto space-y-3">
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+              Ready to Launch Your Career?
             </h2>
-            <p className="text-sm sm:text-base text-slate-200 mb-8 leading-relaxed">
-              Join thousands of ambitious students tracking hackathons, internships, and grants every single week.
+            <p className="text-sm sm:text-base text-indigo-100 font-medium leading-relaxed">
+              Explore hundreds of verified student opportunities or share an authentic opening from your college placement cell.
             </p>
-            <div className="flex flex-wrap items-center gap-3">
-              <Link to="/opportunities">
-                <Button variant="primary" size="lg" className="bg-white text-slate-900 hover:bg-slate-100 shadow-none font-bold">
-                  Explore Opportunities
-                </Button>
-              </Link>
-              <Link to="/register">
-                <Button variant="outline" size="lg" className="bg-transparent text-white border-white/30 hover:bg-white/10">
-                  Create Free Account
-                </Button>
-              </Link>
-            </div>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <Link to="/opportunities">
+              <Button variant="secondary" size="lg" className="font-extrabold px-8 bg-white text-brand-700 hover:bg-brand-50 shadow-lg">
+                Explore All Opportunities
+              </Button>
+            </Link>
+            <Link to="/register">
+              <Button variant="outline" size="lg" className="font-bold border-white/40 text-white hover:bg-white/10">
+                Create Free Student Account
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

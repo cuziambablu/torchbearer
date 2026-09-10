@@ -1,6 +1,21 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, Filter, X, SlidersHorizontal, ArrowUpDown, ShieldCheck } from 'lucide-react';
+import {
+  Search,
+  Filter,
+  X,
+  SlidersHorizontal,
+  ArrowUpDown,
+  ShieldCheck,
+  LayoutGrid,
+  List,
+  Sparkles,
+  Trophy,
+  Briefcase,
+  BookOpen,
+  Rocket,
+  GraduationCap
+} from 'lucide-react';
 import OpportunityCard from '../../components/opportunities/OpportunityCard';
 import OpportunityFilters from '../../components/opportunities/OpportunityFilters';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
@@ -9,8 +24,9 @@ import Pagination from '../../components/common/Pagination';
 import Button from '../../components/common/Button';
 import { useOpportunities } from '../../context/OpportunityContext';
 import { getDeadlineStatus } from '../../utils/dateUtils';
+import { OPPORTUNITY_TYPES } from '../../data/mockOpportunities';
 
-const ITEMS_PER_PAGE = 6;
+const ITEMS_PER_PAGE = 9;
 
 export default function OpportunitiesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -18,6 +34,7 @@ export default function OpportunitiesPage() {
 
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
 
   // Parse filters from URL search params or defaults
   const [filters, setFilters] = useState({
@@ -86,7 +103,9 @@ export default function OpportunitiesPage() {
   // Filter and sort opportunities
   const filteredOpportunities = useMemo(() => {
     const now = new Date();
-    return opportunities
+    const safeList = Array.isArray(opportunities) ? opportunities : [];
+
+    return safeList
       .filter((opp) => {
         // 1. Only published opportunities in public browse
         if (opp.status !== 'published') return false;
@@ -148,7 +167,6 @@ export default function OpportunitiesPage() {
         if (filters.deadline !== 'all') {
           const dl = getDeadlineStatus(opp.deadline);
           if (dl.isExpired) return false;
-
           if (filters.deadline === 'today' && dl.daysLeft > 1) return false;
           if (filters.deadline === 'week' && dl.daysLeft > 7) return false;
           if (filters.deadline === 'month' && dl.daysLeft > 30) return false;
@@ -163,7 +181,7 @@ export default function OpportunitiesPage() {
         if (filters.sort === 'popular') {
           return (b.views || 0) - (a.views || 0);
         }
-        return new Date(b.createdAt) - new Date(a.createdAt);
+        return new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0);
       });
   }, [opportunities, filters]);
 
@@ -187,33 +205,77 @@ export default function OpportunitiesPage() {
     return pills;
   }, [filters]);
 
+  const quickCategories = [
+    { id: 'all', label: 'All Opportunities' },
+    { id: 'Internship', label: 'Internships' },
+    { id: 'Hackathon', label: 'Hackathons' },
+    { id: 'Research', label: 'Research' },
+    { id: 'Fellowship', label: 'Fellowships' },
+    { id: 'Scholarship', label: 'Scholarships' },
+    { id: 'Job', label: 'Full-Time Jobs' }
+  ];
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
       {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-          Explore Opportunities
-        </h1>
-        <p className="text-sm text-slate-500 mt-2">
-          Discover active and verified internships, hackathons, scholarships, and fellowships across verified organizations.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-slate-200">
+        <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 border border-brand-200 text-brand-700 text-xs font-bold mb-2">
+            <Sparkles className="w-3.5 h-3.5 text-brand-600" />
+            <span>AI-Verified Opportunity Catalog</span>
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+            Discover Opportunities
+          </h1>
+          <p className="text-sm text-slate-500 mt-1 font-medium">
+            Browse authentic internships, hackathons, research fellowships, and student programs verified by AI.
+          </p>
+        </div>
+
+        {/* Results Counter & View Switcher */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+            {filteredOpportunities.length} Active {filteredOpportunities.length === 1 ? 'Opportunity' : 'Opportunities'}
+          </span>
+        </div>
+      </div>
+
+      {/* Quick Category Tab Pills */}
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+        {quickCategories.map((cat) => {
+          const isActive = filters.type === cat.id;
+          return (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => handleFilterChange('type', cat.id)}
+              className={`px-4 py-2 rounded-2xl text-xs font-extrabold whitespace-nowrap transition-all shadow-xs ${
+                isActive
+                  ? 'bg-slate-900 text-white shadow-md'
+                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/90'
+              }`}
+            >
+              {cat.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Top Search & Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={filters.search}
             onChange={(e) => handleFilterChange('search', e.target.value)}
-            placeholder="Search by title, organization, skill (e.g., Python, React, IoT)..."
-            className="w-full pl-10 pr-10 py-2.5 text-sm bg-white border border-slate-200/90 rounded-2xl shadow-subtle text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
+            placeholder="Search by title, organization, or skill (e.g., Python, GSoC, AICTE, React)..."
+            className="w-full pl-11 pr-10 py-3 text-sm bg-white border border-slate-200/90 rounded-2xl shadow-card text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
           />
           {filters.search && (
             <button
               onClick={() => handleFilterChange('search', '')}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
             >
               <X className="w-4 h-4" />
             </button>
@@ -227,7 +289,7 @@ export default function OpportunitiesPage() {
             size="md"
             icon={SlidersHorizontal}
             onClick={() => setMobileFilterOpen(true)}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto font-bold py-3 rounded-2xl"
           >
             Filters {activeFilterPills.length > 0 && `(${activeFilterPills.length})`}
           </Button>
@@ -236,12 +298,12 @@ export default function OpportunitiesPage() {
 
       {/* Active Filter Badges */}
       {activeFilterPills.length > 0 && (
-        <div className="flex items-center flex-wrap gap-2 mb-6 animate-fade-in">
-          <span className="text-xs font-semibold text-slate-500">Active filters:</span>
+        <div className="flex items-center flex-wrap gap-2 animate-fade-in">
+          <span className="text-xs font-bold text-slate-500">Active filters:</span>
           {activeFilterPills.map((pill) => (
             <span
               key={pill.key}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-200 shadow-subtle"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200 shadow-subtle"
             >
               <span>{pill.label}</span>
               <button
@@ -261,7 +323,7 @@ export default function OpportunitiesPage() {
           <button
             type="button"
             onClick={handleResetFilters}
-            className="text-xs font-medium text-slate-500 hover:text-brand-600 ml-2 underline"
+            className="text-xs font-bold text-slate-500 hover:text-brand-600 ml-2 underline"
           >
             Clear all
           </button>
@@ -286,7 +348,7 @@ export default function OpportunitiesPage() {
             <LoadingSkeleton count={6} />
           ) : paginatedOpportunities.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {paginatedOpportunities.map((opp) => (
                   <OpportunityCard key={opp.id} opportunity={opp} />
                 ))}
@@ -317,7 +379,7 @@ export default function OpportunitiesPage() {
       {mobileFilterOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
           <div
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm"
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
             onClick={() => setMobileFilterOpen(false)}
           />
           <div className="relative ml-auto w-full max-w-xs bg-white h-full p-6 shadow-2xl overflow-y-auto z-10 flex flex-col justify-between">
@@ -344,7 +406,7 @@ export default function OpportunitiesPage() {
               <Button
                 variant="primary"
                 size="md"
-                className="w-full"
+                className="w-full font-bold"
                 onClick={() => setMobileFilterOpen(false)}
               >
                 Apply Filters ({filteredOpportunities.length})

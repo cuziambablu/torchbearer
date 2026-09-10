@@ -120,10 +120,13 @@ export default function StudentDashboardPage() {
             <p className="text-2xl font-black text-amber-300 mt-0.5">{trackedOpportunities.length}</p>
           </div>
           <div>
-            <p className="text-xs text-brand-200 font-medium">Skills Profile Match</p>
-            <p className="text-2xl font-black text-emerald-400 mt-0.5">
-              {user?.skills?.length || 5} Skills Active
-            </p>
+            <p className="text-xs text-brand-200 font-medium">Profile Readiness</p>
+            <div className="flex items-center gap-2 mt-1">
+              <div className="flex-1 bg-white/20 rounded-full h-2 overflow-hidden">
+                <div className="bg-emerald-400 h-full rounded-full" style={{ width: '85%' }}></div>
+              </div>
+              <span className="text-xs font-black text-emerald-300">85%</span>
+            </div>
           </div>
         </div>
       </div>
