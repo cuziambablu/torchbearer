@@ -61,31 +61,42 @@ export function calculateProfileCompleteness(user) {
 /**
  * Calculates detailed match breakdown and skill gaps between a student and an opportunity
  */
-export function calculateOpportunityMatch(opp, studentProfile) {
-  if (!studentProfile || !opp) {
+export function calculateOpportunityMatch(arg1, arg2) {
+  // Support both (opp, profile) and (profile, opp)
+  let opp = arg1;
+  let studentProfile = arg2;
+
+  if (arg1 && !arg1.title && !arg1.organization && (arg2?.title || arg2?.organization)) {
+    opp = arg2;
+    studentProfile = arg1;
+  }
+
+  if (!opp) {
     return {
+      score: 0,
       matchScore: 0,
-      matchedSkills: [],
-      missingSkills: opp?.skills || [],
+      reasons: [],
       matchReasons: [],
+      matchedSkills: [],
+      missingSkills: [],
       skillMatchRatio: '0/0'
     };
   }
 
-  const studentSkills = Array.isArray(studentProfile.skills)
+  const studentSkills = Array.isArray(studentProfile?.skills)
     ? studentProfile.skills.map((s) => String(s).trim().toLowerCase())
-    : typeof studentProfile.skills === 'string'
+    : typeof studentProfile?.skills === 'string'
     ? studentProfile.skills.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
     : [];
 
-  const studentInterests = Array.isArray(studentProfile.interests)
+  const studentInterests = Array.isArray(studentProfile?.interests)
     ? studentProfile.interests.map((i) => String(i).trim().toLowerCase())
-    : typeof studentProfile.interests === 'string'
+    : typeof studentProfile?.interests === 'string'
     ? studentProfile.interests.split(',').map((i) => i.trim().toLowerCase()).filter(Boolean)
     : [];
 
-  const studentBranch = (studentProfile.branch || '').trim().toLowerCase();
-  const studentYear = (studentProfile.year || '').trim().toLowerCase();
+  const studentBranch = (studentProfile?.branch || '').trim().toLowerCase();
+  const studentYear = (studentProfile?.year || '').trim().toLowerCase();
 
   let score = 0;
   const reasons = [];
@@ -114,7 +125,7 @@ export function calculateOpportunityMatch(opp, studentProfile) {
     );
     if (matchesBranch) {
       score += 25;
-      reasons.push(`Eligible for ${studentProfile.branch || 'your'} branch`);
+      reasons.push(`Eligible for ${studentProfile?.branch || 'your'} branch`);
     }
   } else {
     score += 25;
@@ -127,7 +138,7 @@ export function calculateOpportunityMatch(opp, studentProfile) {
     );
     if (matchesYear) {
       score += 20;
-      reasons.push(`Open for ${studentProfile.year || 'your'} year`);
+      reasons.push(`Open for ${studentProfile?.year || 'your'} year`);
     }
   } else {
     score += 20;
@@ -138,7 +149,7 @@ export function calculateOpportunityMatch(opp, studentProfile) {
   const missingSkills = [];
 
   oppSkills.forEach((skill) => {
-    const skillNorm = skill.trim().toLowerCase();
+    const skillNorm = String(skill).trim().toLowerCase();
     const isMatched = studentSkills.some(
       (s) => s === skillNorm || s.includes(skillNorm) || skillNorm.includes(s)
     );
@@ -176,10 +187,11 @@ export function calculateOpportunityMatch(opp, studentProfile) {
   }
 
   // 5. Work Mode Alignment (Weight: 10)
-  if (studentProfile.preferredMode) {
-    if (opp.mode?.toLowerCase() === studentProfile.preferredMode.toLowerCase()) {
+  const oppMode = opp.workMode || opp.mode;
+  if (studentProfile?.preferredMode) {
+    if (oppMode?.toLowerCase() === studentProfile.preferredMode.toLowerCase()) {
       score += 10;
-      reasons.push(`Matches preferred ${opp.mode} mode`);
+      reasons.push(`Matches preferred ${oppMode} mode`);
     }
   } else {
     score += 10;
@@ -188,9 +200,11 @@ export function calculateOpportunityMatch(opp, studentProfile) {
   const finalScore = Math.min(Math.max(score, 10), 99);
 
   return {
+    score: finalScore,
     matchScore: finalScore,
     matchedSkills,
     missingSkills,
+    reasons: reasons.slice(0, 2),
     matchReasons: reasons.slice(0, 2),
     skillMatchRatio: `${matchedSkills.length}/${oppSkills.length || 0}`
   };

@@ -65,7 +65,7 @@ export default function OpportunityDetailPage() {
 
   // Use student profile or fallback default profile for personalized recommendations
   const studentProfile = profile || MOCK_DEFAULT_STUDENT;
-  const matchResult = opportunity ? calculateOpportunityMatch(studentProfile, opportunity) : null;
+  const matchResult = opportunity ? calculateOpportunityMatch(opportunity, studentProfile) : null;
 
   const existingApp = opportunity ? applications.find((a) => a.opportunityId === opportunity.id) : null;
 
@@ -446,18 +446,20 @@ export default function OpportunityDetailPage() {
               </div>
 
               {/* Match reasons */}
-              <div className="space-y-1 text-xs text-slate-200">
-                {matchResult.reasons.map((reason, idx) => (
-                  <div key={idx} className="flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-                    <span>{reason}</span>
-                  </div>
-                ))}
-              </div>
+              {Array.isArray(matchResult.reasons || matchResult.matchReasons) && (
+                <div className="space-y-1 text-xs text-slate-200">
+                  {(matchResult.reasons || matchResult.matchReasons || []).map((reason, idx) => (
+                    <div key={idx} className="flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                      <span>{reason}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Skill Gap Matrix */}
               <div className="pt-3 border-t border-white/10 space-y-3">
-                {matchResult.matchedSkills.length > 0 && (
+                {Array.isArray(matchResult.matchedSkills) && matchResult.matchedSkills.length > 0 && (
                   <div>
                     <span className="text-[11px] uppercase font-bold text-emerald-300">
                       Your Matched Skills ({matchResult.matchedSkills.length})
@@ -475,7 +477,7 @@ export default function OpportunityDetailPage() {
                   </div>
                 )}
 
-                {matchResult.missingSkills.length > 0 && (
+                {Array.isArray(matchResult.missingSkills) && matchResult.missingSkills.length > 0 && (
                   <div>
                     <span className="text-[11px] uppercase font-bold text-rose-300">
                       Skills to Learn ({matchResult.missingSkills.length})
