@@ -21,6 +21,12 @@ export function verifyUrl(url = '') {
       return { isValid: false, reason: 'URL hostname is incomplete' };
     }
 
+    // Check for placeholder domains (example.com, test.com, etc.)
+    const blockedDomains = ['example.com', 'example.org', 'example.net', 'localhost', '127.0.0.1', 'test.com', 'placeholder.com'];
+    if (blockedDomains.some((d) => parsed.hostname.toLowerCase().includes(d))) {
+      return { isValid: false, reason: 'Placeholder or disallowed test domain detected', isPlaceholder: true };
+    }
+
     // Check for suspicious domains / url shorteners with obfuscation
     const suspiciousDomains = ['bit.ly', 'tinyurl.com', 'shorte.st', 'adf.ly'];
     if (suspiciousDomains.some((d) => parsed.hostname.includes(d))) {

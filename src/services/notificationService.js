@@ -8,26 +8,26 @@ const LOCAL_NOTIFICATIONS_KEY = 'campuslaunch_notifications';
 export const INITIAL_NOTIFICATIONS = [
   {
     id: 'notif-1',
-    title: '⏰ Urgent Deadline: AI/ML Engineering Intern',
-    message: 'Synthetix Labs application is closing in less than 6 days. Make sure to complete your submission!',
+    title: '⏰ GSoC 2026 Contributor Submissions',
+    message: 'Google Summer of Code (GSoC) 2026 contributor proposals opening soon. Prepare your open-source proposals!',
     type: 'deadline',
-    link: '/opportunities/opp-1',
+    link: '/opportunities/opp-real-1',
     isRead: false,
     createdAt: new Date(Date.now() - 3600000 * 2).toISOString()
   },
   {
     id: 'notif-2',
-    title: '✨ 95% Match Opportunity Available',
-    message: 'Global HackIndia 2026 matches your CSE branch, 3rd year, and React/Python skills.',
+    title: '✨ Smart India Hackathon (SIH) 2026',
+    message: 'SIH 2026 matches your CSE branch, engineering year, and problem-solving skills.',
     type: 'recommendation',
-    link: '/opportunities/opp-2',
+    link: '/opportunities/opp-real-2',
     isRead: false,
     createdAt: new Date(Date.now() - 86400000).toISOString()
   },
   {
     id: 'notif-3',
     title: '🎉 Application Status Updated',
-    message: 'Your application for Razorflow Payments was marked as "Interview". Check notes.',
+    message: 'Your application for Microsoft Imagine Cup 2026 was marked as "Interview". Check your portal notes.',
     type: 'status_update',
     link: '/applications',
     isRead: true,

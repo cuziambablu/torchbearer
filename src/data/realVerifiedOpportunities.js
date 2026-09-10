@@ -322,9 +322,9 @@ export const REAL_VERIFIED_OPPORTUNITIES = [
       'Relocation assistance and modern technology workstation setup.'
     ],
     applicationProcess: '1. Online Assessment (DSA & CS Core) -> 2. Two Technical Problem-Solving Rounds -> 3. Techno-Managerial Round -> 4. Offer.',
-    applyUrl: 'https://example.com/placement-cell/drive-2027',
-    sourceUrl: 'https://campuslaunch.org/placement-cell',
-    sourceName: 'Official College Placement Cell',
+    applyUrl: 'https://internship.aicte-india.org/',
+    sourceUrl: 'https://internship.aicte-india.org/',
+    sourceName: 'AICTE National Internship & Placement Portal',
     status: 'published',
     verificationStatus: 'verified',
     verifiedAt: '2026-09-06T16:00:00Z',

@@ -10,8 +10,8 @@ import { agentScheduler } from '../services/opportunityAgent/scheduler';
 const OpportunityContext = createContext(null);
 
 export function OpportunityProvider({ children }) {
-  // Combine real verified opportunities as primary dataset
-  const ALL_SEED_OPPORTUNITIES = [...REAL_VERIFIED_OPPORTUNITIES, ...INITIAL_OPPORTUNITIES];
+  // Real verified opportunities as primary initial dataset
+  const ALL_SEED_OPPORTUNITIES = REAL_VERIFIED_OPPORTUNITIES;
 
   // 1. Opportunities State
   const [opportunities, setOpportunities] = useState(() => {
@@ -19,7 +19,16 @@ export function OpportunityProvider({ children }) {
       const saved = localStorage.getItem('campuslaunch_opportunities');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const clean = parsed.filter(o =>
+            o &&
+            o.applyUrl &&
+            !o.applyUrl.includes('example.com') &&
+            !o.applyUrl.includes('example.org') &&
+            !o.applyUrl.includes('test.com')
+          );
+          if (clean.length > 0) return clean;
+        }
       }
       return ALL_SEED_OPPORTUNITIES;
     } catch {
