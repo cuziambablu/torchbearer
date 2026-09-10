@@ -49,7 +49,7 @@ export default class ErrorBoundary extends React.Component {
                 Something went wrong
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-                CampusLaunch encountered an unexpected runtime error. You can reload the page or reset local cache data.
+                Torchbearer AI encountered an unexpected runtime error. You can reload the page or reset local cache data.
               </p>
             </div>
 

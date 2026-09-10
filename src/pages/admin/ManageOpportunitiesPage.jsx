@@ -223,7 +223,7 @@ export default function ManageOpportunitiesPage() {
         isOpen={!!deletingId}
         onClose={() => setDeletingId(null)}
         title="Confirm Deletion"
-        subtitle="This action will permanently delete the opportunity from CampusLaunch."
+        subtitle="This action will permanently delete the opportunity from Torchbearer AI."
       >
         <div className="space-y-4">
           <p className="text-xs text-slate-600">

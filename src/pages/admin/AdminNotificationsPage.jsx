@@ -197,7 +197,7 @@ export default function AdminNotificationsPage() {
                 </label>
                 <input
                   type="url"
-                  placeholder="https://campuslaunch.org/opportunities/..."
+                  placeholder="https://torchbearer.ai/opportunities/..."
                   value={formData.actionUrl}
                   onChange={(e) => setFormData({ ...formData, actionUrl: e.target.value })}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"

@@ -137,7 +137,7 @@ export default function ReportModal({ isOpen, onClose, opportunity }) {
             </div>
             <h4 className="text-lg font-bold text-slate-900">Report Submitted</h4>
             <p className="text-sm text-slate-500 max-w-sm mx-auto">
-              Our moderation team reviews student reports within 24 hours to keep CampusLaunch trustworthy and 100% verified.
+              Our moderation team reviews student reports within 24 hours to keep Torchbearer AI trustworthy and 100% verified.
             </p>
           </div>
         ) : (

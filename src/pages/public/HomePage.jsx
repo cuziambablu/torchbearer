@@ -30,10 +30,13 @@ import {
   Cpu,
   RefreshCw,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  Lightbulb
 } from 'lucide-react';
 import OpportunityCard from '../../components/opportunities/OpportunityCard';
 import Button from '../../components/common/Button';
+import BrandLogo from '../../components/common/BrandLogo';
+import AIGuideModal from '../../components/common/AIGuideModal';
 import { useOpportunities } from '../../context/OpportunityContext';
 import { useAuth } from '../../context/AuthContext';
 import { getDeadlineStatus } from '../../utils/dateUtils';
@@ -43,8 +46,8 @@ import { calculateOpportunityMatch } from '../../utils/recommendation';
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [openFaq, setOpenFaq] = useState(null);
-  const [activeCategoryTab, setActiveCategoryTab] = useState('all');
-  const { opportunities, isAgentRunning, agentStats } = useOpportunities();
+  const [aiGuideOpen, setAiGuideOpen] = useState(false);
+  const { opportunities } = useOpportunities();
   const { profile } = useAuth();
   const navigate = useNavigate();
 
@@ -64,7 +67,7 @@ export default function HomePage() {
     navigate(`/opportunities?search=${encodeURIComponent(term)}`);
   };
 
-  // 1. Trending Opportunities (Featured + High Views)
+  // 1. Trending Opportunities
   const trendingOpportunities = useMemo(() => {
     return safeOpportunities
       .filter((o) => o.status === 'published')
@@ -72,15 +75,7 @@ export default function HomePage() {
       .slice(0, 6);
   }, [safeOpportunities]);
 
-  // 2. Freshly Added by AI
-  const freshOpportunities = useMemo(() => {
-    return safeOpportunities
-      .filter((o) => o.status === 'published')
-      .sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0))
-      .slice(0, 6);
-  }, [safeOpportunities]);
-
-  // 3. Closing Soon (Earliest active deadlines)
+  // 2. Closing Soon
   const closingSoonOpportunities = useMemo(() => {
     return safeOpportunities
       .filter((o) => {
@@ -92,7 +87,7 @@ export default function HomePage() {
       .slice(0, 6);
   }, [safeOpportunities]);
 
-  // 4. AI Recommended for You
+  // 3. AI Recommended for You
   const recommendedOpportunities = useMemo(() => {
     return safeOpportunities
       .filter((o) => o.status === 'published')
@@ -104,24 +99,17 @@ export default function HomePage() {
       .slice(0, 6);
   }, [safeOpportunities, studentProfile]);
 
-  // 5. Hackathons & Competitions
-  const hackathons = useMemo(() => {
-    return safeOpportunities
-      .filter((o) => o.status === 'published' && (o.type === 'Hackathon' || o.type === 'Competition'))
-      .slice(0, 6);
-  }, [safeOpportunities]);
-
-  // 6. Research Fellowships & Grants
+  // 4. Research Programs
   const researchOpportunities = useMemo(() => {
     return safeOpportunities
       .filter((o) => o.status === 'published' && (o.type === 'Research' || o.type === 'Fellowship'))
       .slice(0, 6);
   }, [safeOpportunities]);
 
-  // 7. Remote Opportunities
-  const remoteOpportunities = useMemo(() => {
+  // 5. Hackathons
+  const hackathons = useMemo(() => {
     return safeOpportunities
-      .filter((o) => o.status === 'published' && (o.mode === 'Remote' || o.location?.toLowerCase().includes('remote')))
+      .filter((o) => o.status === 'published' && (o.type === 'Hackathon' || o.type === 'Competition'))
       .slice(0, 6);
   }, [safeOpportunities]);
 
@@ -131,24 +119,24 @@ export default function HomePage() {
 
   const faqs = [
     {
-      q: 'How does CampusLaunch verify that opportunities are genuine?',
-      a: 'Our autonomous AI Opportunity Agent continuously scans registered official foundations, universities, ministries, and enterprise career portals. Every listing undergoes multi-factor verification: URL domain verification, deadline validity, stipend authentication, and duplicate filtering before being published.'
+      q: 'What is Torchbearer AI?',
+      a: 'Torchbearer AI is an intelligent opportunity discovery and career guidance platform for college students. It continuously discovers, authenticates, and matches verified internships, hackathons, research fellowships, and scholarships.'
     },
     {
-      q: 'Are all application links directly to the official portals?',
-      a: 'Yes, 100%. CampusLaunch does not redirect you through intermediary spam walls or affiliate gateways. Clicking "Apply Now" connects you directly to the official organization or government application portal.'
+      q: 'How does Torchbearer AI verify opportunities?',
+      a: 'Our autonomous agent continuously audits registered university programs, open-source foundations, government portals, and enterprise career hubs. It verifies application URLs, confirms deadlines, and blocks placeholder or fraudulent links.'
     },
     {
-      q: 'How does the AI recommendation match score work?',
-      a: 'The engine compares your academic branch, graduation year, core technical skills, and career interests against the structured requirements of each posting using semantic alignment.'
+      q: 'How does the Torchbearer AI Guide work?',
+      a: 'You can ask the AI Guide about your specific skills, goals, and branch (e.g. "I know Python and I want remote research fellowships"). The AI analyzes the active catalog and provides grounded recommendations with personalized interview preparation strategies.'
     },
     {
-      q: 'Is CampusLaunch completely free for students?',
-      a: 'Yes, CampusLaunch is 100% free and open for college students across all engineering and technical disciplines.'
+      q: 'Are all application links direct to official portals?',
+      a: 'Yes, 100%. Torchbearer AI enforces a zero-spam policy. Every single "Apply Now" link connects you directly to the official government or organization portal.'
     },
     {
-      q: 'How often is the opportunity database refreshed?',
-      a: 'The autonomous AI agent audits and refreshes the database every 6 hours, detecting newly released cohorts and automatically archiving expired deadlines.'
+      q: 'Is Torchbearer AI completely free for students?',
+      a: 'Yes, Torchbearer AI is 100% free and open for college students worldwide.'
     }
   ];
 
@@ -157,73 +145,79 @@ export default function HomePage() {
       {/* ========================================================================= */}
       {/* 1. HERO SECTION */}
       {/* ========================================================================= */}
-      <section className="relative pt-12 pb-20 md:pt-20 md:pb-28 overflow-hidden bg-gradient-to-b from-white via-slate-50/70 to-slate-100/50 border-b border-slate-200/80">
-        {/* Subtle Ambient Background Gradients */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[500px] bg-gradient-to-tr from-brand-100/50 via-indigo-100/30 to-purple-100/40 blur-3xl -z-10 pointer-events-none rounded-full animate-pulse-glow" />
-        <div className="absolute top-40 right-10 w-72 h-72 bg-emerald-100/30 blur-3xl -z-10 pointer-events-none rounded-full" />
+      <section className="relative pt-14 pb-20 md:pt-24 md:pb-32 overflow-hidden bg-gradient-to-b from-white via-amber-50/20 to-slate-100/60 border-b border-slate-200/80">
+        {/* Luminous Torch Flare Gradients */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-[480px] bg-gradient-to-tr from-amber-200/40 via-orange-100/30 to-amber-100/20 blur-3xl -z-10 pointer-events-none rounded-full animate-pulse-glow" />
+        <div className="absolute top-32 left-10 w-80 h-80 bg-amber-300/15 blur-3xl -z-10 pointer-events-none rounded-full" />
+        <div className="absolute top-40 right-10 w-80 h-80 bg-orange-300/15 blur-3xl -z-10 pointer-events-none rounded-full" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center text-center max-w-4xl mx-auto space-y-8">
-            {/* Live Agent Pulse Badge */}
-            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/90 border border-slate-200 shadow-subtle text-slate-700 text-xs font-bold tracking-wide animate-fade-in backdrop-blur-md">
+            {/* Tagline Pill */}
+            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/95 border border-amber-200/80 shadow-subtle text-amber-900 text-xs font-bold tracking-wide animate-fade-in backdrop-blur-md">
               <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
               </span>
-              <span className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px]">AI Engine Active</span>
-              <span className="text-slate-300">•</span>
-              <span className="text-slate-500 font-medium">100% Official Verified Portals</span>
+              <span className="text-amber-800 font-extrabold uppercase tracking-wider text-[11px]">TORCHBEARER AI</span>
+              <span className="text-amber-300">•</span>
+              <span className="text-slate-600 font-medium">Light the way to your future</span>
             </div>
 
             {/* Main Headline */}
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-slate-900 tracking-tight leading-[1.1] sm:leading-[1.1] animate-fade-up">
-              Find Your Next <br className="hidden sm:inline" />
-              <span className="text-gradient">
-                Opportunity.
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-slate-950 tracking-tight leading-[1.1] animate-fade-up">
+              Light the way to <br className="hidden sm:inline" />
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700">
+                your future.
               </span>
             </h1>
 
             {/* Subheadline */}
             <p className="text-base sm:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed font-normal">
-              Internships, hackathons, research programs, fellowships, and scholarships — discovered, verified, and categorized by AI.
+              One intelligent platform for the opportunities that shape your career. Internships, hackathons, research programs, and fellowships — found and verified by AI.
             </p>
 
             {/* Modern Search Box with Quick Tags */}
             <div className="w-full max-w-2xl space-y-3">
               <form
                 onSubmit={handleSearchSubmit}
-                className="relative flex items-center bg-white rounded-3xl shadow-xl shadow-slate-200/70 border border-slate-200/90 p-2.5 focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/10 transition-all duration-300"
+                className="relative flex items-center bg-white rounded-3xl shadow-xl shadow-amber-900/5 border border-slate-200/90 p-2.5 focus-within:border-amber-500 focus-within:ring-4 focus-within:ring-amber-500/10 transition-all duration-300"
               >
-                <div className="pl-3.5 pr-2 text-slate-400">
-                  <Search className="w-5 h-5 text-brand-600" />
+                <div className="pl-3.5 pr-2 text-amber-600">
+                  <Search className="w-5 h-5" />
                 </div>
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search internships, hackathons, skills, or companies (e.g. Python, GSoC, AICTE)..."
-                  className="w-full text-sm sm:text-base text-slate-900 placeholder-slate-400 bg-transparent focus:outline-none py-2"
+                  placeholder="Search opportunities by title, organization, or skill (e.g., GSoC, AICTE, CERN)..."
+                  className="w-full text-sm sm:text-base text-slate-900 placeholder-slate-400 bg-transparent focus:outline-none py-2 font-medium"
                 />
-                <Button type="submit" variant="primary" size="md" className="flex-shrink-0 font-bold px-6 shadow-md shadow-brand-600/20">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  className="flex-shrink-0 font-bold px-6 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 shadow-md shadow-amber-500/25"
+                >
                   <span>Explore</span>
                 </Button>
               </form>
 
               {/* Quick Search Chips */}
               <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-xs text-slate-500">
-                <span className="font-semibold text-slate-400">Trending searches:</span>
+                <span className="font-bold text-slate-400">Trending tracks:</span>
                 {[
                   { label: '🔥 Google Summer of Code', query: 'Google Summer of Code' },
                   { label: '🏆 Smart India Hackathon', query: 'Smart India Hackathon' },
                   { label: '🔬 CERN Research', query: 'CERN' },
                   { label: '💼 Amazon WOW', query: 'Amazon WOW' },
-                  { label: '🌐 Remote', query: 'Remote' }
+                  { label: '🌐 Remote Fellowships', query: 'Remote' }
                 ].map((chip, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => handleQuickSearch(chip.query)}
-                    className="px-3 py-1 rounded-full bg-white hover:bg-brand-50 hover:text-brand-700 hover:border-brand-300 text-slate-600 font-medium border border-slate-200/80 transition shadow-xs text-[11px]"
+                    className="px-3 py-1 rounded-full bg-white hover:bg-amber-50 hover:text-amber-800 hover:border-amber-300 text-slate-600 font-semibold border border-slate-200/80 transition shadow-xs text-[11px]"
                   >
                     {chip.label}
                   </button>
@@ -234,54 +228,63 @@ export default function HomePage() {
             {/* Primary Action Buttons */}
             <div className="flex flex-wrap items-center justify-center gap-3.5 pt-2">
               <Link to="/opportunities">
-                <Button variant="primary" size="lg" icon={ArrowRight} iconPosition="right" className="font-extrabold px-8 shadow-lg shadow-brand-600/25">
-                  Explore All Opportunities
+                <Button
+                  variant="primary"
+                  size="lg"
+                  icon={ArrowRight}
+                  iconPosition="right"
+                  className="font-black px-8 bg-slate-950 hover:bg-slate-800 text-white shadow-xl shadow-slate-900/20"
+                >
+                  Explore Opportunities
                 </Button>
               </Link>
-              <Link to="/submit">
-                <Button variant="outline" size="lg" icon={PlusCircle} className="font-bold border-slate-300 hover:bg-slate-50">
-                  Submit an Opportunity
-                </Button>
-              </Link>
+              <button
+                type="button"
+                onClick={() => setAiGuideOpen(true)}
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-white hover:bg-amber-50 text-slate-800 hover:text-amber-800 font-bold text-sm border border-slate-200 shadow-sm transition"
+              >
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span>Ask Torchbearer AI</span>
+              </button>
             </div>
 
-            {/* Interactive Live AI Engine Flow Graphic */}
-            <div className="w-full pt-8 sm:pt-12">
-              <div className="p-6 sm:p-8 rounded-3xl bg-slate-900 text-white shadow-2xl border border-slate-800 relative overflow-hidden text-left">
-                {/* Background glow and grid overlay */}
-                <div className="absolute -right-20 -top-20 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
+            {/* Signature Torchbearer Interactive Guidance Flow */}
+            <div className="w-full pt-10 sm:pt-14">
+              <div className="p-6 sm:p-8 rounded-3xl bg-slate-950 text-white shadow-2xl border border-slate-800 relative overflow-hidden text-left">
+                <div className="absolute -right-20 -top-20 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-slate-800">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-brand-400">
-                      <Cpu className="w-5 h-5 animate-pulse" />
+                    <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+                      <Flame className="w-5 h-5" />
                     </div>
                     <div>
-                      <div className="text-xs font-black uppercase tracking-widest text-brand-400">
-                        Autonomous Ingestion Flow
+                      <div className="text-xs font-black uppercase tracking-widest text-amber-400">
+                        Intelligent Guidance Architecture
                       </div>
                       <div className="text-base sm:text-lg font-black text-white">
-                        How CampusLaunch AI Discovers & Verifies
+                        How Torchbearer AI Illuminates Your Path
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 bg-emerald-950/40 px-3 py-1.5 rounded-xl border border-emerald-800/40">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                    <span>Continuous Radar: 100% Real-Time</span>
+                  <div className="flex items-center gap-2 text-xs font-mono text-amber-400 bg-amber-950/40 px-3 py-1.5 rounded-xl border border-amber-800/40">
+                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                    <span>100% Genuine Portals Audited</span>
                   </div>
                 </div>
 
-                {/* 5 Pipeline Stages Visual */}
+                {/* 5 Stages Flow */}
                 <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 pt-6">
                   {[
-                    { step: '01', title: 'DISCOVER', desc: 'Scan official portals & foundations', icon: Globe, color: 'text-sky-400' },
-                    { step: '02', title: 'UNDERSTAND', desc: 'LLM extracts skills & deadlines', icon: Bot, color: 'text-indigo-400' },
+                    { step: '01', title: 'DISCOVER', desc: 'Scan official portals & foundations', icon: Globe, color: 'text-amber-400' },
+                    { step: '02', title: 'UNDERSTAND', desc: 'LLM extracts skills & deadlines', icon: Bot, color: 'text-orange-400' },
                     { step: '03', title: 'VERIFY', desc: 'Multi-point domain authenticity', icon: ShieldCheck, color: 'text-emerald-400' },
-                    { step: '04', title: 'MATCH', desc: 'Student branch & skill alignment', icon: Sparkles, color: 'text-amber-400' },
-                    { step: '05', title: 'YOUR FUTURE', desc: 'Apply directly on official link', icon: Rocket, color: 'text-rose-400' }
+                    { step: '04', title: 'MATCH', desc: 'Student branch & skill alignment', icon: Sparkles, color: 'text-indigo-400' },
+                    { step: '05', title: 'GUIDE', desc: 'Apply with interview prep strategies', icon: Rocket, color: 'text-rose-400' }
                   ].map((st, i) => (
-                    <div key={i} className="p-4 rounded-2xl bg-slate-800/60 border border-slate-700/50 hover:border-brand-500/50 transition relative group">
+                    <div key={i} className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-amber-500/50 transition relative group">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-mono font-bold text-slate-400">{st.step}</span>
+                        <span className="text-[10px] font-mono font-bold text-slate-500">{st.step}</span>
                         <st.icon className={`w-4 h-4 ${st.color}`} />
                       </div>
                       <h4 className="text-xs font-black tracking-wide text-white mb-1">{st.title}</h4>
@@ -292,23 +295,23 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Live Trust Metrics Bar */}
+            {/* Live Trust Metrics */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full pt-4">
               <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-card text-center">
                 <div className="text-2xl sm:text-3xl font-black text-slate-900">{safeOpportunities.length}+</div>
                 <div className="text-xs font-bold text-slate-500 mt-1">Verified Real Opportunities</div>
               </div>
               <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-card text-center">
-                <div className="text-2xl sm:text-3xl font-black text-brand-600">100%</div>
-                <div className="text-xs font-bold text-slate-500 mt-1">Authentic Official Links</div>
+                <div className="text-2xl sm:text-3xl font-black text-amber-600">100%</div>
+                <div className="text-xs font-bold text-slate-500 mt-1">Direct Official Portals</div>
               </div>
               <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-card text-center">
                 <div className="text-2xl sm:text-3xl font-black text-emerald-600">₹1 Cr+</div>
-                <div className="text-xs font-bold text-slate-500 mt-1">Stipends & Prizes Pool</div>
+                <div className="text-xs font-bold text-slate-500 mt-1">Stipends & Grants Pool</div>
               </div>
               <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-card text-center">
                 <div className="text-2xl sm:text-3xl font-black text-indigo-600">6 Hours</div>
-                <div className="text-xs font-bold text-slate-500 mt-1">Automated Refresh Cycle</div>
+                <div className="text-xs font-bold text-slate-500 mt-1">Autonomous Scan Cycle</div>
               </div>
             </div>
           </div>
@@ -334,7 +337,7 @@ export default function HomePage() {
           </div>
           <Link
             to="/opportunities"
-            className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-brand-600 hover:text-brand-800 transition"
+            className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-amber-600 hover:text-amber-800 transition"
           >
             <span>View All ({safeOpportunities.length})</span>
             <ArrowRight className="w-4 h-4" />
@@ -352,14 +355,14 @@ export default function HomePage() {
       {/* 3. 🤖 AI RECOMMENDED FOR YOU SECTION */}
       {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="p-8 sm:p-10 rounded-3xl bg-gradient-to-br from-indigo-950 via-slate-900 to-brand-950 text-white shadow-2xl border border-indigo-900/50 space-y-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="p-8 sm:p-10 rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white shadow-2xl border border-slate-800 space-y-8 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-indigo-800/40">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
             <div className="space-y-1">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30 text-xs font-bold">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold">
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                <span>Smart Academic Matching</span>
+                <span>Torchbearer AI Match Engine</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
                 Recommended For You
@@ -368,13 +371,14 @@ export default function HomePage() {
                 Matched against {studentProfile.branch} • {studentProfile.year} • {Array.isArray(studentProfile.skills) ? studentProfile.skills.slice(0, 4).join(', ') : 'Tech Skills'}
               </p>
             </div>
-            <Link
-              to="/opportunities"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/10 transition backdrop-blur-sm self-start sm:self-auto"
+            <button
+              type="button"
+              onClick={() => setAiGuideOpen(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold border border-amber-500/30 transition self-start sm:self-auto"
             >
-              <span>Explore All Matches</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Ask AI Guide for More Matches</span>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -386,25 +390,25 @@ export default function HomePage() {
       </section>
 
       {/* ========================================================================= */}
-      {/* 4. ⏰ CLOSING SOON (URGENT DEADLINES) SECTION */}
+      {/* 4. ⏰ CLOSING SOON SECTION */}
       {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2 border-b border-slate-200">
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-extrabold text-rose-600 uppercase tracking-wider mb-1">
               <Clock className="w-4 h-4 text-rose-500" />
-              <span>Time-Sensitive Cohorts</span>
+              <span>Urgent Approaching Deadlines</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               Closing Soon
             </h2>
             <p className="text-sm text-slate-500 mt-1 font-medium">
-              Verified deadlines approaching. Make sure to complete your applications before portals close.
+              Verified deadlines closing within days. Submit your applications before portals shut.
             </p>
           </div>
           <Link
             to="/opportunities"
-            className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-brand-600 hover:text-brand-800 transition"
+            className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-amber-600 hover:text-amber-800 transition"
           >
             <span>View All Deadlines</span>
             <ArrowRight className="w-4 h-4" />
@@ -419,7 +423,40 @@ export default function HomePage() {
       </section>
 
       {/* ========================================================================= */}
-      {/* 5. 🏆 HACKATHONS & CODING BATTLES */}
+      {/* 5. 🔬 PREMIER RESEARCH & FELLOWSHIPS */}
+      {/* ========================================================================= */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2 border-b border-slate-200">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-extrabold text-sky-600 uppercase tracking-wider mb-1">
+              <BookOpen className="w-4 h-4 text-sky-500" />
+              <span>Frontier Science & Academic Labs</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Research Fellowships & Grants
+            </h2>
+            <p className="text-sm text-slate-500 mt-1 font-medium">
+              Paid academic summer fellowships at CERN, TIFR, ISRO, DRDO, IIT Bombay, MITACS, and DAAD.
+            </p>
+          </div>
+          <Link
+            to="/opportunities?type=Research"
+            className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-amber-600 hover:text-amber-800 transition"
+          >
+            <span>View All Research Tracks</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {researchOpportunities.map((opp) => (
+            <OpportunityCard key={opp.id} opportunity={opp} />
+          ))}
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 6. 🏆 HACKATHONS & CODING BATTLES */}
       {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2 border-b border-slate-200">
@@ -432,12 +469,12 @@ export default function HomePage() {
               Hackathons & Competitions
             </h2>
             <p className="text-sm text-slate-500 mt-1 font-medium">
-              Build prototypes, win grand prize pools, and secure fast-track interview rounds.
+              Compete in team hackathons, build ambitious software, and earn grand cash prizes.
             </p>
           </div>
           <Link
             to="/opportunities?type=Hackathon"
-            className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-brand-600 hover:text-brand-800 transition"
+            className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-amber-600 hover:text-amber-800 transition"
           >
             <span>View All Hackathons</span>
             <ArrowRight className="w-4 h-4" />
@@ -452,85 +489,52 @@ export default function HomePage() {
       </section>
 
       {/* ========================================================================= */}
-      {/* 6. 🔬 RESEARCH FELLOWSHIPS & GRANTS */}
-      {/* ========================================================================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2 border-b border-slate-200">
-          <div>
-            <div className="inline-flex items-center gap-1.5 text-xs font-extrabold text-sky-600 uppercase tracking-wider mb-1">
-              <BookOpen className="w-4 h-4 text-sky-500" />
-              <span>Premier Academic Laboratories</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Research Programs & Fellowships
-            </h2>
-            <p className="text-sm text-slate-500 mt-1 font-medium">
-              Paid academic research summer internships at CERN, ISRO, DRDO, IIT Bombay, and IISc.
-            </p>
-          </div>
-          <Link
-            to="/opportunities?type=Research"
-            className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-brand-600 hover:text-brand-800 transition"
-          >
-            <span>View All Research Fellowships</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {researchOpportunities.map((opp) => (
-            <OpportunityCard key={opp.id} opportunity={opp} />
-          ))}
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 7. "MEET YOUR OPPORTUNITY AI" SECTION */}
+      {/* 7. "MEET YOUR AI OPPORTUNITY GUIDE" SECTION */}
       {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-slate-900 rounded-3xl p-8 sm:p-12 text-white border border-slate-800 relative overflow-hidden shadow-2xl">
+        <div className="bg-slate-950 rounded-3xl p-8 sm:p-12 text-white border border-slate-800 relative overflow-hidden shadow-2xl">
           <div className="max-w-3xl space-y-4 mb-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30 text-xs font-bold">
-              <Bot className="w-4 h-4 text-brand-400" />
-              <span>CampusLaunch Intelligence Engine</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold">
+              <Bot className="w-4 h-4 text-amber-400" />
+              <span>Meet Your AI Opportunity Guide</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
-              Meet Your Opportunity AI
+              Torchbearer AI searches, understands, and verifies.
             </h2>
             <p className="text-sm sm:text-base text-slate-300 leading-relaxed font-normal">
-              Unlike traditional job portals loaded with outdated ads and expired links, CampusLaunch runs an 11-stage autonomous agent pipeline to keep every opportunity genuine, active, and tailored for college students.
+              Spend less time searching through fragmented job boards and spam links. Torchbearer AI autonomously scans legitimate sources, extracts structured requirements, and prepares you to apply with confidence.
             </p>
           </div>
 
-          {/* 3 Value Proposition Cards */}
+          {/* 3 Pillars Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-6 rounded-2xl bg-slate-800/70 border border-slate-700/60 space-y-3">
+            <div className="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <Flame className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-black text-white">Direction & Focus</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Personalized match calculations help you discover opportunities precisely tailored to your engineering branch, year, and technical skills.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                 <ShieldCheck className="w-5 h-5" />
               </div>
-              <h3 className="text-base font-black text-white">Zero Fake Links Policy</h3>
+              <h3 className="text-base font-black text-white">100% Genuine Portals</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Automated multi-point verification blocks spam and enforces that every application URL directly opens authentic official portals.
+                Zero placeholder URLs or affiliate walls. Every single application destination connects directly to the official organization.
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl bg-slate-800/70 border border-slate-700/60 space-y-3">
+            <div className="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3">
               <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
                 <Sparkles className="w-5 h-5" />
               </div>
-              <h3 className="text-base font-black text-white">AI Strategy & Interview Prep</h3>
+              <h3 className="text-base font-black text-white">AI Interview Strategies</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Powered by GLM 5.3, the agent analyzes job requirements and generates custom interview study plans and key skill focus areas.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-slate-800/70 border border-slate-700/60 space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                <Clock className="w-5 h-5" />
-              </div>
-              <h3 className="text-base font-black text-white">Automated Freshness Engine</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Past deadlines are automatically transitioned to Expired so you never waste time applying to closed opportunities.
+                Powered by GLM 5.3, the agent analyzes job specs and generates actionable study action items and recommended tech stack prep for interviews.
               </p>
             </div>
           </div>
@@ -542,7 +546,7 @@ export default function HomePage() {
       {/* ========================================================================= */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         <div className="text-center space-y-2 mb-8">
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 uppercase tracking-wider">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-600 uppercase tracking-wider">
             <HelpCircle className="w-4 h-4" />
             <span>Got Questions?</span>
           </div>
@@ -565,7 +569,7 @@ export default function HomePage() {
                 <span className="text-sm sm:text-base font-bold text-slate-900">{faq.q}</span>
                 <ChevronDown
                   className={`w-4 h-4 text-slate-400 transition-transform duration-300 flex-shrink-0 ${
-                    openFaq === idx ? 'transform rotate-180 text-brand-600' : ''
+                    openFaq === idx ? 'transform rotate-180 text-amber-600' : ''
                   }`}
                 />
               </button>
@@ -583,29 +587,40 @@ export default function HomePage() {
       {/* 9. BOTTOM CALL TO ACTION */}
       {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="p-8 sm:p-12 rounded-3xl bg-gradient-to-r from-brand-600 via-indigo-600 to-purple-600 text-white text-center shadow-xl space-y-6 relative overflow-hidden">
+        <div className="p-8 sm:p-12 rounded-3xl bg-gradient-to-r from-slate-950 via-slate-900 to-amber-950 text-white text-center shadow-xl space-y-6 relative overflow-hidden border border-amber-900/40">
           <div className="max-w-2xl mx-auto space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold">
+              <Flame className="w-3.5 h-3.5" />
+              <span>Light the way to your future</span>
+            </div>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
-              Ready to Launch Your Career?
+              Ready to Discover Your Next Opportunity?
             </h2>
-            <p className="text-sm sm:text-base text-indigo-100 font-medium leading-relaxed">
-              Explore hundreds of verified student opportunities or share an authentic opening from your college placement cell.
+            <p className="text-sm sm:text-base text-slate-300 font-normal leading-relaxed">
+              Create your free student profile to get personalized recommendations, deadline alerts, and AI-powered preparation advice.
             </p>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <div className="flex flex-wrap items-center justify-center gap-3.5 pt-2">
             <Link to="/opportunities">
-              <Button variant="secondary" size="lg" className="font-extrabold px-8 bg-white text-brand-700 hover:bg-brand-50 shadow-lg">
+              <Button
+                variant="primary"
+                size="lg"
+                className="font-extrabold px-8 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 shadow-lg shadow-amber-500/25"
+              >
                 Explore All Opportunities
               </Button>
             </Link>
             <Link to="/register">
-              <Button variant="outline" size="lg" className="font-bold border-white/40 text-white hover:bg-white/10">
-                Create Free Student Account
+              <Button variant="outline" size="lg" className="font-bold border-slate-700 text-white hover:bg-white/10">
+                Create Free Profile
               </Button>
             </Link>
           </div>
         </div>
       </section>
+
+      {/* AI Guide Modal */}
+      <AIGuideModal isOpen={aiGuideOpen} onClose={() => setAiGuideOpen(false)} />
     </div>
   );
 }

@@ -26,6 +26,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useOpportunities } from '../context/OpportunityContext';
 import { isSupabaseConfigured } from '../services/supabase';
+import BrandLogo from '../components/common/BrandLogo';
 
 export default function AdminLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -65,19 +66,9 @@ export default function AdminLayout() {
       <aside className="hidden md:flex flex-col w-64 bg-slate-900 border-r border-slate-800 h-screen sticky top-0 z-30 flex-shrink-0">
         {/* Brand Header */}
         <div className="h-16 flex items-center justify-between px-5 border-b border-slate-800">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-500 to-indigo-600 flex items-center justify-center text-white shadow-md">
-              <ShieldCheck className="w-4 h-4 text-white" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-black text-sm tracking-tight text-white leading-none">
-                CampusLaunch
-              </span>
-              <span className="text-[10px] text-brand-400 font-bold uppercase tracking-wider mt-0.5">
-                Admin Console
-              </span>
-            </div>
-          </div>
+          <Link to="/admin/dashboard" className="flex items-center">
+            <BrandLogo size="sm" isDark={true} subtitle="Command Center" />
+          </Link>
         </div>
 
         {/* Navigation Items */}
@@ -132,7 +123,7 @@ export default function AdminLayout() {
                 {user?.name || 'Administrator'}
               </div>
               <div className="text-[10px] text-slate-400 truncate">
-                {user?.email || 'admin@campuslaunch.org'}
+                {user?.email || 'admin@torchbearer.ai'}
               </div>
             </div>
 
@@ -159,7 +150,7 @@ export default function AdminLayout() {
               <Menu className="w-5 h-5" />
             </button>
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider hidden sm:inline">
-              CampusLaunch Enterprise Administration
+              Torchbearer AI Enterprise Command Center
             </span>
           </div>
 
@@ -199,7 +190,7 @@ export default function AdminLayout() {
           <div className="relative w-72 bg-slate-900 h-full p-5 shadow-2xl overflow-y-auto z-10 flex flex-col justify-between border-r border-slate-800">
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
-                <span className="font-black text-base text-white">CampusLaunch Admin</span>
+                <BrandLogo size="sm" isDark={true} subtitle="Admin" />
                 <button
                   onClick={() => setMobileMenuOpen(false)}
                   className="p-1 text-slate-400 hover:text-white"

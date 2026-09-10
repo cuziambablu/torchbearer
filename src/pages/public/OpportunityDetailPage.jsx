@@ -79,11 +79,10 @@ export default function OpportunityDetailPage() {
   // Dynamic SEO Page Title
   useEffect(() => {
     if (opportunity) {
-      document.title = `${opportunity.title} at ${opportunity.organization} — CampusLaunch`;
+      document.title = `${opportunity.title} at ${opportunity.organization} — Torchbearer AI`;
+    } else {
+      document.title = 'Torchbearer AI — Light the way to your future.';
     }
-    return () => {
-      document.title = 'CampusLaunch — Discover. Apply. Grow.';
-    };
   }, [opportunity]);
 
   if (!opportunity) {
@@ -559,7 +558,7 @@ export default function OpportunityDetailPage() {
             </h3>
             <div className="p-3 bg-emerald-50/50 rounded-2xl border border-emerald-100 space-y-1 text-xs text-slate-700">
               <p className="font-bold text-emerald-900 flex items-center gap-1">
-                <span>✓ Verified by CampusLaunch</span>
+                <span>✓ Verified by Torchbearer AI</span>
               </p>
               <p className="text-slate-500">
                 Source: <span className="font-semibold text-slate-800">{opportunity.sourceName || 'Official Portal'}</span>

@@ -72,7 +72,7 @@ const DEFAULT_SOURCES = [
     id: 'src-6',
     name: 'Student Community Verified Submissions',
     type: 'Community Moderated',
-    url: 'https://campuslaunch.org/submit',
+    url: 'https://torchbearer.ai/submit',
     lastFetched: '2026-09-08T19:20:00Z',
     status: 'healthy',
     count: 6,

@@ -103,7 +103,7 @@ export default function StudentLoginPage() {
         interests: ['Internships', 'Hackathons']
       });
 
-      addToast('Account created successfully! Welcome to CampusLaunch.', 'success');
+      addToast('Account created successfully! Welcome to Torchbearer AI.', 'success');
       navigate('/student/dashboard', { replace: true });
     } catch (err) {
       setErrorMsg(err.message || 'Registration failed. Please try again.');
@@ -262,7 +262,7 @@ export default function StudentLoginPage() {
               </div>
 
               <div className="text-center text-xs text-slate-500 pt-2 border-t border-slate-100">
-                <span>New to CampusLaunch? </span>
+                <span>New to Torchbearer AI? </span>
                 <button
                   type="button"
                   onClick={() => {

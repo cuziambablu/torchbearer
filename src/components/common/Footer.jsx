@@ -1,38 +1,41 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, Heart, Github, Linkedin, Twitter, ExternalLink, ShieldCheck } from 'lucide-react';
+import { Sparkles, ShieldCheck, Github, Linkedin, Twitter, Flame, Compass } from 'lucide-react';
+import BrandLogo from './BrandLogo';
 
 export default function Footer() {
   return (
-    <footer className="bg-slate-900 text-slate-400 border-t border-slate-800 text-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+    <footer className="bg-slate-950 text-slate-400 border-t border-slate-800 text-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
           {/* Col 1: Brand & Tagline */}
           <div className="md:col-span-1 space-y-4">
-            <Link to="/" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-brand-500 flex items-center justify-center text-white shadow-md">
-                <Sparkles className="w-4 h-4 text-amber-300" />
-              </div>
-              <span className="text-lg font-black tracking-tight text-white">
-                Campus<span className="text-brand-400">Launch</span>
-              </span>
-            </Link>
+            <BrandLogo size="md" variant="dark" href="/" />
             <p className="text-xs text-slate-400 leading-relaxed">
-              The centralized opportunity discovery platform designed exclusively for college students. Unlocking top internships, hackathons, fellowships, and scholarships.
+              Torchbearer AI helps students find direction, discover verified opportunities, and move confidently toward their future.
             </p>
-            <div className="flex items-center gap-3 text-slate-400">
-              <a href="#" className="hover:text-white transition"><Twitter className="w-4 h-4" /></a>
-              <a href="#" className="hover:text-white transition"><Github className="w-4 h-4" /></a>
-              <a href="#" className="hover:text-white transition"><Linkedin className="w-4 h-4" /></a>
+            <div className="text-xs font-bold text-amber-400/90 tracking-wide">
+              Light the way to your future.
+            </div>
+            <div className="flex items-center gap-3 text-slate-400 pt-1">
+              <a href="https://twitter.com" target="_blank" rel="noreferrer" className="hover:text-amber-400 transition"><Twitter className="w-4 h-4" /></a>
+              <a href="https://github.com" target="_blank" rel="noreferrer" className="hover:text-amber-400 transition"><Github className="w-4 h-4" /></a>
+              <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="hover:text-amber-400 transition"><Linkedin className="w-4 h-4" /></a>
             </div>
           </div>
 
           {/* Col 2: Opportunities */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200 mb-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200 mb-3.5">
               Explore
             </h4>
-            <ul className="space-y-2 text-xs">
+            <ul className="space-y-2.5 text-xs">
+              <li>
+                <Link to="/opportunities" className="hover:text-white transition flex items-center gap-1.5">
+                  <Compass className="w-3.5 h-3.5 text-amber-500" />
+                  <span>All Opportunities</span>
+                </Link>
+              </li>
               <li>
                 <Link to="/opportunities?type=Internship" className="hover:text-white transition">
                   Internships 2026
@@ -44,8 +47,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/opportunities?type=Competition" className="hover:text-white transition">
-                  Coding Competitions
+                <Link to="/opportunities?type=Research" className="hover:text-white transition">
+                  Research Fellowships
                 </Link>
               </li>
               <li>
@@ -53,20 +56,15 @@ export default function Footer() {
                   STEM Scholarships
                 </Link>
               </li>
-              <li>
-                <Link to="/opportunities?type=Fellowship" className="hover:text-white transition">
-                  Open Source Fellowships
-                </Link>
-              </li>
             </ul>
           </div>
 
-          {/* Col 3: Student Tools */}
+          {/* Col 3: Student Platform */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200 mb-3">
-              Student Platform
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200 mb-3.5">
+              Torchbearer AI
             </h4>
-            <ul className="space-y-2 text-xs">
+            <ul className="space-y-2.5 text-xs">
               <li>
                 <Link to="/dashboard" className="hover:text-white transition">
                   Student Dashboard
@@ -88,8 +86,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/profile" className="hover:text-white transition">
-                  Skill & Profile Setup
+                <Link to="/about" className="hover:text-white transition">
+                  About the Platform
                 </Link>
               </li>
             </ul>
@@ -97,23 +95,26 @@ export default function Footer() {
 
           {/* Col 4: Trust & Verification */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200 mb-3 flex items-center gap-1.5">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200 mb-3.5 flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              Verified Links
+              100% Verified Links
             </h4>
             <p className="text-xs text-slate-400 leading-relaxed mb-3">
-              Every opportunity is curated and verified by our student review board. Direct official application links only — zero spam.
+              Every opportunity is continuously audited by Torchbearer AI Agent. Direct official application links only — zero spam, zero placeholder URLs.
             </p>
-            <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700/60 text-[11px] text-slate-300">
-              💡 Have an opportunity to share? <Link to="/submit" className="text-brand-400 hover:underline font-medium">Contribute it here</Link>.
+            <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 text-[11px] text-slate-300">
+              💡 Have an authentic opening to share? <Link to="/submit" className="text-amber-400 hover:underline font-bold">Submit it here</Link>.
             </div>
           </div>
         </div>
 
-        <div className="pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <p>© 2026 CampusLaunch. Built with precision for students worldwide.</p>
-          <div className="flex items-center gap-1">
-            <span>Discover. Apply. Grow.</span>
+        <div className="pt-8 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+          <p>© 2026 Torchbearer AI. All rights reserved.</p>
+          <div className="flex items-center gap-4 text-xs">
+            <Link to="/about" className="hover:text-slate-300 transition">About</Link>
+            <Link to="/contact" className="hover:text-slate-300 transition">Contact</Link>
+            <span className="text-slate-600">•</span>
+            <span className="text-amber-400/80 font-medium">Light the way to your future.</span>
           </div>
         </div>
       </div>

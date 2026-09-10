@@ -98,7 +98,7 @@ export default function CsvImportPage() {
       });
 
       addToast(
-        `Successfully imported ${parsingResult.validRows.length} opportunities into CampusLaunch!`,
+        `Successfully imported ${parsingResult.validRows.length} opportunities into Torchbearer AI!`,
         'success'
       );
       navigate('/admin/opportunities');

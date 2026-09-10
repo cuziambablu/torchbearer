@@ -10,6 +10,7 @@ import {
   Key
 } from 'lucide-react';
 import Button from '../../components/common/Button';
+import BrandLogo from '../../components/common/BrandLogo';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { MOCK_ADMIN_USER } from '../../data/mockOpportunities';
@@ -67,12 +68,9 @@ export default function AdminLoginPage() {
     <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 text-white animate-fade-in selection:bg-brand-500 selection:text-white">
       {/* Header */}
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-500 to-indigo-600 flex items-center justify-center text-white shadow-xl shadow-brand-500/20 mx-auto mb-4 border border-brand-400/20">
-          <ShieldCheck className="w-6 h-6" />
+        <div className="flex justify-center mb-4">
+          <BrandLogo size="lg" isDark={true} subtitle="Enterprise Command Center" />
         </div>
-        <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-          CampusLaunch Administration
-        </h1>
         <p className="mt-1.5 text-xs text-slate-400">
           Secure administrator access for platform operations & verification.
         </p>
@@ -100,7 +98,7 @@ export default function AdminLoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@campuslaunch.org"
+                  placeholder="admin@torchbearer.ai"
                   className="w-full pl-10 pr-3.5 py-2.5 text-xs bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
                 />
               </div>

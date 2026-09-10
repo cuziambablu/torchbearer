@@ -92,7 +92,7 @@ export default function AuthLandingPage() {
         interests: ['Internships', 'Hackathons']
       });
 
-      addToast('Account created successfully! Welcome to CampusLaunch.', 'success');
+      addToast('Account created successfully! Welcome to Torchbearer AI.', 'success');
       navigate('/student/dashboard', { replace: true });
     } catch (err) {
       setErrorMsg(err.message || 'Registration failed. Please try again.');

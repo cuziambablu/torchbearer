@@ -21,6 +21,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import NotificationBell from '../components/common/NotificationBell';
+import BrandLogo from '../components/common/BrandLogo';
 import { useAuth } from '../context/AuthContext';
 import { useOpportunities } from '../context/OpportunityContext';
 
@@ -66,19 +67,9 @@ export default function StudentLayout() {
       {/* 1. Desktop Persistent Sidebar */}
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-slate-200/90 h-screen sticky top-0 z-30 flex-shrink-0">
         {/* Brand Header */}
-        <div className="h-16 flex items-center px-6 border-b border-slate-100">
-          <Link to="/student/dashboard" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform">
-              <Sparkles className="w-4 h-4 text-amber-300" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-black text-base tracking-tight text-slate-900 group-hover:text-brand-600 transition leading-none">
-                Campus<span className="text-brand-600">Launch</span>
-              </span>
-              <span className="text-[9px] text-brand-600 font-bold uppercase tracking-wider mt-0.5">
-                Student Portal
-              </span>
-            </div>
+        <div className="h-16 flex items-center px-5 border-b border-slate-100">
+          <Link to="/student/dashboard" className="flex items-center">
+            <BrandLogo size="sm" subtitle="Student Portal" />
           </Link>
         </div>
 
@@ -240,7 +231,7 @@ export default function StudentLayout() {
           <div className="relative w-72 bg-white h-full p-5 shadow-2xl overflow-y-auto z-10 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
-                <span className="font-black text-base text-slate-900">CampusLaunch</span>
+                <BrandLogo size="sm" subtitle="Student" />
                 <button
                   onClick={() => setMobileSidebarOpen(false)}
                   className="p-1 text-slate-400 hover:text-slate-600"
