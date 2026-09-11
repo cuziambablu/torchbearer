@@ -83,24 +83,18 @@ export default function StudentDashboardPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Link to="/opportunities">
-              <Button
-                variant="primary"
-                size="md"
-                className="bg-white text-slate-900 hover:bg-slate-100 shadow-none font-bold"
-                icon={Compass}
-              >
-                Browse All
-              </Button>
+            <Link
+              to="/student/opportunities"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 text-sm font-bold shadow-md transition active:scale-95"
+            >
+              <Compass className="w-4 h-4 text-amber-600" />
+              <span>Browse All</span>
             </Link>
-            <Link to="/profile">
-              <Button
-                variant="outline"
-                size="md"
-                className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-              >
-                Edit Preferences
-              </Button>
+            <Link
+              to="/student/profile"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold border border-white/20 transition active:scale-95"
+            >
+              <span>Edit Preferences</span>
             </Link>
           </div>
         </div>
@@ -141,7 +135,7 @@ export default function StudentDashboardPage() {
             </h2>
           </div>
           <Link
-            to="/saved"
+            to="/student/saved"
             className="text-xs font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1"
           >
             <span>View all saved</span>
@@ -154,7 +148,7 @@ export default function StudentDashboardPage() {
             {trackedOpportunities.map((opp) => (
               <Link
                 key={opp.id}
-                to={`/opportunities/${opp.id}`}
+                to={`/student/opportunities/${opp.id}`}
                 className="group bg-white rounded-2xl border border-slate-200/90 p-4 shadow-card hover:shadow-card-hover hover:border-amber-300 transition-all flex flex-col justify-between"
               >
                 <div>
