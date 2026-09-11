@@ -15,14 +15,14 @@ import Button from '../../components/common/Button';
 import BrandLogo from '../../components/common/BrandLogo';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { YEARS } from '../../data/mockOpportunities';
+import { BRANCHES, YEARS } from '../../data/mockOpportunities';
 
 export default function StudentSignupPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     college: '',
-    branch: '',
+    branch: BRANCHES[0],
     year: '3rd Year',
     password: '',
     confirmPassword: ''

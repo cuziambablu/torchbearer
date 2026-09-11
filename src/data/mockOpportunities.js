@@ -18,7 +18,33 @@ export const OPPORTUNITY_TYPES = [
   { id: 'Career Event', label: 'Career Events', icon: 'Calendar', emoji: '🎙️', desc: 'AMA sessions, tech talks & virtual fairs' },
 ];
 
-export const BRANCHES = ['CSE', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Other'];
+export const BRANCHES = [
+  'Computer Science & Engineering (CSE)',
+  'Information Technology (IT)',
+  'Artificial Intelligence & Machine Learning (AI & ML)',
+  'Data Science & Artificial Intelligence',
+  'Electronics & Communication Engineering (ECE)',
+  'Electrical & Electronics Engineering (EEE)',
+  'Mechanical Engineering (MECH)',
+  'Civil Engineering (CIVIL)',
+  'Robotics & Automation Engineering',
+  'Cyber Security & Digital Forensics',
+  'Software Engineering',
+  'Aerospace & Aeronautical Engineering',
+  'Biotechnology & Biomedical Engineering',
+  'Chemical Engineering',
+  'Mechatronics & IoT Engineering',
+  'Automobile & EV Engineering',
+  'Industrial & Production Engineering',
+  'Metallurgical & Materials Engineering',
+  'Instrumentation & Control Engineering (ICE)',
+  'Environmental & Energy Engineering',
+  'Marine & Ocean Engineering',
+  'Mining Engineering',
+  'Petroleum & Petrochemical Engineering',
+  'Agricultural & Food Engineering',
+  'Other Engineering / General'
+];
 export const YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
 export const MODES = ['Remote', 'Hybrid', 'On-site'];
 

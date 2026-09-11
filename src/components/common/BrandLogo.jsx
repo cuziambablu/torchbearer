@@ -33,7 +33,7 @@ export default function BrandLogo({
             src="/logo.png"
             alt="Torchbearer AI"
             onError={() => setImgError(true)}
-            className="w-full h-full object-contain rounded-full drop-shadow-[0_2px_10px_rgba(249,115,22,0.4)]"
+            className="w-full h-full object-contain filter drop-shadow-[0_2px_8px_rgba(249,115,22,0.35)]"
           />
         ) : (
           <svg

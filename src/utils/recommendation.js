@@ -120,9 +120,17 @@ export function calculateOpportunityMatch(arg1, arg2) {
 
   // 1. Target Branch Match (Weight: 25)
   if (oppTargetBranches.length > 0) {
-    const matchesBranch = oppTargetBranches.some(
-      (b) => b.toLowerCase() === studentBranch || b.toLowerCase() === 'other' || b.toLowerCase() === 'all'
-    );
+    const matchesBranch = oppTargetBranches.some((b) => {
+      const bLow = b.trim().toLowerCase();
+      if (!studentBranch || bLow === 'other' || bLow === 'all' || bLow.includes('other engineering')) return true;
+      if (bLow === studentBranch) return true;
+      if (studentBranch.includes(bLow) || bLow.includes(studentBranch)) return true;
+      const bAcronym = (b.match(/\(([^)]+)\)/) || [])[1]?.toLowerCase();
+      const sAcronym = (studentProfile?.branch?.match(/\(([^)]+)\)/) || [])[1]?.toLowerCase();
+      if (bAcronym && (bAcronym === studentBranch || sAcronym === bAcronym)) return true;
+      if (sAcronym && (bLow.includes(sAcronym) || sAcronym === bLow)) return true;
+      return false;
+    });
     if (matchesBranch) {
       score += 25;
       reasons.push(`Eligible for ${studentProfile?.branch || 'your'} branch`);
