@@ -135,7 +135,7 @@ export default function StudentLoginPage() {
           <BrandLogo size="lg" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-          {activeTab === 'login' ? 'Find Your Next Opportunity' : 'Create Your Student Account'}
+          {activeTab === 'login' ? 'Welcome Back' : 'Create Your Student Account'}
         </h1>
         <p className="mt-1.5 text-xs sm:text-sm text-slate-500">
           {activeTab === 'login'
@@ -188,13 +188,13 @@ export default function StudentLoginPage() {
           )}
 
           {/* ========================================================= */}
-          {/* TAB 1: SIGN IN FORM                                       */}
+          {/* TAB 1: SIGN IN FORM (EMAIL + PASSWORD ONLY)                */}
           {/* ========================================================= */}
           {activeTab === 'login' && (
             <form onSubmit={handleLogin} className="space-y-4 animate-fade-in">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                  College / Student Email
+                  Student Email
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -203,7 +203,7 @@ export default function StudentLoginPage() {
                     required
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="student@college.edu"
+                    placeholder="student@example.com"
                     className="w-full pl-10 pr-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition"
                   />
                 </div>
@@ -244,21 +244,8 @@ export default function StudentLoginPage() {
                 Sign In to Student Portal
               </Button>
 
-              {/* Demo Account Quick Access */}
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={handleQuickDemoStudent}
-                  disabled={loading}
-                  className="w-full py-2.5 px-3 bg-brand-50 hover:bg-brand-100 text-brand-800 text-xs font-bold rounded-xl border border-brand-200 flex items-center justify-center gap-2 transition"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-brand-600" />
-                  <span>Continue as Demo Student (Aarav Sharma)</span>
-                </button>
-              </div>
-
-              <div className="text-center text-xs text-slate-500 pt-2 border-t border-slate-100">
-                <span>New to Torchbearer AI? </span>
+              <div className="text-center text-xs text-slate-500 pt-3 border-t border-slate-100">
+                <span>Don't have an account? </span>
                 <button
                   type="button"
                   onClick={() => {
