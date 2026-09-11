@@ -13,7 +13,7 @@ export function OpportunityProvider({ children }) {
   // Real verified opportunities as primary initial dataset
   const ALL_SEED_OPPORTUNITIES = REAL_VERIFIED_OPPORTUNITIES;
 
-  // 1. Opportunities State
+  // 1. Opportunities State — auto-merge new verified seed opportunities with any local additions
   const [opportunities, setOpportunities] = useState(() => {
     try {
       const saved = localStorage.getItem('campuslaunch_opportunities');
@@ -27,9 +27,21 @@ export function OpportunityProvider({ children }) {
             !o.applyUrl.includes('example.org') &&
             !o.applyUrl.includes('test.com')
           );
+          
+          // Merge newly added seed opportunities by ID
+          const existingIds = new Set(clean.map(o => o.id));
+          const newSeeds = ALL_SEED_OPPORTUNITIES.filter(o => !existingIds.has(o.id));
+          
+          if (newSeeds.length > 0) {
+            const merged = [...clean, ...newSeeds];
+            localStorage.setItem('campuslaunch_opportunities', JSON.stringify(merged));
+            return merged;
+          }
+          
           if (clean.length > 0) return clean;
         }
       }
+      localStorage.setItem('campuslaunch_opportunities', JSON.stringify(ALL_SEED_OPPORTUNITIES));
       return ALL_SEED_OPPORTUNITIES;
     } catch {
       return ALL_SEED_OPPORTUNITIES;
