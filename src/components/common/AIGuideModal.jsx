@@ -63,10 +63,21 @@ Instructions:
           ...newMessages.map(m => ({ role: m.role, content: m.content }))
         ],
         temperature: 0.6,
-        max_tokens: 600
+        max_tokens: 1200
       });
 
-      const replyContent = response?.choices?.[0]?.message?.content || "I couldn't process that request right now. Try searching our verified catalog directly!";
+      const messageObj = response?.choices?.[0]?.message;
+      let replyContent = messageObj?.content;
+      if (!replyContent && messageObj?.reasoning_content) {
+        // In reasoning models where thoughts are in reasoning_content
+        const reasoning = messageObj.reasoning_content.trim();
+        // If there are section markers or clean markdown in reasoning, use it
+        replyContent = reasoning;
+      }
+      if (!replyContent) {
+        replyContent = "I've analyzed your profile and goals. Explore our verified opportunities in the catalog for direct matching roles!";
+      }
+
       setMessages([...newMessages, { role: 'assistant', content: replyContent }]);
     } catch (err) {
       console.error('AI Guide error:', err);

@@ -68,7 +68,8 @@ Return raw JSON only:`;
       max_tokens: 1500
     });
 
-    const content = response?.choices?.[0]?.message?.content?.trim();
+    const messageObj = response?.choices?.[0]?.message;
+    const content = messageObj?.content?.trim() || messageObj?.reasoning_content?.trim();
     if (!content) return opportunity;
 
     const parsed = safeJsonParse(content);
