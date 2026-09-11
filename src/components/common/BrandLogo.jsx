@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import logoImg from '../../assets/logo.png';
 
 export default function BrandLogo({
   size = 'md',
@@ -25,15 +26,15 @@ export default function BrandLogo({
   const subColor = isDarkMode ? 'text-amber-400' : 'text-amber-600';
 
   const logoContent = (
-    <div className={`inline-flex items-center gap-3 select-none ${className}`}>
+    <div className={`inline-flex items-center gap-3 select-none bg-transparent ${className}`}>
       {/* Glowing Circular Ring Logo Emblem */}
-      <div className={`relative flex items-center justify-center flex-shrink-0 rounded-full ${sizeClasses.icon} transition-transform duration-300 group-hover:scale-105`}>
+      <div className={`relative flex items-center justify-center flex-shrink-0 bg-transparent ${sizeClasses.icon} transition-transform duration-300 group-hover:scale-105`}>
         {!imgError ? (
           <img
-            src="/logo.png"
+            src={logoImg}
             alt="Torchbearer AI"
             onError={() => setImgError(true)}
-            className="w-full h-full object-contain filter drop-shadow-[0_2px_8px_rgba(249,115,22,0.35)]"
+            className="w-full h-full object-contain bg-transparent border-0 outline-none select-none filter drop-shadow-[0_2px_8px_rgba(249,115,22,0.35)]"
           />
         ) : (
           <svg
