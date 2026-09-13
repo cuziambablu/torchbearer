@@ -26,7 +26,7 @@ import BrandLogo from './BrandLogo';
 import AIGuideModal from './AIGuideModal';
 
 export default function Navbar() {
-  const { user, isAuthenticated, isAdmin, isStudent, logout } = useAuth();
+  const { user, isAuthenticated, isStudent, logout } = useAuth();
   const { savedIds, applications } = useOpportunities();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -103,23 +103,6 @@ export default function Navbar() {
                     </NavLink>
                   </>
                 )}
-
-                {isAuthenticated && isAdmin && (
-                  <>
-                    <NavLink to="/admin" end className={navLinkClass}>
-                      <LayoutDashboard className="w-4 h-4" />
-                      <span>Command Center</span>
-                    </NavLink>
-                    <NavLink to="/admin/opportunities" className={navLinkClass}>
-                      <Compass className="w-4 h-4" />
-                      <span>Manage</span>
-                    </NavLink>
-                    <NavLink to="/admin/agent" className={navLinkClass}>
-                      <Bot className="w-4 h-4 text-amber-600" />
-                      <span>AI Agent</span>
-                    </NavLink>
-                  </>
-                )}
               </nav>
             </div>
 
@@ -167,43 +150,20 @@ export default function Navbar() {
                         <p className="text-[11px] text-slate-500 truncate">{user?.email || ''}</p>
                       </div>
 
-                      {isStudent && (
-                        <>
-                          <Link
-                            to="/dashboard"
-                            className="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 transition"
-                          >
-                            <LayoutDashboard className="w-4 h-4 text-slate-400" />
-                            <span>Student Dashboard</span>
-                          </Link>
-                          <Link
-                            to="/profile"
-                            className="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 transition"
-                          >
-                            <User className="w-4 h-4 text-slate-400" />
-                            <span>Profile & Skills</span>
-                          </Link>
-                        </>
-                      )}
-
-                      {isAdmin && (
-                        <>
-                          <Link
-                            to="/admin"
-                            className="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 transition"
-                          >
-                            <LayoutDashboard className="w-4 h-4 text-slate-400" />
-                            <span>Command Center</span>
-                          </Link>
-                          <Link
-                            to="/admin/agent"
-                            className="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 transition"
-                          >
-                            <Bot className="w-4 h-4 text-amber-500" />
-                            <span>AI Opportunity Agent</span>
-                          </Link>
-                        </>
-                      )}
+                      <Link
+                        to="/dashboard"
+                        className="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 transition"
+                      >
+                        <LayoutDashboard className="w-4 h-4 text-slate-400" />
+                        <span>Dashboard</span>
+                      </Link>
+                      <Link
+                        to="/profile"
+                        className="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 transition"
+                      >
+                        <User className="w-4 h-4 text-slate-400" />
+                        <span>Profile & Skills</span>
+                      </Link>
 
                       <div className="border-t border-slate-100 mt-1 pt-1">
                         <button
