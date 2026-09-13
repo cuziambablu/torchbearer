@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Bookmark,
   MapPin,
@@ -28,7 +28,8 @@ import { formatRelativeVerificationTime } from '../../services/opportunityAgent/
 export default function OpportunityCard({ opportunity, showRecommendationBadge = false }) {
   const { isSaved, toggleSave } = useOpportunities();
   const { addToast } = useToast();
-  const { profile } = useAuth();
+  const { profile, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   const studentProfile = profile || MOCK_DEFAULT_STUDENT;
   const userSkills = Array.isArray(studentProfile?.skills)
@@ -46,6 +47,13 @@ export default function OpportunityCard({ opportunity, showRecommendationBadge =
   const handleSaveClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!isAuthenticated) {
+      addToast('Create a free student account to save and track opportunities! 🎓', 'info');
+      navigate(`/student/signup?redirect=/opportunities/${opportunity.id}`);
+      return;
+    }
+
     const willBeSaved = toggleSave(opportunity.id);
     addToast(
       willBeSaved

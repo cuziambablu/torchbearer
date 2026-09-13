@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   User,
   Mail,
-  Lock,
-  Building2,
+  Building,
   GraduationCap,
-  Calendar,
-  Sparkles,
+  BookOpen,
+  Lock,
   ArrowRight,
+  Sparkles,
   AlertCircle
 } from 'lucide-react';
 import Button from '../../components/common/Button';
@@ -18,6 +18,9 @@ import { useToast } from '../../context/ToastContext';
 import { BRANCHES, YEARS } from '../../data/mockOpportunities';
 
 export default function StudentSignupPage() {
+  const [searchParams] = useSearchParams();
+  const redirectPath = searchParams.get('redirect') || '/student/dashboard';
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -66,7 +69,7 @@ export default function StudentSignupPage() {
       });
 
       addToast('Account created successfully! Welcome to Torchbearer AI.', 'success');
-      navigate('/student/dashboard', { replace: true });
+      navigate(redirectPath, { replace: true });
     } catch (err) {
       setErrorMsg(err.message || 'Registration failed. Please try again.');
     } finally {

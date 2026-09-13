@@ -57,7 +57,7 @@ export default function StudentLoginPage() {
     return <Navigate to={isAdmin ? '/admin/dashboard' : '/student/dashboard'} replace />;
   }
 
-  const redirectPath = location.state?.from?.pathname || '/student/dashboard';
+  const redirectPath = searchParams.get('redirect') || location.state?.from?.pathname || '/student/dashboard';
 
   // 1. Handle Login
   const handleLogin = async (e) => {
