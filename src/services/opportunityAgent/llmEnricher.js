@@ -1,87 +1,47 @@
 /**
- * Opportunity Agent LLM Enricher
- * Uses z-ai/glm-5.3-free via TokenRouter for AI-powered opportunity discovery,
- * data parsing, smart categorization, and student application insights.
+ * Torchbearer AI — Opportunity Agent LLM Enricher
+ * 
+ * Powered by the multi-model AI Orchestrator.
+ * Generates structured opportunity intelligence, actionable preparation roadmaps,
+ * verified technical key tags, and student match insights.
  */
 
-import { createChatCompletion } from '../llmClient.js';
+import { globalAIOrchestrator } from '../aiOrchestrator/index.js';
+import { TASK_TYPES } from '../aiOrchestrator/models.js';
 
 /**
- * Safely parses a JSON string or extracts the first valid JSON object from text.
- */
-function safeJsonParse(rawText) {
-  if (!rawText) return null;
-  const clean = rawText.trim();
-  
-  // Try direct parse
-  try {
-    return JSON.parse(clean);
-  } catch {}
-
-  // Strip markdown code fences
-  try {
-    const codeBlockMatch = clean.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-    if (codeBlockMatch && codeBlockMatch[1]) {
-      return JSON.parse(codeBlockMatch[1].trim());
-    }
-  } catch {}
-
-  // Extract first { ... } block
-  try {
-    const firstBrace = clean.indexOf('{');
-    const lastBrace = clean.lastIndexOf('}');
-    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-      return JSON.parse(clean.substring(firstBrace, lastBrace + 1));
-    }
-  } catch {}
-
-  return null;
-}
-
-/**
- * Enriches an opportunity with AI-generated summary, key skills, and student preparation tips.
+ * Enriches an opportunity with AI-powered structured intelligence and strategic reasoning
  */
 export async function enrichOpportunityWithLLM(opportunity) {
   if (!opportunity || !opportunity.title) return opportunity;
 
   try {
-    const prompt = `Analyze this student opportunity and return a JSON object with keys:
-- "aiSummary": A 2-sentence summary for college students.
-- "recommendedPrep": Array of 2-3 specific technical preparation bullet points.
-- "keyTags": Array of 3-5 technical keywords.
-
-Details:
-Title: ${opportunity.title}
-Organization: ${opportunity.organization}
-Type: ${opportunity.type}
-Description: ${opportunity.description || 'N/A'}
-Skills: ${(opportunity.skills || []).join(', ')}
-
-Return raw JSON only:`;
-
-    const response = await createChatCompletion({
-      messages: [
-        { role: 'system', content: 'You are an expert college career advisor and opportunity analyst. Output valid JSON only.' },
-        { role: 'user', content: prompt }
-      ],
-      temperature: 0.3,
-      max_tokens: 1500
-    });
-
-    const messageObj = response?.choices?.[0]?.message;
-    const content = messageObj?.content?.trim() || messageObj?.reasoning_content?.trim();
-    if (!content) return opportunity;
-
-    const parsed = safeJsonParse(content);
-    if (!parsed) return opportunity;
+    const intelligence = await globalAIOrchestrator.analyzeOpportunityWithDeepReasoning(opportunity);
 
     return {
       ...opportunity,
-      aiSummary: parsed.aiSummary || opportunity.description,
-      preparationTips: Array.isArray(parsed.recommendedPrep) ? parsed.recommendedPrep : [],
-      aiTags: Array.isArray(parsed.keyTags) ? parsed.keyTags : opportunity.skills || [],
+      aiSummary: intelligence.description || opportunity.description,
+      whyItMatters: intelligence.why_it_matters,
+      evidence: intelligence.evidence,
+      recommendedAction: intelligence.recommended_action,
+      preparationTips: [
+        intelligence.recommended_action,
+        `Target core requirements: ${(opportunity.skills || ['Technical Foundations']).slice(0, 3).join(', ')}`,
+        'Verify official application guidelines before the posted deadline.'
+      ],
+      aiTags: Array.isArray(opportunity.skills) && opportunity.skills.length > 0
+        ? Array.from(new Set([opportunity.category || 'Engineering', ...opportunity.skills.slice(0, 4)]))
+        : [opportunity.category || 'Software Development', 'Verified', 'Student Opportunity'],
       aiEnriched: true,
-      aiModel: 'z-ai/glm-5.3-free'
+      aiScores: {
+        impact: intelligence.impact,
+        confidence: intelligence.confidence,
+        relevance: intelligence.relevance,
+        actionability: intelligence.actionability,
+        freshness: intelligence.freshness,
+        competition: intelligence.competition,
+        overall: intelligence.overall_score
+      }
     };
   } catch (err) {
     console.warn(`[LLM Enricher] Failed to enrich opportunity "${opportunity.title}":`, err.message);
@@ -92,31 +52,37 @@ Return raw JSON only:`;
 /**
  * Generates an AI-powered personalized match explanation for a student profile
  */
-export async function generateStudentMatchInsight(opportunity, studentProfile) {
-  try {
-    const prompt = `Explain in 2 friendly, concise sentences why this opportunity is a great match for this student:
+export async function generateStudentMatchInsight(opportunity, studentProfile = {}) {
+  if (!opportunity) return null;
 
-Opportunity: ${opportunity.title} at ${opportunity.organization} (${opportunity.type})
+  try {
+    const systemPrompt = `You are the Lead Student Career Coach at Torchbearer AI.
+Mission: "Light the way to your future."
+Explain in 2 direct, encouraging, high-impact sentences why this opportunity fits the student's profile.
+Highlight 1-2 overlapping technical skills or career milestone benefits.
+Keep response under 50 words.`;
+
+    const userPrompt = `Opportunity: ${opportunity.title} at ${opportunity.organization || opportunity.company} (${opportunity.type || 'Internship'})
 Required Skills: ${(opportunity.skills || []).join(', ')}
 
 Student:
 Branch: ${studentProfile.branch || 'Engineering'}
 Year: ${studentProfile.year || '3rd Year'}
 Student Skills: ${(studentProfile.skills || []).join(', ')}
-Interests: ${(studentProfile.interests || []).join(', ')}
+Interests: ${(studentProfile.interests || []).join(', ')}`;
 
-Respond in 2 concise sentences directly addressing the student.`;
-
-    const response = await createChatCompletion({
+    const response = await globalAIOrchestrator.executeChatCompletion({
+      taskType: TASK_TYPES.STRATEGIC_REASONING,
       messages: [
-        { role: 'system', content: 'You are a warm, supportive college mentor giving concise application encouragement.' },
-        { role: 'user', content: prompt }
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
       ],
-      temperature: 0.6,
-      max_tokens: 400
+      temperature: 0.5,
+      max_tokens: 300
     });
 
-    return response?.choices?.[0]?.message?.content?.trim() || null;
+    const content = response?.choices?.[0]?.message?.content?.trim();
+    return content || null;
   } catch (err) {
     console.warn('[LLM Match Insight] Error:', err.message);
     return null;

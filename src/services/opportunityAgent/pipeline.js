@@ -69,7 +69,7 @@ export class OpportunityAgentPipeline {
       // -------------------------------------------------------------
       // STAGE 1: DISCOVER
       // -------------------------------------------------------------
-      logEvent('DISCOVER', 'info', `AI Agent Engine: ${DEFAULT_MODEL} (${DEFAULT_BASE_URL})`, { percent: 5 });
+      logEvent('DISCOVER', 'info', `AI Orchestrator Active: Nemotron 3 Ultra (Primary Reasoning) → GLM 5.2 (Fallback) → GLM 5.3 (Secondary)`, { percent: 5 });
       logEvent('DISCOVER', 'info', 'Generating search vectors and querying registered source endpoints...', { percent: 10 });
       const queries = generateDiscoveryQueries();
       const activeSources = VERIFIED_OPPORTUNITY_SOURCES.filter((s) => s.enabled && this.config.enabledSources.includes(s.id));
