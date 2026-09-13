@@ -11,7 +11,7 @@ export async function logAdminAction({ adminId, adminEmail, action, entity, enti
   const newLog = {
     id: 'log-' + Date.now() + Math.random().toString(36).substring(2, 5),
     adminId: adminId || 'admin-1',
-    adminEmail: adminEmail || 'admin@campuslaunch.org',
+    adminEmail: adminEmail || 'irfan@gmail.com',
     action, // e.g. 'OPPORTUNITY_VERIFIED', 'OPPORTUNITY_DELETED', 'CSV_IMPORTED'
     entity, // e.g. 'opportunity', 'submission', 'user'
     entityId: entityId || null,

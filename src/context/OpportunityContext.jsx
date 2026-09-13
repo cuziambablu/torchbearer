@@ -419,7 +419,7 @@ export function OpportunityProvider({ children }) {
     return newSubmission;
   };
 
-  const approveSubmission = async (submissionId, adminEmail = 'admin@campuslaunch.org') => {
+  const approveSubmission = async (submissionId, adminEmail = 'irfan@gmail.com') => {
     const targetSub = submissions.find((s) => s.id === submissionId);
     if (!targetSub) return;
 
@@ -520,7 +520,7 @@ export function OpportunityProvider({ children }) {
     }
   };
 
-  const rejectSubmission = async (submissionId, adminEmail = 'admin@campuslaunch.org') => {
+  const rejectSubmission = async (submissionId, adminEmail = 'irfan@gmail.com') => {
     setSubmissions((prev) =>
       prev.map((s) => (s.id === submissionId ? { ...s, status: 'rejected' } : s))
     );
@@ -545,7 +545,7 @@ export function OpportunityProvider({ children }) {
   };
 
   // Admin Opportunity CRUD with Supabase & Audit Sync
-  const createOpportunity = async (oppData, adminEmail = 'admin@campuslaunch.org') => {
+  const createOpportunity = async (oppData, adminEmail = 'irfan@gmail.com') => {
     const newOpp = {
       id: 'opp-' + Date.now(),
       ...oppData,
@@ -608,7 +608,7 @@ export function OpportunityProvider({ children }) {
     return newOpp;
   };
 
-  const updateOpportunity = async (id, updatedFields, adminEmail = 'admin@campuslaunch.org') => {
+  const updateOpportunity = async (id, updatedFields, adminEmail = 'irfan@gmail.com') => {
     setOpportunities((prev) =>
       prev.map((opp) => (opp.id === id ? { ...opp, ...updatedFields, updatedAt: new Date().toISOString() } : opp))
     );
@@ -660,7 +660,7 @@ export function OpportunityProvider({ children }) {
     }
   };
 
-  const deleteOpportunity = async (id, adminEmail = 'admin@campuslaunch.org') => {
+  const deleteOpportunity = async (id, adminEmail = 'irfan@gmail.com') => {
     setOpportunities((prev) => prev.filter((opp) => opp.id !== id));
     setSavedIds((prev) => prev.filter((sId) => sId !== id));
 
@@ -680,7 +680,7 @@ export function OpportunityProvider({ children }) {
     }
   };
 
-  const togglePublishStatus = async (id, adminEmail = 'admin@campuslaunch.org') => {
+  const togglePublishStatus = async (id, adminEmail = 'irfan@gmail.com') => {
     let nextStatus = 'published';
     setOpportunities((prev) =>
       prev.map((opp) => {
@@ -755,7 +755,7 @@ export function OpportunityProvider({ children }) {
     return newReport;
   };
 
-  const resolveReport = async (reportId, actionTaken = 'resolved', adminNotes = '', adminEmail = 'admin@campuslaunch.org') => {
+  const resolveReport = async (reportId, actionTaken = 'resolved', adminNotes = '', adminEmail = 'irfan@gmail.com') => {
     setReports((prev) =>
       prev.map((r) =>
         r.id === reportId
@@ -788,7 +788,7 @@ export function OpportunityProvider({ children }) {
     }
   };
 
-  const dismissReport = async (reportId, adminNotes = 'Deemed accurate after review', adminEmail = 'admin@campuslaunch.org') => {
+  const dismissReport = async (reportId, adminNotes = 'Deemed accurate after review', adminEmail = 'irfan@gmail.com') => {
     setReports((prev) =>
       prev.map((r) =>
         r.id === reportId
@@ -916,7 +916,7 @@ export function OpportunityProvider({ children }) {
     }
   };
 
-  const approveReviewItem = async (queueId, overrideData = null, adminEmail = 'admin@campuslaunch.org') => {
+  const approveReviewItem = async (queueId, overrideData = null, adminEmail = 'irfan@gmail.com') => {
     const queueItem = reviewQueue.find((item) => item.id === queueId || item.opportunity_data?.id === queueId);
     if (!queueItem) return;
 
@@ -977,7 +977,7 @@ export function OpportunityProvider({ children }) {
     }
   };
 
-  const rejectReviewItem = async (queueId, reason = 'Did not meet authenticity standards', adminEmail = 'admin@campuslaunch.org') => {
+  const rejectReviewItem = async (queueId, reason = 'Did not meet authenticity standards', adminEmail = 'irfan@gmail.com') => {
     setReviewQueue((prev) => {
       const updatedQueue = prev.filter((item) => item.id !== queueId && item.opportunity_data?.id !== queueId);
       localStorage.setItem('campuslaunch_review_queue', JSON.stringify(updatedQueue));

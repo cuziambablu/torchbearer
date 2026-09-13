@@ -10,10 +10,15 @@ export function AuthProvider({ children }) {
       const savedUser = localStorage.getItem('campuslaunch_user');
       if (savedUser) {
         const parsed = JSON.parse(savedUser);
+        // Wipe any legacy mock user or any admin user that isn't strictly irfan@gmail.com
         if (
+          !parsed?.email ||
           parsed?.email === 'aarav.sharma@nitk.edu.in' ||
           parsed?.id === 'student-1' ||
-          parsed?.name === 'Aarav Sharma'
+          parsed?.name?.includes('Devika') ||
+          parsed?.email === 'admin@campuslaunch.org' ||
+          parsed?.email === 'admin@torchbearer.ai' ||
+          (parsed?.role === 'admin' && parsed?.email?.toLowerCase() !== 'irfan@gmail.com')
         ) {
           localStorage.removeItem('campuslaunch_user');
           return null;
@@ -22,6 +27,7 @@ export function AuthProvider({ children }) {
       }
       return null;
     } catch {
+      localStorage.removeItem('campuslaunch_user');
       return null;
     }
   });
