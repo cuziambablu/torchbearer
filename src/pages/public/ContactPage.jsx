@@ -6,7 +6,9 @@ import {
   CheckCircle2,
   HelpCircle,
   ShieldCheck,
-  Flame
+  Flame,
+  Instagram,
+  ExternalLink
 } from 'lucide-react';
 import Button from '../../components/common/Button';
 import BrandLogo from '../../components/common/BrandLogo';
@@ -38,38 +40,51 @@ export default function ContactPage() {
           Get in Touch with Torchbearer AI
         </h1>
         <p className="text-sm text-slate-500 font-medium">
-          Have a question, feedback, or want to verify opportunities for your college or organization? We'd love to hear from you.
+          Have a question, feedback, or want support for your opportunities or account? Reach out directly.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Contact Info Sidebar */}
         <div className="space-y-4 md:col-span-1">
-          <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-card space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+          {/* Primary Email */}
+          <a
+            href="mailto:teamtorchbearerai@gmail.com"
+            className="block p-5 bg-white hover:bg-amber-50/50 transition rounded-2xl border border-slate-200 hover:border-amber-300 shadow-card space-y-2 group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center group-hover:scale-105 transition">
               <Mail className="w-5 h-5" />
             </div>
-            <h3 className="text-sm font-bold text-slate-900">Email Support</h3>
-            <p className="text-xs text-slate-500">support@torchbearer.ai</p>
-            <p className="text-[11px] text-slate-400">Response within 24 hours</p>
-          </div>
+            <h3 className="text-sm font-bold text-slate-900">Official Support</h3>
+            <p className="text-xs font-semibold text-amber-600 break-all">teamtorchbearerai@gmail.com</p>
+            <p className="text-[11px] text-slate-400">Direct inbox for all student & partner inquiries</p>
+          </a>
 
-          <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-card space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
-              <Building className="w-5 h-5" />
+          {/* Instagram Link */}
+          <a
+            href="https://www.instagram.com/torchbearer.ai?utm_source=ig_web_button_share_sheet&stkn=ZDNlZDc0MzIxNw=="
+            target="_blank"
+            rel="noreferrer"
+            className="block p-5 bg-white hover:bg-pink-50/50 transition rounded-2xl border border-slate-200 hover:border-pink-300 shadow-card space-y-2 group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-pink-500 to-purple-600 text-white flex items-center justify-center group-hover:scale-105 transition">
+              <Instagram className="w-5 h-5" />
             </div>
-            <h3 className="text-sm font-bold text-slate-900">University Partnerships</h3>
-            <p className="text-xs text-slate-500">partners@torchbearer.ai</p>
-            <p className="text-[11px] text-slate-400">Placement cell integrations</p>
-          </div>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-900">Instagram</h3>
+              <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-pink-600 transition" />
+            </div>
+            <p className="text-xs font-semibold text-pink-600">@torchbearer.ai</p>
+            <p className="text-[11px] text-slate-400">Daily opportunity alerts, tips & community</p>
+          </a>
 
           <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-card space-y-2">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <h3 className="text-sm font-bold text-slate-900">Quality Moderation</h3>
-            <p className="text-xs text-slate-500">moderation@torchbearer.ai</p>
-            <p className="text-[11px] text-slate-400">Report broken or scam listings</p>
+            <p className="text-xs text-slate-500">Report broken links or issues via email</p>
+            <p className="text-[11px] text-slate-400">Reviewed within 24 hours</p>
           </div>
         </div>
 

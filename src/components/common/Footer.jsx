@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, ShieldCheck, Github, Linkedin, Twitter, Flame, Compass } from 'lucide-react';
+import { Sparkles, ShieldCheck, Github, Linkedin, Twitter, Flame, Compass, Instagram, Mail } from 'lucide-react';
 import BrandLogo from './BrandLogo';
 
 export default function Footer() {
@@ -17,10 +17,22 @@ export default function Footer() {
             <div className="text-xs font-bold text-amber-400/90 tracking-wide">
               Light the way to your future.
             </div>
+            <div className="pt-1">
+              <a
+                href="mailto:teamtorchbearerai@gmail.com"
+                className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-amber-400 font-medium transition"
+              >
+                <Mail className="w-3.5 h-3.5 text-amber-400" />
+                <span>teamtorchbearerai@gmail.com</span>
+              </a>
+            </div>
             <div className="flex items-center gap-3 text-slate-400 pt-1">
-              <a href="https://twitter.com" target="_blank" rel="noreferrer" className="hover:text-amber-400 transition"><Twitter className="w-4 h-4" /></a>
-              <a href="https://github.com" target="_blank" rel="noreferrer" className="hover:text-amber-400 transition"><Github className="w-4 h-4" /></a>
-              <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="hover:text-amber-400 transition"><Linkedin className="w-4 h-4" /></a>
+              <a href="https://www.instagram.com/torchbearer.ai?utm_source=ig_web_button_share_sheet&stkn=ZDNlZDc0MzIxNw==" target="_blank" rel="noreferrer" title="Follow on Instagram" className="hover:text-amber-400 transition p-1.5 bg-slate-900 rounded-lg hover:bg-slate-800 border border-slate-800">
+                <Instagram className="w-4 h-4 text-pink-400 hover:text-pink-300" />
+              </a>
+              <a href="https://twitter.com" target="_blank" rel="noreferrer" className="hover:text-amber-400 transition p-1.5 bg-slate-900 rounded-lg hover:bg-slate-800 border border-slate-800"><Twitter className="w-4 h-4" /></a>
+              <a href="https://github.com" target="_blank" rel="noreferrer" className="hover:text-amber-400 transition p-1.5 bg-slate-900 rounded-lg hover:bg-slate-800 border border-slate-800"><Github className="w-4 h-4" /></a>
+              <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="hover:text-amber-400 transition p-1.5 bg-slate-900 rounded-lg hover:bg-slate-800 border border-slate-800"><Linkedin className="w-4 h-4" /></a>
             </div>
           </div>
 
