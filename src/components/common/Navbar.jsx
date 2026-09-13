@@ -26,11 +26,10 @@ import BrandLogo from './BrandLogo';
 import AIGuideModal from './AIGuideModal';
 
 export default function Navbar() {
-  const { user, isAuthenticated, isAdmin, isStudent, logout, switchRole } = useAuth();
+  const { user, isAuthenticated, isAdmin, isStudent, logout } = useAuth();
   const { savedIds, applications } = useOpportunities();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
-  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
   const [aiGuideOpen, setAiGuideOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -128,55 +127,6 @@ export default function Navbar() {
             <div className="hidden md:flex items-center gap-3">
               {/* In-App Notification Bell */}
               {isAuthenticated && <NotificationBell />}
-
-              {/* Quick Demo Role Switcher Badge */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
-                  className="text-[11px] font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 flex items-center gap-1.5 transition"
-                  title="Switch preview roles"
-                >
-                  <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                  <span>{user ? (user.role === 'admin' ? 'Admin Mode' : 'Student') : 'Guest'}</span>
-                  <ChevronDown className="w-3 h-3 text-slate-400" />
-                </button>
-
-                {roleDropdownOpen && (
-                  <div
-                    className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 py-1.5 z-50 text-xs animate-scale-up"
-                    onClick={() => setRoleDropdownOpen(false)}
-                  >
-                    <div className="px-3 py-1.5 font-bold text-slate-400 uppercase tracking-wider text-[10px]">
-                      Switch User Role
-                    </div>
-                    <button
-                      onClick={() => switchRole('student')}
-                      className={`w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between ${
-                        isStudent ? 'text-amber-700 font-bold bg-amber-50/50' : 'text-slate-700'
-                      }`}
-                    >
-                      <span>🎓 Student Mode</span>
-                    </button>
-                    <button
-                      onClick={() => switchRole('admin')}
-                      className={`w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between ${
-                        isAdmin ? 'text-amber-700 font-bold bg-amber-50/50' : 'text-slate-700'
-                      }`}
-                    >
-                      <span>🛡️ Admin Command Center</span>
-                    </button>
-                    <button
-                      onClick={() => switchRole('guest')}
-                      className={`w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between ${
-                        !user ? 'text-amber-700 font-bold bg-amber-50/50' : 'text-slate-700'
-                      }`}
-                    >
-                      <span>👤 Guest (Logged out)</span>
-                    </button>
-                  </div>
-                )}
-              </div>
 
               {/* Submit Opportunity Button */}
               <Link to="/submit">

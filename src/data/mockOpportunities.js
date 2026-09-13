@@ -148,15 +148,15 @@ export const MOCK_DEFAULT_STUDENT = {
 };
 
 export const MOCK_ADMIN_USER = {
-  id: 'admin-1',
-  name: 'Devika Nair (Admin)',
-  email: 'admin@campuslaunch.org',
+  id: 'admin-irfan',
+  name: 'Irfan (Platform Administrator)',
+  email: 'irfan@gmail.com',
   role: 'admin',
-  college: 'CampusLaunch Platform Team',
-  branch: 'Admin',
-  year: 'Staff',
-  skills: ['Opportunity Curation', 'Moderation', 'Platform Operations'],
-  interests: ['Student Success', 'Community Building']
+  college: 'Torchbearer AI Core Administration',
+  branch: 'Lead Administrator',
+  year: 'Root Admin',
+  skills: ['Platform Operations', 'AI System Governance', 'Security'],
+  interests: ['Student Opportunities', 'AI Innovation']
 };
 
 export const MOCK_REPORTS = [

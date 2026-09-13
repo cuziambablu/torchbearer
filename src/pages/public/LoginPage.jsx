@@ -7,9 +7,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('aarav.sharma@college.edu');
-  const [password, setPassword] = useState('password123');
-  const [role, setRole] = useState('student');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const { login } = useAuth();
@@ -25,7 +24,7 @@ export default function LoginPage() {
 
     try {
       setLoading(true);
-      const user = await login(email, password, role);
+      const user = await login(email, password, 'student');
       addToast(`Welcome back, ${user.name}! 👋`, 'success');
       if (user.role === 'admin') {
         navigate('/admin');
@@ -33,21 +32,9 @@ export default function LoginPage() {
         navigate('/dashboard');
       }
     } catch (err) {
-      addToast('Login failed. Please verify your credentials.', 'error');
+      addToast(err.message || 'Login failed. Please verify your credentials.', 'error');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleQuickDemo = (demoRole) => {
-    if (demoRole === 'admin') {
-      setEmail('admin@torchbearer.ai');
-      setPassword('adminPass123');
-      setRole('admin');
-    } else {
-      setEmail('aarav.sharma@college.edu');
-      setPassword('studentPass123');
-      setRole('student');
     }
   };
 
@@ -65,39 +52,6 @@ export default function LoginPage() {
           <p className="text-xs sm:text-sm text-slate-500 font-medium">
             Your path starts here • Sign in to access your opportunity dashboard
           </p>
-        </div>
-
-        {/* Quick Demo Credentials Pill Bar */}
-        <div className="p-3 bg-white rounded-2xl border border-slate-200/90 shadow-subtle text-xs space-y-2">
-          <p className="font-bold text-slate-700 text-[11px] uppercase tracking-wider text-center">
-            ⚡ Quick Demo Accounts
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('student')}
-              className={`p-2 rounded-xl border flex items-center justify-center gap-1.5 font-bold text-xs transition ${
-                role === 'student'
-                  ? 'bg-amber-50 text-amber-800 border-amber-300 ring-1 ring-amber-300'
-                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              <GraduationCap className="w-4 h-4" />
-              <span>Student Mode</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('admin')}
-              className={`p-2 rounded-xl border flex items-center justify-center gap-1.5 font-bold text-xs transition ${
-                role === 'admin'
-                  ? 'bg-amber-50 text-amber-800 border-amber-300 ring-1 ring-amber-300'
-                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              <ShieldCheck className="w-4 h-4" />
-              <span>Admin Mode</span>
-            </button>
-          </div>
         </div>
 
         {/* Form Card */}

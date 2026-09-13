@@ -5,15 +5,12 @@ import {
   Lock,
   Mail,
   ArrowRight,
-  Sparkles,
-  AlertCircle,
-  Key
+  AlertCircle
 } from 'lucide-react';
 import Button from '../../components/common/Button';
 import BrandLogo from '../../components/common/BrandLogo';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { MOCK_ADMIN_USER } from '../../data/mockOpportunities';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -32,33 +29,29 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setErrorMsg('');
 
+    const cleanEmail = (email || '').trim().toLowerCase();
+
+    // Strict Security Guard: Only irfan@gmail.com with irfan@2006 is authorized
+    if (cleanEmail !== 'irfan@gmail.com' || password !== 'irfan@2006') {
+      setErrorMsg('Access Denied: Invalid administrator credentials or unauthorized administrator email.');
+      addToast('Admin authorization failed. Unauthorized access attempt logged.', 'error');
+      return;
+    }
+
     try {
       setLoading(true);
-      const user = await login(email, password, 'admin');
-      if (user?.role !== 'admin' && !email.includes('admin')) {
+      const user = await login(cleanEmail, password, 'admin');
+      if (user?.role !== 'admin') {
         setErrorMsg('Access Denied: This account does not possess platform administrator privileges.');
         addToast('Admin authorization required.', 'error');
         return;
       }
 
-      addToast('Administrator session authenticated.', 'success');
+      addToast('Administrator session authenticated. Welcome, Irfan.', 'success');
       navigate(redirectPath, { replace: true });
     } catch (err) {
-      setErrorMsg('Invalid administrator credentials or unauthorized token.');
+      setErrorMsg(err.message || 'Invalid administrator credentials or unauthorized token.');
       addToast('Admin login failed.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleQuickDemoAdmin = async () => {
-    try {
-      setLoading(true);
-      await login(MOCK_ADMIN_USER.email, 'admin123', 'admin');
-      addToast('Logged in with Administrator Privileges.', 'success');
-      navigate('/admin/dashboard', { replace: true });
-    } catch (err) {
-      addToast('Could not authenticate admin demo.', 'error');
     } finally {
       setLoading(false);
     }
@@ -72,7 +65,7 @@ export default function AdminLoginPage() {
           <BrandLogo size="lg" isDark={true} subtitle="Enterprise Command Center" />
         </div>
         <p className="mt-1.5 text-xs text-slate-400">
-          Secure administrator access for platform operations & verification.
+          Strictly restricted to platform administration only.
         </p>
       </div>
 
@@ -80,7 +73,7 @@ export default function AdminLoginPage() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
         <div className="bg-slate-900 py-8 px-6 sm:px-10 rounded-3xl border border-slate-800 shadow-2xl space-y-6">
           {errorMsg && (
-            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-300 flex items-center gap-2">
+            <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-300 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
               <span>{errorMsg}</span>
             </div>
@@ -98,7 +91,7 @@ export default function AdminLoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@torchbearer.ai"
+                  placeholder="admin@example.com"
                   className="w-full pl-10 pr-3.5 py-2.5 text-xs bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
                 />
               </div>
@@ -132,20 +125,7 @@ export default function AdminLoginPage() {
             </Button>
           </form>
 
-          {/* Quick Demo Access */}
-          <div className="pt-4 border-t border-slate-800">
-            <button
-              type="button"
-              onClick={handleQuickDemoAdmin}
-              disabled={loading}
-              className="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 flex items-center justify-center gap-2 transition"
-            >
-              <Key className="w-3.5 h-3.5 text-amber-400" />
-              <span>Continue as Demo Admin (Devika Nair)</span>
-            </button>
-          </div>
-
-          <div className="text-center pt-2">
+          <div className="text-center pt-3 border-t border-slate-800/80">
             <Link
               to="/student/login"
               className="text-xs text-slate-500 hover:text-slate-300 transition"

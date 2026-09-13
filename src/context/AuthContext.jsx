@@ -57,6 +57,9 @@ export function AuthProvider({ children }) {
   // Fetch full profile from Supabase profiles table
   const fetchProfile = async (userId, email) => {
     try {
+      const cleanEmail = (email || '').trim().toLowerCase();
+      const isAdminEmail = cleanEmail === 'irfan@gmail.com';
+
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -66,6 +69,7 @@ export function AuthProvider({ children }) {
       if (data && !error) {
         setUser({
           ...data,
+          role: isAdminEmail ? 'admin' : (data.role === 'admin' ? 'student' : (data.role || 'student')),
           skills: data.skills || [],
           interests: data.interests || []
         });
@@ -74,9 +78,9 @@ export function AuthProvider({ children }) {
         // Construct fallback user from auth metadata
         const fallback = {
           id: userId,
-          email,
-          name: email ? email.split('@')[0] : 'Student',
-          role: email?.includes('admin') ? 'admin' : 'student',
+          email: cleanEmail,
+          name: cleanEmail ? cleanEmail.split('@')[0] : 'Student',
+          role: isAdminEmail ? 'admin' : 'student',
           college: 'Engineering Institute of Technology',
           branch: 'CSE',
           year: '3rd Year',
@@ -100,11 +104,32 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password, role = 'student') => {
     setLoading(true);
+    const cleanEmail = (email || '').trim().toLowerCase();
+
+    // Strict Security Guard: Only irfan@gmail.com with irfan@2006 has admin access
+    if (role === 'admin' || cleanEmail === 'irfan@gmail.com') {
+      if (cleanEmail !== 'irfan@gmail.com' || password !== 'irfan@2006') {
+        setLoading(false);
+        throw new Error('Access Denied: Invalid administrator credentials or unauthorized administrator email.');
+      }
+
+      const adminUser = {
+        ...MOCK_ADMIN_USER,
+        id: 'admin-irfan',
+        name: 'Irfan (Platform Administrator)',
+        email: 'irfan@gmail.com',
+        role: 'admin'
+      };
+      setUser(adminUser);
+      localStorage.setItem('campuslaunch_user', JSON.stringify(adminUser));
+      setLoading(false);
+      return adminUser;
+    }
 
     if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase.auth.signInWithPassword({
-          email,
+          email: cleanEmail,
           password
         });
 
@@ -118,18 +143,14 @@ export function AuthProvider({ children }) {
       }
     }
 
-    // Local / Demo Account Handling
+    // Local / Account Handling for students
     await new Promise((r) => setTimeout(r, 300));
-    let targetUser;
-    if (role === 'admin' || email.includes('admin')) {
-      targetUser = { ...MOCK_ADMIN_USER, email };
-    } else {
-      targetUser = {
-        ...MOCK_DEFAULT_STUDENT,
-        email,
-        name: email.split('@')[0].replace('.', ' ').replace(/^./, (str) => str.toUpperCase()),
-      };
-    }
+    const targetUser = {
+      ...MOCK_DEFAULT_STUDENT,
+      email: cleanEmail,
+      name: cleanEmail.split('@')[0].replace('.', ' ').replace(/^./, (str) => str.toUpperCase()),
+      role: 'student'
+    };
     setUser(targetUser);
     setLoading(false);
     return targetUser;
@@ -255,9 +276,8 @@ export function AuthProvider({ children }) {
   };
 
   const switchRole = (newRole) => {
-    if (newRole === 'admin') {
-      setUser(MOCK_ADMIN_USER);
-    } else if (newRole === 'student') {
+    // Only student or guest mode permitted via switch; admin requires explicit authentication as irfan@gmail.com
+    if (newRole === 'student') {
       setUser(MOCK_DEFAULT_STUDENT);
     } else {
       setUser(null); // Guest mode
