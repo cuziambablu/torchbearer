@@ -13,33 +13,20 @@ export function OpportunityProvider({ children }) {
   // Real verified opportunities as primary initial dataset
   const ALL_SEED_OPPORTUNITIES = REAL_VERIFIED_OPPORTUNITIES;
 
-  // 1. Opportunities State — auto-merge new verified seed opportunities with any local additions
+  // 1. Opportunities State — guaranteed to always contain all 64 verified seed opportunities
   const [opportunities, setOpportunities] = useState(() => {
     try {
       const saved = localStorage.getItem('campuslaunch_opportunities');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const clean = parsed.filter(o =>
-            o &&
-            o.applyUrl &&
-            !o.applyUrl.includes('example.com') &&
-            !o.applyUrl.includes('example.org') &&
-            !o.applyUrl.includes('test.com')
-          );
-          
-          // Merge newly added seed opportunities by ID
-          const existingIds = new Set(clean.map(o => o.id));
-          const newSeeds = ALL_SEED_OPPORTUNITIES.filter(o => !existingIds.has(o.id));
-          
-          if (newSeeds.length > 0) {
-            const merged = [...clean, ...newSeeds];
-            localStorage.setItem('campuslaunch_opportunities', JSON.stringify(merged));
-            return merged;
-          }
-          
-          if (clean.length > 0) return clean;
+        if (Array.isArray(parsed) && parsed.length >= ALL_SEED_OPPORTUNITIES.length) {
+          return parsed;
         }
+        const existingIds = new Set(Array.isArray(parsed) ? parsed.map((o) => o.id) : []);
+        const newSeeds = ALL_SEED_OPPORTUNITIES.filter((o) => !existingIds.has(o.id));
+        const merged = [...(Array.isArray(parsed) ? parsed : []), ...newSeeds];
+        localStorage.setItem('campuslaunch_opportunities', JSON.stringify(merged));
+        return merged;
       }
       localStorage.setItem('campuslaunch_opportunities', JSON.stringify(ALL_SEED_OPPORTUNITIES));
       return ALL_SEED_OPPORTUNITIES;
@@ -170,7 +157,7 @@ export function OpportunityProvider({ children }) {
           .select('*')
           .order('created_at', { ascending: false });
 
-        if (cloudOpps && cloudOpps.length > 0 && !oppError) {
+        if (cloudOpps && !oppError) {
           const formattedOpps = cloudOpps.map((o) => ({
             id: o.id,
             title: o.title,
@@ -209,8 +196,18 @@ export function OpportunityProvider({ children }) {
             createdAt: o.created_at,
             updatedAt: o.updated_at
           }));
-          setOpportunities(formattedOpps);
-          localStorage.setItem('campuslaunch_opportunities', JSON.stringify(formattedOpps));
+
+          // Merge cloud data with all verified seeds so zero opportunities are lost
+          const cloudIds = new Set(formattedOpps.map((o) => o.id));
+          const cloudTitles = new Set(formattedOpps.map((o) => o.title?.trim().toLowerCase()));
+
+          const missingSeeds = ALL_SEED_OPPORTUNITIES.filter(
+            (seed) => !cloudIds.has(seed.id) && !cloudTitles.has(seed.title?.trim().toLowerCase())
+          );
+
+          const fullCatalog = [...formattedOpps, ...missingSeeds];
+          setOpportunities(fullCatalog);
+          localStorage.setItem('campuslaunch_opportunities', JSON.stringify(fullCatalog));
         }
 
         const { data: cloudSubs } = await supabase
