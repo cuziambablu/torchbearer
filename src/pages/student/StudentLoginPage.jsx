@@ -409,8 +409,8 @@ export default function StudentLoginPage() {
           )}
         </div>
 
-        {/* Administrator access link & Guest Catalog link */}
-        <div className="text-center mt-5 space-y-2">
+        {/* Guest Catalog link */}
+        <div className="text-center mt-5">
           <Link
             to="/opportunities"
             className="text-xs font-semibold text-slate-500 hover:text-brand-600 flex items-center justify-center gap-1 transition"
@@ -418,16 +418,6 @@ export default function StudentLoginPage() {
             <Compass className="w-3.5 h-3.5" />
             <span>Explore Opportunity Catalog as Guest →</span>
           </Link>
-
-          <div>
-            <Link
-              to="/admin/login"
-              className="text-xs font-medium text-slate-400 hover:text-slate-600 inline-flex items-center gap-1 transition"
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Administrator Access Portal →</span>
-            </Link>
-          </div>
         </div>
       </div>
     </div>

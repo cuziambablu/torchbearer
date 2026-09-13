@@ -378,17 +378,6 @@ export default function AuthLandingPage() {
             </Link>
           </div>
         </div>
-
-        {/* Administrator Portal Switch */}
-        <div className="text-center mt-5">
-          <Link
-            to="/admin/login"
-            className="text-xs font-medium text-slate-500 hover:text-slate-300 inline-flex items-center gap-1.5 transition"
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
-            <span>Administrator Operations Portal →</span>
-          </Link>
-        </div>
       </div>
     </div>
   );
