@@ -57,29 +57,27 @@ export default function App() {
   return (
     <Routes>
       {/* ========================================================= */}
-      {/* 1. FIRST ENTRANCE: STUDENT LOGIN & AUTH                   */}
-      {/* ========================================================= */}
-      <Route path="/" element={<StudentLoginPage />} />
-      <Route path="/student/login" element={<Navigate to="/" replace />} />
-      <Route path="/student/signup" element={<StudentSignupPage />} />
-      <Route path="/student/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/admin/login" element={<AdminLoginPage />} />
-
-      {/* Aliases for quick access */}
-      <Route path="/login" element={<Navigate to="/" replace />} />
-      <Route path="/register" element={<Navigate to="/student/signup" replace />} />
-      <Route path="/signup" element={<Navigate to="/student/signup" replace />} />
-
-      {/* ========================================================= */}
-      {/* 2. PUBLIC WEBSITE (PublicLayout)                          */}
+      {/* 1. PUBLIC WEBSITE (PublicLayout)                          */}
       {/* ========================================================= */}
       <Route element={<PublicLayout />}>
+        <Route path="/" element={<HomePage />} />
         <Route path="/home" element={<HomePage />} />
         <Route path="/opportunities" element={<OpportunitiesPage />} />
         <Route path="/opportunities/:id" element={<OpportunityDetailPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
       </Route>
+
+      {/* ========================================================= */}
+      {/* 2. AUTHENTICATION (Standalone)                            */}
+      {/* ========================================================= */}
+      <Route path="/student/login" element={<StudentLoginPage />} />
+      <Route path="/student/signup" element={<StudentSignupPage />} />
+      <Route path="/student/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/login" element={<StudentLoginPage />} />
+      <Route path="/register" element={<StudentSignupPage />} />
+      <Route path="/signup" element={<StudentSignupPage />} />
+      <Route path="/admin/login" element={<AdminLoginPage />} />
 
       {/* ========================================================= */}
       {/* 3. STUDENT PORTAL (ProtectedRoute + StudentLayout)        */}
