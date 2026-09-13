@@ -61,11 +61,11 @@ export default function PublicLayout() {
           <div className="hidden md:flex items-center gap-2.5">
             {isAuthenticated ? (
               <Link
-                to={isAdmin ? '/admin/dashboard' : '/student/dashboard'}
+                to="/student/dashboard"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-sm shadow-brand-500/20 active:scale-95 transition"
               >
                 <User className="w-3.5 h-3.5" />
-                <span>Go to {isAdmin ? 'Admin Console' : 'Student Dashboard'}</span>
+                <span>Go to Dashboard</span>
               </Link>
             ) : (
               <>
@@ -113,11 +113,11 @@ export default function PublicLayout() {
             <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
               {isAuthenticated ? (
                 <Link
-                  to={isAdmin ? '/admin/dashboard' : '/student/dashboard'}
+                  to="/student/dashboard"
                   onClick={() => setMobileMenuOpen(false)}
                   className="w-full py-2.5 text-center text-xs font-bold bg-brand-600 text-white rounded-xl shadow-sm"
                 >
-                  Go to {isAdmin ? 'Admin Console' : 'Student Dashboard'}
+                  Go to Dashboard
                 </Link>
               ) : (
                 <>
