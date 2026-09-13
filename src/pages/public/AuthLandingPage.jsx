@@ -54,9 +54,14 @@ export default function AuthLandingPage() {
     setErrorMsg('');
     try {
       setLoading(true);
-      await login(loginEmail, loginPassword, 'student');
-      addToast('Welcome back! Successfully logged into student portal.', 'success');
-      navigate('/student/dashboard', { replace: true });
+      const user = await login(loginEmail, loginPassword, 'student');
+      if (user?.role === 'admin' || user?.email?.toLowerCase() === 'irfan@gmail.com') {
+        addToast('Administrator session authenticated. Welcome, Irfan! 🛡️', 'success');
+        navigate('/admin/dashboard', { replace: true });
+      } else {
+        addToast('Welcome back! Successfully logged into student portal.', 'success');
+        navigate('/student/dashboard', { replace: true });
+      }
     } catch (err) {
       setErrorMsg(err.message || 'Invalid student email or password.');
       addToast('Login failed. Please check your credentials.', 'error');

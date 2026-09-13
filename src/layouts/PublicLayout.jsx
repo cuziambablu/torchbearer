@@ -61,7 +61,7 @@ export default function PublicLayout() {
           <div className="hidden md:flex items-center gap-2.5">
             {isAuthenticated ? (
               <Link
-                to="/student/dashboard"
+                to={user?.email?.toLowerCase() === 'irfan@gmail.com' || isAdmin ? '/admin/dashboard' : '/student/dashboard'}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-sm shadow-brand-500/20 active:scale-95 transition"
               >
                 <User className="w-3.5 h-3.5" />
@@ -113,7 +113,7 @@ export default function PublicLayout() {
             <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
               {isAuthenticated ? (
                 <Link
-                  to="/student/dashboard"
+                  to={user?.email?.toLowerCase() === 'irfan@gmail.com' || isAdmin ? '/admin/dashboard' : '/student/dashboard'}
                   onClick={() => setMobileMenuOpen(false)}
                   className="w-full py-2.5 text-center text-xs font-bold bg-brand-600 text-white rounded-xl shadow-sm"
                 >
