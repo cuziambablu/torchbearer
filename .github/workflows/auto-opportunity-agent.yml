@@ -1,0 +1,46 @@
+name: Autonomous 6-Hour AI Opportunity Agent
+
+on:
+  schedule:
+    # Runs every 6 hours automatically (00:00, 06:00, 12:00, 18:00 UTC)
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  run-opportunity-agent:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Check out repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci || npm install
+
+      - name: 🤖 Run 24/7 AI Opportunity Discovery & Audit Agent
+        run: node scripts/autonomous-agent-runner.mjs
+
+      - name: 🏗️ Compile Production Build
+        run: npm run build
+
+      - name: 🚀 Deploy Updated Build to Live Website (InfinityFree FTP)
+        run: node scripts/deploy-ftp.mjs
+        env:
+          FTP_HOST: 'ftpupload.net'
+          FTP_USER: 'if0_42890832'
+          FTP_PASSWORD: 'kNSulAx3dHhQeG'
+
+      - name: 💾 Commit & Push Updated Opportunity Catalog to Git
+        run: |
+          git config --global user.name "Torchbearer AI Agent"
+          git config --global user.email "agent@torchbearer.ai"
+          git add src/data/realVerifiedOpportunities.js
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore(auto-agent): 6-hour autonomous opportunity catalog refresh [skip ci]" && git push origin main)
