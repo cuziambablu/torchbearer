@@ -3,6 +3,7 @@
  */
 
 import { OPPORTUNITY_CATEGORIES, WORK_MODES } from './sources.js';
+import { resolveOrganizationIdentity } from '../../utils/organizationUtils.js';
 
 /**
  * Validates if the raw posting describes an internship or fellowship
@@ -158,13 +159,24 @@ export function extractOpportunityData(rawInput = {}) {
       : `${deadline}T23:59:59Z`
     : null;
 
+  const orgIdentity = resolveOrganizationIdentity(
+    company,
+    rawInput.applicationUrl || rawInput.applyUrl || rawInput.sourceUrl,
+    rawInput.organizationLogo || rawInput.companyLogo
+  );
+
   const extracted = {
     id: rawInput.id || `ai-opp-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
     title,
-    company,
-    companyLogo: rawInput.companyLogo || rawInput.organization_logo || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=128&auto=format&fit=crop&q=80',
-    companyDescription: rawInput.companyDescription || `${company} student talent and internship initiative.`,
-    description: rawInput.description || `${title} at ${company}. Real-world project experience and engineering mentorship.`,
+    company: orgIdentity.name || company,
+    organization: orgIdentity.name || company,
+    organizationName: orgIdentity.name || company,
+    organizationLogo: orgIdentity.logoUrl,
+    organizationWebsite: orgIdentity.website,
+    organizationDomain: orgIdentity.domain,
+    companyLogo: orgIdentity.logoUrl,
+    companyDescription: rawInput.companyDescription || `${orgIdentity.name || company} student talent and internship initiative.`,
+    description: rawInput.description || `${title} at ${orgIdentity.name || company}. Real-world project experience and engineering mentorship.`,
     internshipType,
     isDirectInternship,
     category,
@@ -188,10 +200,10 @@ export function extractOpportunityData(rawInput = {}) {
     applicationUrl: (rawInput.applicationUrl || rawInput.applyUrl || '').trim(),
     applyUrl: (rawInput.applicationUrl || rawInput.applyUrl || '').trim(),
     sourceUrl: (rawInput.sourceUrl || rawInput.applyUrl || '').trim(),
-    sourceName: rawInput.sourceName || 'Official Career Source',
+    sourceName: rawInput.sourceName || `${orgIdentity.name} Official Portal`,
     postedDate: rawInput.postedDate || new Date().toISOString(),
     lastVerifiedAt: new Date().toISOString(),
-    aiSummary: rawInput.aiSummary || generateAiSummary({ company, title, skills: skillsList, branches: branchesList, workMode }),
+    aiSummary: rawInput.aiSummary || generateAiSummary({ company: orgIdentity.name, title, skills: skillsList, branches: branchesList, workMode }),
     aiTags: rawInput.aiTags || [category, workMode, 'Verified'],
     featured: Boolean(rawInput.featured),
     views: rawInput.views || 0,

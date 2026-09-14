@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import Badge from '../common/Badge';
 import DeadlineBadge from './DeadlineBadge';
+import OrganizationLogo from '../common/OrganizationLogo';
 import { useOpportunities } from '../../context/OpportunityContext';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
@@ -144,20 +145,30 @@ export default function OpportunityCard({ opportunity, showRecommendationBadge =
           </button>
         </div>
 
-        {/* Opportunity Title & Organization */}
-        <div className="mb-3 space-y-1">
-          <Link
-            to={`/opportunities/${opportunity.id}`}
-            className="block group-hover:text-brand-600 transition-colors"
-          >
-            <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug tracking-tight line-clamp-2">
-              {opportunity.title}
-            </h3>
-          </Link>
+        {/* Opportunity Header: Logo + Title & Organization */}
+        <div className="mb-3.5 flex items-start gap-3">
+          <OrganizationLogo
+            organization={opportunity.organization || opportunity.company}
+            logoUrl={opportunity.organizationLogo || opportunity.companyLogo || opportunity.imageUrl}
+            websiteUrl={opportunity.applyUrl || opportunity.sourceUrl}
+            size="md"
+            shape="rounded-xl"
+            className="mt-0.5 border border-slate-200/90 shadow-xs"
+          />
 
-          <div className="flex items-center gap-1.5 text-xs text-slate-600 font-semibold">
-            <Building2 className="w-3.5 h-3.5 text-brand-600 flex-shrink-0" />
-            <span className="truncate">{opportunity.organization}</span>
+          <div className="flex-1 min-w-0 space-y-1">
+            <Link
+              to={`/opportunities/${opportunity.id}`}
+              className="block group-hover:text-brand-600 transition-colors"
+            >
+              <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug tracking-tight line-clamp-2">
+                {opportunity.title}
+              </h3>
+            </Link>
+
+            <div className="flex items-center gap-1.5 text-xs text-slate-600 font-semibold">
+              <span className="truncate text-slate-700 font-bold">{opportunity.organization}</span>
+            </div>
           </div>
         </div>
 

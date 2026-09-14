@@ -29,6 +29,8 @@ import {
 } from 'lucide-react';
 import Badge from '../../components/common/Badge';
 import DeadlineBadge from '../../components/opportunities/DeadlineBadge';
+import OrganizationLogo from '../../components/common/OrganizationLogo';
+import { resolveOrganizationIdentity } from '../../utils/organizationUtils';
 import Button from '../../components/common/Button';
 import Modal from '../../components/common/Modal';
 import ReportModal from '../../components/opportunities/ReportModal';
@@ -213,56 +215,79 @@ export default function OpportunityDetailPage() {
       {/* Main Hero Header Card */}
       <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-card">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-100">
-          <div className="space-y-3 max-w-3xl">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="brand" size="md">
-                {opportunity.type}
-              </Badge>
-              <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200">
-                {opportunity.mode}
-              </span>
-              <DeadlineBadge deadline={opportunity.deadline} />
+          <div className="flex flex-col sm:flex-row items-start gap-5 max-w-3xl">
+            {/* Organization Logo */}
+            <OrganizationLogo
+              organization={opportunity.organization || opportunity.company}
+              logoUrl={opportunity.organizationLogo || opportunity.companyLogo || opportunity.imageUrl}
+              websiteUrl={opportunity.applyUrl || opportunity.sourceUrl}
+              size="xl"
+              shape="rounded-2xl"
+              className="border border-slate-200/90 shadow-sm mt-1"
+            />
 
-              {opportunity.verificationStatus === 'verified' && (
-                <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Verified Opportunity</span>
+            <div className="space-y-3 flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="brand" size="md">
+                  {opportunity.type}
+                </Badge>
+                <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200">
+                  {opportunity.mode}
                 </span>
-              )}
+                <DeadlineBadge deadline={opportunity.deadline} />
 
-              {opportunity.isCollegeExclusive && (
-                <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 border border-purple-200">
-                  <GraduationCap className="w-3.5 h-3.5 text-purple-600" />
-                  <span>College Exclusive</span>
-                </span>
-              )}
-            </div>
+                {opportunity.verificationStatus === 'verified' && (
+                  <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Verified Opportunity</span>
+                  </span>
+                )}
 
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight leading-tight">
-              {opportunity.title}
-            </h1>
-
-            <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-slate-600 font-medium">
-              <div className="flex items-center gap-1.5 text-slate-800">
-                <Building2 className="w-4 h-4 text-brand-600" />
-                <span>{opportunity.organization}</span>
+                {opportunity.isCollegeExclusive && (
+                  <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 border border-purple-200">
+                    <GraduationCap className="w-3.5 h-3.5 text-purple-600" />
+                    <span>College Exclusive</span>
+                  </span>
+                )}
               </div>
-              <div className="flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-slate-400" />
-                <span>{opportunity.location}</span>
+
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+                {opportunity.title}
+              </h1>
+
+              <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-slate-600 font-medium">
+                <div className="flex items-center gap-1.5 text-slate-900 font-bold">
+                  <Building2 className="w-4 h-4 text-brand-600" />
+                  <span>{opportunity.organization}</span>
+                  {(opportunity.applyUrl || opportunity.sourceUrl) && (
+                    <a
+                      href={opportunity.applyUrl || opportunity.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-1 text-[11px] font-bold text-brand-600 hover:text-brand-800 hover:underline inline-flex items-center gap-0.5"
+                    >
+                      <span>Visit Website</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-slate-400" />
+                  <span>{opportunity.location}</span>
+                </div>
+                {opportunity.stipend && (
+                  <div className="flex items-center gap-1.5 text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                    <DollarSign className="w-4 h-4" />
+                    <span>{opportunity.stipend}</span>
+                  </div>
+                )}
+                {opportunity.prize && (
+                  <div className="flex items-center gap-1.5 text-amber-800 font-bold bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                    <Trophy className="w-4 h-4 text-amber-600" />
+                    <span>{opportunity.prize}</span>
+                  </div>
+                )}
               </div>
-              {opportunity.stipend && (
-                <div className="flex items-center gap-1.5 text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                  <DollarSign className="w-4 h-4" />
-                  <span>{opportunity.stipend}</span>
-                </div>
-              )}
-              {opportunity.prize && (
-                <div className="flex items-center gap-1.5 text-amber-800 font-bold bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
-                  <Trophy className="w-4 h-4 text-amber-600" />
-                  <span>{opportunity.prize}</span>
-                </div>
-              )}
             </div>
           </div>
 
