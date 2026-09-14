@@ -123,8 +123,9 @@ export function OpportunityProvider({ children }) {
 
   const [loading, setLoading] = useState(false);
 
-  // Automated Expiration Checker: Run on mount to ensure expired opportunities are marked expired
+  // 1. Automated Expiration & Autonomous Background Scheduler Worker
   useEffect(() => {
+    // A. Audit & expire past deadlines immediately on mount
     const now = new Date();
     setOpportunities((prev) =>
       prev.map((opp) => {
@@ -142,6 +143,28 @@ export function OpportunityProvider({ children }) {
       } catch (err) {
         // Ignore offline RPC errors
       }
+    }
+
+    // B. Autonomous Background Agent: Auto-trigger discovery if last run was > 4 hours ago
+    const LAST_RUN_KEY = 'tb_last_autonomous_agent_run';
+    const lastRunStr = localStorage.getItem(LAST_RUN_KEY);
+    const fourHoursMs = 4 * 60 * 60 * 1000;
+    const shouldRunNow = !lastRunStr || (Date.now() - new Date(lastRunStr).getTime() > fourHoursMs);
+
+    // Start recurring 6-hour scheduler
+    agentScheduler.startSchedule(6, false, () => {
+      localStorage.setItem(LAST_RUN_KEY, new Date().toISOString());
+      runAgentNow({ autoPublish: true, autoPublishThreshold: 80 });
+    });
+    setSchedulerStatus(agentScheduler.getStatus());
+
+    if (shouldRunNow) {
+      // Delay initial background run slightly to let primary page render smoothly
+      const timer = setTimeout(() => {
+        localStorage.setItem(LAST_RUN_KEY, new Date().toISOString());
+        runAgentNow({ autoPublish: true, autoPublishThreshold: 80 }).catch(() => {});
+      }, 5000);
+      return () => clearTimeout(timer);
     }
   }, []);
 
