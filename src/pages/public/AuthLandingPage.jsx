@@ -55,8 +55,8 @@ export default function AuthLandingPage() {
     try {
       setLoading(true);
       const user = await login(loginEmail, loginPassword, 'student');
-      if (user?.role === 'admin' || user?.email?.toLowerCase() === 'irfan@gmail.com') {
-        addToast('Administrator session authenticated. Welcome, Irfan! 🛡️', 'success');
+      if (user?.role === 'admin') {
+        addToast(`Administrator session authenticated. Welcome back, ${user.name || 'Admin'}! 🛡️`, 'success');
         navigate('/admin/dashboard', { replace: true });
       } else {
         addToast('Welcome back! Successfully logged into student portal.', 'success');
@@ -102,20 +102,6 @@ export default function AuthLandingPage() {
       navigate('/student/dashboard', { replace: true });
     } catch (err) {
       setErrorMsg(err.message || 'Registration failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Quick Demo Fill
-  const handleQuickDemoStudent = async () => {
-    try {
-      setLoading(true);
-      await login(MOCK_DEFAULT_STUDENT.email, 'password123', 'student');
-      addToast(`Logged in as ${MOCK_DEFAULT_STUDENT.name}!`, 'success');
-      navigate('/student/dashboard', { replace: true });
-    } catch (err) {
-      addToast('Could not sign in with demo account.', 'error');
     } finally {
       setLoading(false);
     }

@@ -120,10 +120,10 @@ export default function AdminLayout() {
           <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
             <div className="min-w-0">
               <div className="text-xs font-bold text-slate-200 truncate">
-                {user?.name || 'Irfan (Platform Administrator)'}
+                {user?.name || 'Administrator'}
               </div>
               <div className="text-[10px] text-slate-400 truncate">
-                {user?.email || 'irfan@gmail.com'}
+                {user?.email || 'admin@torchbearer.ai'}
               </div>
             </div>
 

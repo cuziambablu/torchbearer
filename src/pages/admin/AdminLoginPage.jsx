@@ -28,15 +28,7 @@ export default function AdminLoginPage() {
   const handleAdminLogin = async (e) => {
     e.preventDefault();
     setErrorMsg('');
-
     const cleanEmail = (email || '').trim().toLowerCase();
-
-    // Strict Security Guard: Only irfan@gmail.com with irfan@2006 is authorized
-    if (cleanEmail !== 'irfan@gmail.com' || password !== 'irfan@2006') {
-      setErrorMsg('Access Denied: Invalid administrator credentials or unauthorized administrator email.');
-      addToast('Admin authorization failed. Unauthorized access attempt logged.', 'error');
-      return;
-    }
 
     try {
       setLoading(true);
@@ -47,7 +39,7 @@ export default function AdminLoginPage() {
         return;
       }
 
-      addToast('Administrator session authenticated. Welcome, Irfan.', 'success');
+      addToast(`Administrator session authenticated. Welcome back, ${user.name || 'Admin'}.`, 'success');
       navigate(redirectPath, { replace: true });
     } catch (err) {
       setErrorMsg(err.message || 'Invalid administrator credentials or unauthorized token.');

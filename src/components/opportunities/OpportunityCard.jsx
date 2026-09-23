@@ -1,91 +1,41 @@
-import React from 'react';
+﻿import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Bookmark,
   MapPin,
-  Building2,
-  Sparkles,
   ExternalLink,
   ArrowRight,
   ShieldCheck,
-  Trophy,
-  DollarSign,
-  GraduationCap,
+  IndianRupee,
+  Share2,
   Clock,
-  Flame,
+  Sparkles,
   CheckCircle2,
-  Share2
+  AlertCircle
 } from 'lucide-react';
-import Badge from '../common/Badge';
-import DeadlineBadge from './DeadlineBadge';
 import OrganizationLogo from '../common/OrganizationLogo';
 import { useOpportunities } from '../../context/OpportunityContext';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
-import { formatDate, getDeadlineStatus } from '../../utils/dateUtils';
-import { MOCK_DEFAULT_STUDENT } from '../../data/mockOpportunities';
+import { getDeadlineStatus } from '../../utils/dateUtils';
+import { formatCompensation } from '../../utils/currencyUtils';
 import { formatRelativeVerificationTime } from '../../services/opportunityAgent/freshnessEngine';
 
 export default function OpportunityCard({ opportunity, showRecommendationBadge = false }) {
   const { isSaved, toggleSave } = useOpportunities();
   const { addToast } = useToast();
-  const { profile, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  const studentProfile = profile || MOCK_DEFAULT_STUDENT;
-  const userSkills = Array.isArray(studentProfile?.skills)
-    ? studentProfile.skills.map((s) => String(s).toLowerCase())
-    : typeof studentProfile?.skills === 'string'
-    ? studentProfile.skills.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
-    : [];
+  if (!opportunity) return null;
 
   const saved = isSaved(opportunity.id);
   const workMode = opportunity.workMode || opportunity.mode || 'Remote';
-  const verificationScore = opportunity.verificationScore || opportunity.verification_score;
   const lastVerified = opportunity.lastVerifiedAt || opportunity.last_verified_at;
-  const deadlineInfo = getDeadlineStatus(opportunity.deadline);
+  const deadlineInfo = getDeadlineStatus(opportunity.deadline || opportunity.applicationDeadline);
 
-  const handleSaveClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!isAuthenticated) {
-      addToast('Create a free student account to save and track opportunities! 🎓', 'info');
-      navigate(`/student/signup?redirect=/opportunities/${opportunity.id}`);
-      return;
-    }
-
-    const willBeSaved = toggleSave(opportunity.id);
-    addToast(
-      willBeSaved
-        ? `Saved "${opportunity.title}" to your bookmarks`
-        : `Removed "${opportunity.title}" from saved`,
-      willBeSaved ? 'success' : 'info'
-    );
-  };
-
-  const getTypeStyle = (type) => {
-    switch (type) {
-      case 'Internship':
-        return { badge: 'brand', text: 'text-brand-700', bg: 'bg-brand-50', border: 'border-brand-200' };
-      case 'Hackathon':
-        return { badge: 'purple', text: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-200' };
-      case 'Job':
-        return { badge: 'emerald', text: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' };
-      case 'Scholarship':
-        return { badge: 'success', text: 'text-teal-700', bg: 'bg-teal-50', border: 'border-teal-200' };
-      case 'Fellowship':
-        return { badge: 'warning', text: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200' };
-      case 'Competition':
-        return { badge: 'indigo', text: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-200' };
-      case 'Research':
-        return { badge: 'sky', text: 'text-sky-700', bg: 'bg-sky-50', border: 'border-sky-200' };
-      default:
-        return { badge: 'default', text: 'text-slate-700', bg: 'bg-slate-50', border: 'border-slate-200' };
-    }
-  };
-
-  const typeConfig = getTypeStyle(opportunity.type);
+  const orgName = opportunity.organization || opportunity.company || 'Official Organization';
+  const applyUrl = opportunity.applyUrl || opportunity.applicationUrl || opportunity.sourceUrl || '#';
   const rawSkills = Array.isArray(opportunity.skills)
     ? opportunity.skills
     : typeof opportunity.skills === 'string'
@@ -95,155 +45,251 @@ export default function OpportunityCard({ opportunity, showRecommendationBadge =
   const displaySkills = rawSkills.slice(0, 3);
   const remainingSkillsCount = rawSkills.length - displaySkills.length;
 
+  const compensationDisplay = formatCompensation({
+    stipend: opportunity.stipend,
+    salary: opportunity.salary,
+    prize: opportunity.prize,
+    currency: opportunity.currency,
+    country: opportunity.country,
+    amount: opportunity.stipendAmount
+  });
+
+  const handleSaveClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!isAuthenticated) {
+      addToast('Sign in to bookmark and track opportunities.', 'info');
+      navigate('/student/login?redirect=/opportunities/' + opportunity.id);
+      return;
+    }
+
+    const willBeSaved = toggleSave(opportunity.id);
+    addToast(
+      willBeSaved
+        ? 'Saved "' + opportunity.title + '" to bookmarks'
+        : 'Removed "' + opportunity.title + '" from saved',
+      willBeSaved ? 'success' : 'info'
+    );
+  };
+
+  const handleShareClick = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const shareUrl = window.location.origin + '/opportunities/' + opportunity.id;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: opportunity.title + ' — Torchbearer AI',
+          text: 'Check out this opportunity at ' + orgName + ' on Torchbearer AI:',
+          url: shareUrl
+        });
+        return;
+      } catch (_) {}
+    }
+
+    navigator.clipboard.writeText(shareUrl);
+    addToast('Opportunity link copied to clipboard!', 'success');
+  };
+
+  const getTypeStyle = (type) => {
+    switch (type) {
+      case 'Internship':
+        return 'bg-blue-50 text-blue-700 border-blue-200/80';
+      case 'Hackathon':
+        return 'bg-purple-50 text-purple-700 border-purple-200/80';
+      case 'Job':
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200/80';
+      case 'Scholarship':
+        return 'bg-teal-50 text-teal-700 border-teal-200/80';
+      case 'Fellowship':
+        return 'bg-amber-50 text-amber-800 border-amber-200/80';
+      case 'Research':
+        return 'bg-sky-50 text-sky-700 border-sky-200/80';
+      case 'Competition':
+      case 'Coding Contests':
+        return 'bg-indigo-50 text-indigo-700 border-indigo-200/80';
+      case 'Open Source':
+        return 'bg-orange-50 text-orange-800 border-orange-200/80';
+      default:
+        return 'bg-slate-100 text-slate-700 border-slate-200';
+    }
+  };
+
   return (
-    <div className="group relative bg-white rounded-3xl border border-slate-200/90 hover:border-brand-400/80 shadow-card hover:shadow-card-hover transition-all duration-300 flex flex-col justify-between overflow-hidden transform hover:-translate-y-1">
-      {/* Top recommendation highlight banner if applicable */}
+    <div className="group relative bg-white rounded-2xl border border-slate-200/90 hover:border-slate-300 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden">
+      {/* Optional Top Recommendation Match Bar */}
       {showRecommendationBadge && opportunity.matchScore && (
-        <div className="bg-gradient-to-r from-brand-600 via-indigo-600 to-brand-700 px-4 py-1.5 text-white flex items-center justify-between text-xs font-bold tracking-wide">
-          <span className="flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-spin" style={{ animationDuration: '6s' }} />
-            {opportunity.matchScore}% Match for you
+        <div className="bg-slate-900 px-4 py-1.5 text-white flex items-center justify-between text-xs font-semibold">
+          <span className="flex items-center gap-1.5 text-amber-400">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>{opportunity.matchScore}% Match Signal</span>
           </span>
-          <span className="text-[11px] opacity-90 truncate max-w-[170px] font-medium">
-            {opportunity.matchReasons?.[0] || 'Top Student Fit'}
+          <span className="text-[11px] text-slate-300 truncate max-w-[180px]">
+            {opportunity.matchReasons?.[0] || 'High Profile Alignment'}
           </span>
         </div>
       )}
 
-      {/* Main Card Content */}
-      <div className="p-6 flex-1 flex flex-col">
-        {/* Top Meta Bar: Badges + Save Button */}
-        <div className="flex items-start justify-between gap-3 mb-3.5">
+      {/* Main Body */}
+      <div className="p-5 sm:p-6 flex-1 flex flex-col">
+        {/* Top Badges & Actions */}
+        <div className="flex items-center justify-between gap-2 mb-3.5">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className={`text-[11px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-lg border ${typeConfig.bg} ${typeConfig.text} ${typeConfig.border}`}>
-              {opportunity.type}
+            <span className={'text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md border ' + getTypeStyle(opportunity.type || opportunity.category)}>
+              {opportunity.type || opportunity.category || 'Opportunity'}
             </span>
 
-            <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/60">
               {workMode}
             </span>
 
-            {opportunity.verificationStatus === 'verified' && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <ShieldCheck className="w-3 h-3 text-emerald-600 flex-shrink-0" />
-                <span>{verificationScore ? `${verificationScore}% Verified` : 'Verified'}</span>
+            {/* Smart Urgency Pill */}
+            {deadlineInfo.isClosingSoon && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
+                {deadlineInfo.label}
               </span>
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={handleSaveClick}
-            aria-label={saved ? 'Remove from saved' : 'Save opportunity'}
-            className={`p-2 rounded-xl transition-all flex-shrink-0 ${
-              saved
-                ? 'bg-brand-50 text-brand-600 hover:bg-brand-100 ring-2 ring-brand-300/60 scale-105'
-                : 'text-slate-400 hover:text-slate-800 hover:bg-slate-100'
-            }`}
-          >
-            <Bookmark className={`w-4 h-4 ${saved ? 'fill-current text-brand-600' : ''}`} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={handleShareClick}
+              aria-label="Share opportunity"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+              title="Share"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveClick}
+              aria-label={saved ? 'Remove from bookmarks' : 'Save opportunity'}
+              className={'p-1.5 rounded-lg transition ' + (saved ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100')}
+              title={saved ? 'Saved' : 'Bookmark'}
+            >
+              <Bookmark className={'w-4 h-4 ' + (saved ? 'fill-current text-amber-600' : '')} />
+            </button>
+          </div>
         </div>
 
-        {/* Opportunity Header: Logo + Title & Organization */}
-        <div className="mb-3.5 flex items-start gap-3">
+        {/* Opportunity Header: Logo + Title + Org */}
+        <div className="flex items-start gap-3.5 mb-3.5">
           <OrganizationLogo
-            organization={opportunity.organization || opportunity.company}
+            organization={orgName}
             logoUrl={opportunity.organizationLogo || opportunity.companyLogo || opportunity.imageUrl}
-            websiteUrl={opportunity.applyUrl || opportunity.sourceUrl}
+            websiteUrl={applyUrl}
             size="md"
             shape="rounded-xl"
-            className="mt-0.5 border border-slate-200/90 shadow-xs"
+            className="flex-shrink-0 mt-0.5 border border-slate-200/90 shadow-2xs"
           />
 
-          <div className="flex-1 min-w-0 space-y-1">
+          <div className="flex-1 min-w-0">
             <Link
-              to={`/opportunities/${opportunity.id}`}
-              className="block group-hover:text-brand-600 transition-colors"
+              to={'/opportunities/' + opportunity.id}
+              className="block group-hover:text-amber-600 transition-colors"
             >
-              <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug tracking-tight line-clamp-2">
+              <h3 className="text-base font-bold text-slate-900 leading-snug tracking-tight line-clamp-2">
                 {opportunity.title}
               </h3>
             </Link>
-
-            <div className="flex items-center gap-1.5 text-xs text-slate-600 font-semibold">
-              <span className="truncate text-slate-700 font-bold">{opportunity.organization}</span>
+            <div className="text-xs text-slate-600 font-semibold mt-0.5 truncate">
+              {orgName}
             </div>
           </div>
         </div>
 
-        {/* Location & Compensation / Prize */}
-        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 mb-3.5">
+        {/* Key Info: Location + Compensation */}
+        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 mb-3">
           <div className="flex items-center gap-1 text-slate-500">
-            <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-slate-400" />
-            <span className="truncate max-w-[140px]">{opportunity.location}</span>
+            <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+            <span className="truncate max-w-[150px]">{opportunity.location || 'Remote'}</span>
           </div>
 
-          {opportunity.stipend && (
-            <div className="flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50/80 px-2 py-0.5 rounded-md border border-emerald-200/60 truncate">
-              <DollarSign className="w-3 h-3 flex-shrink-0" />
-              <span>{opportunity.stipend}</span>
-            </div>
-          )}
-
-          {opportunity.prize && !opportunity.stipend && (
-            <div className="flex items-center gap-1 font-bold text-amber-700 bg-amber-50/80 px-2 py-0.5 rounded-md border border-amber-200/60 truncate">
-              <Trophy className="w-3 h-3 flex-shrink-0" />
-              <span>{opportunity.prize}</span>
+          {compensationDisplay && (
+            <div className="flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50/90 px-2 py-0.5 rounded-md border border-emerald-200/80">
+              <IndianRupee className="w-3 h-3 flex-shrink-0" />
+              <span className="truncate">{compensationDisplay}</span>
             </div>
           )}
         </div>
 
-        {/* Short Description */}
-        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-4 flex-1">
+        {/* Short Summary Description */}
+        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-4 flex-1 font-normal">
           {opportunity.aiSummary || opportunity.description}
         </p>
 
-        {/* Skills Pills */}
-        {displaySkills.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5 mb-4">
-            {displaySkills.map((skill, i) => {
-              const isMatched = userSkills.includes(skill.toLowerCase());
-              return (
-                <span
-                  key={i}
-                  className={`text-[11px] px-2.5 py-0.5 rounded-lg font-medium transition ${
-                    isMatched
-                      ? 'bg-brand-50 text-brand-700 border border-brand-200 font-bold'
-                      : 'bg-slate-100 text-slate-600 border border-slate-200/60'
-                  }`}
-                >
-                  {skill}
-                </span>
-              );
-            })}
-            {remainingSkillsCount > 0 && (
-              <span className="text-[10px] font-bold text-slate-400 px-1.5 py-0.5">
-                +{remainingSkillsCount} more
-              </span>
-            )}
-          </div>
-        )}
-      </div>
+        {/* Skills & Eligibility Tags */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+          {opportunity.eligibility && (
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/60 truncate max-w-[200px]">
+              🎓 {opportunity.eligibility}
+            </span>
+          )}
 
-      {/* Card Footer: Deadline + CTA Link */}
-      <div className="px-6 py-4 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between gap-3">
-        <div className="flex flex-col">
-          <DeadlineBadge deadline={opportunity.deadline} />
-          {lastVerified && (
-            <span className="text-[10px] text-slate-400 font-medium mt-0.5">
-              Verified {formatRelativeVerificationTime(lastVerified)}
+          {displaySkills.map((skill, i) => (
+            <span
+              key={i}
+              className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 border border-slate-200/60"
+            >
+              {skill}
+            </span>
+          ))}
+
+          {remainingSkillsCount > 0 && (
+            <span className="text-[10px] font-semibold text-slate-400 px-1 py-0.5">
+              +{remainingSkillsCount}
             </span>
           )}
         </div>
+      </div>
 
-        <Link
-          to={`/opportunities/${opportunity.id}`}
-          className="inline-flex items-center gap-1 text-xs font-bold text-brand-600 hover:text-brand-800 transition group-hover:translate-x-0.5"
-        >
-          <span>View Details</span>
-          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
-        </Link>
+      {/* Card Footer: Verification Status + Dual CTAs */}
+      <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-600">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+            <span className="truncate">
+              {lastVerified ? 'Verified ' + formatRelativeVerificationTime(lastVerified) : 'Verified source'}
+            </span>
+          </div>
+          {opportunity.deadline && (
+            <div className="text-[10px] text-slate-400 font-medium">
+              Deadline: {deadlineInfo.label}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Link
+            to={'/opportunities/' + opportunity.id}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-200/70 transition"
+          >
+            Details
+          </Link>
+
+          {applyUrl && applyUrl !== '#' ? (
+            <a
+              href={applyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-xs"
+            >
+              <span>Apply</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          ) : (
+            <Link
+              to={'/opportunities/' + opportunity.id}
+              className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-xs"
+            >
+              <span>View</span>
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );

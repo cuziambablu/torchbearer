@@ -10,16 +10,7 @@ export function AuthProvider({ children }) {
       const savedUser = localStorage.getItem('campuslaunch_user');
       if (savedUser) {
         const parsed = JSON.parse(savedUser);
-        // Wipe any legacy mock user or any admin user that isn't strictly irfan@gmail.com
-        if (
-          !parsed?.email ||
-          parsed?.email === 'aarav.sharma@nitk.edu.in' ||
-          parsed?.id === 'student-1' ||
-          parsed?.name?.includes('Devika') ||
-          parsed?.email === 'admin@campuslaunch.org' ||
-          parsed?.email === 'admin@torchbearer.ai' ||
-          (parsed?.role === 'admin' && parsed?.email?.toLowerCase() !== 'irfan@gmail.com')
-        ) {
+        if (!parsed?.email || !parsed?.id) {
           localStorage.removeItem('campuslaunch_user');
           return null;
         }
@@ -50,7 +41,8 @@ export function AuthProvider({ children }) {
         if (session?.user) {
           fetchProfile(session.user.id, session.user.email);
         } else if (event === 'SIGNED_OUT') {
-          // Keep state consistent if explicit logout
+          setUser(null);
+          localStorage.removeItem('campuslaunch_user');
         }
       }
     );
@@ -64,7 +56,6 @@ export function AuthProvider({ children }) {
   const fetchProfile = async (userId, email) => {
     try {
       const cleanEmail = (email || '').trim().toLowerCase();
-      const isAdminEmail = cleanEmail === 'irfan@gmail.com';
 
       const { data, error } = await supabase
         .from('profiles')
@@ -73,20 +64,22 @@ export function AuthProvider({ children }) {
         .single();
 
       if (data && !error) {
-        setUser({
+        const profileUser = {
           ...data,
-          role: isAdminEmail ? 'admin' : (data.role === 'admin' ? 'student' : (data.role || 'student')),
+          role: data.role || 'student',
           skills: data.skills || [],
           interests: data.interests || []
-        });
-        localStorage.setItem('campuslaunch_user', JSON.stringify(data));
+        };
+        setUser(profileUser);
+        localStorage.setItem('campuslaunch_user', JSON.stringify(profileUser));
+        return profileUser;
       } else {
         // Construct fallback user from auth metadata
         const fallback = {
           id: userId,
           email: cleanEmail,
           name: cleanEmail ? cleanEmail.split('@')[0] : 'Student',
-          role: isAdminEmail ? 'admin' : 'student',
+          role: 'student',
           college: 'Engineering Institute of Technology',
           branch: 'CSE',
           year: '3rd Year',
@@ -94,9 +87,11 @@ export function AuthProvider({ children }) {
           interests: ['Internships', 'Hackathons']
         };
         setUser(fallback);
+        return fallback;
       }
     } catch (e) {
       console.warn('Profile fetch error, using local state:', e);
+      return null;
     }
   };
 
@@ -112,26 +107,6 @@ export function AuthProvider({ children }) {
     setLoading(true);
     const cleanEmail = (email || '').trim().toLowerCase();
 
-    // Strict Security Guard: Only irfan@gmail.com with irfan@2006 has admin access
-    if (role === 'admin' || cleanEmail === 'irfan@gmail.com') {
-      if (cleanEmail !== 'irfan@gmail.com' || password !== 'irfan@2006') {
-        setLoading(false);
-        throw new Error('Access Denied: Invalid administrator credentials or unauthorized administrator email.');
-      }
-
-      const adminUser = {
-        ...MOCK_ADMIN_USER,
-        id: 'admin-irfan',
-        name: 'Irfan (Platform Administrator)',
-        email: 'irfan@gmail.com',
-        role: 'admin'
-      };
-      setUser(adminUser);
-      localStorage.setItem('campuslaunch_user', JSON.stringify(adminUser));
-      setLoading(false);
-      return adminUser;
-    }
-
     if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -139,17 +114,35 @@ export function AuthProvider({ children }) {
           password
         });
 
-        if (!error && data?.user) {
-          await fetchProfile(data.user.id, data.user.email);
+        if (error) {
           setLoading(false);
-          return user;
+          throw new Error(error.message);
+        }
+
+        if (data?.user) {
+          const profile = await fetchProfile(data.user.id, data.user.email);
+          if (role === 'admin' && profile?.role !== 'admin') {
+            await supabase.auth.signOut();
+            setUser(null);
+            localStorage.removeItem('campuslaunch_user');
+            setLoading(false);
+            throw new Error('Access Denied: Account does not possess administrator privileges.');
+          }
+          setLoading(false);
+          return profile || data.user;
         }
       } catch (err) {
-        console.warn('Supabase auth attempt failed, proceeding with demo fallback:', err);
+        setLoading(false);
+        throw err;
       }
     }
 
-    // Local / Account Handling for students
+    // Demo/offline student mode fallback when Supabase is not connected
+    if (role === 'admin') {
+      setLoading(false);
+      throw new Error('Administrator authentication requires an active backend database connection.');
+    }
+
     await new Promise((r) => setTimeout(r, 300));
     const targetUser = {
       ...MOCK_DEFAULT_STUDENT,

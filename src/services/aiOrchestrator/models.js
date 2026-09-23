@@ -35,7 +35,7 @@ export const DEFAULT_CONFIG = {
   tokenRouterBaseUrl: 'https://api.tokenrouter.com/v1',
 
   // Fallback production keys (overridden by env variables)
-  tokenRouterFallbackKey: 'sk-CVqw7jlQPzG8DlW8k26HXl89cNixf9XLbM9shyBkobGuzD3R',
+  tokenRouterFallbackKey: '',
   openRouterFallbackKey: '',
 
   // Multi-tier Models

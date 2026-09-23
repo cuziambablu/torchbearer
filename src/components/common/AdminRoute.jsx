@@ -17,9 +17,8 @@ export default function AdminRoute({ children }) {
     );
   }
 
-  // If not authenticated or not the authorized admin email (irfan@gmail.com), redirect to dedicated admin login
-  const isStrictAdmin = isAuthenticated && isAdmin && user?.email?.toLowerCase() === 'irfan@gmail.com';
-  if (!isStrictAdmin) {
+  // If not authenticated or not an admin, redirect to dedicated admin login
+  if (!isAuthenticated || !isAdmin) {
     return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
 

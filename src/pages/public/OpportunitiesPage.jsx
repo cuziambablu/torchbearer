@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Search,
@@ -14,7 +14,9 @@ import {
   Briefcase,
   BookOpen,
   Rocket,
-  GraduationCap
+  GraduationCap,
+  IndianRupee,
+  RotateCcw
 } from 'lucide-react';
 import OpportunityCard from '../../components/opportunities/OpportunityCard';
 import OpportunityFilters from '../../components/opportunities/OpportunityFilters';
@@ -24,9 +26,8 @@ import Pagination from '../../components/common/Pagination';
 import Button from '../../components/common/Button';
 import { useOpportunities } from '../../context/OpportunityContext';
 import { getDeadlineStatus } from '../../utils/dateUtils';
-import { OPPORTUNITY_TYPES } from '../../data/mockOpportunities';
 
-const ITEMS_PER_PAGE = 9;
+const ITEMS_PER_PAGE = 12;
 
 export default function OpportunitiesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -44,9 +45,9 @@ export default function OpportunitiesPage() {
     branch: searchParams.get('branch') || 'all',
     year: searchParams.get('year') || 'all',
     deadline: searchParams.get('deadline') || 'all',
+    stipendTier: searchParams.get('stipend') || 'all',
     sort: searchParams.get('sort') || 'newest',
-    verifiedOnly: searchParams.get('verified') === 'true',
-    collegeExclusive: searchParams.get('exclusive') === 'true'
+    verifiedOnly: searchParams.get('verified') === 'true'
   });
 
   // Sync state when URL params change
@@ -59,9 +60,9 @@ export default function OpportunitiesPage() {
       branch: searchParams.get('branch') || 'all',
       year: searchParams.get('year') || 'all',
       deadline: searchParams.get('deadline') || 'all',
+      stipendTier: searchParams.get('stipend') || 'all',
       sort: searchParams.get('sort') || 'newest',
-      verifiedOnly: searchParams.get('verified') === 'true',
-      collegeExclusive: searchParams.get('exclusive') === 'true'
+      verifiedOnly: searchParams.get('verified') === 'true'
     }));
   }, [searchParams]);
 
@@ -76,7 +77,7 @@ export default function OpportunitiesPage() {
     Object.entries(nextFilters).forEach(([k, v]) => {
       if (v && v !== 'all' && v !== false) {
         if (k === 'verifiedOnly') newParams.set('verified', 'true');
-        else if (k === 'collegeExclusive') newParams.set('exclusive', 'true');
+        else if (k === 'stipendTier') newParams.set('stipend', v);
         else newParams.set(k, v);
       }
     });
@@ -91,327 +92,323 @@ export default function OpportunitiesPage() {
       branch: 'all',
       year: 'all',
       deadline: 'all',
+      stipendTier: 'all',
       sort: 'newest',
-      verifiedOnly: false,
-      collegeExclusive: false
+      verifiedOnly: false
     };
     setFilters(defaultFilters);
     setSearchParams(new URLSearchParams());
     setCurrentPage(1);
   };
 
-  // Filter and sort opportunities
+  // Filter & Search Logic
   const filteredOpportunities = useMemo(() => {
-    const now = new Date();
-    const safeList = Array.isArray(opportunities) ? opportunities : [];
+    return (opportunities || []).filter((opp) => {
+      // 1. Search Query Filter (Natural language matching)
+      if (filters.search) {
+        const query = filters.search.toLowerCase().trim();
+        const titleMatch = (opp.title || '').toLowerCase().includes(query);
+        const orgMatch = (opp.organization || opp.company || '').toLowerCase().includes(query);
+        const descMatch = (opp.description || opp.aiSummary || '').toLowerCase().includes(query);
+        const locMatch = (opp.location || '').toLowerCase().includes(query);
+        const skillsMatch = Array.isArray(opp.skills)
+          ? opp.skills.some((s) => s.toLowerCase().includes(query))
+          : (opp.skills || '').toLowerCase().includes(query);
+        const categoryMatch = (opp.category || '').toLowerCase().includes(query);
+        const typeMatch = (opp.type || '').toLowerCase().includes(query);
 
-    return safeList
-      .filter((opp) => {
-        // 1. Only published opportunities in public browse
-        if (opp.status !== 'published') return false;
-
-        // 2. Automated Expiration: Exclude past deadlines from public discovery
-        if (opp.deadline && new Date(opp.deadline) < now) {
+        if (!titleMatch && !orgMatch && !descMatch && !locMatch && !skillsMatch && !categoryMatch && !typeMatch) {
           return false;
         }
+      }
 
-        // 3. Verified only filter
-        if (filters.verifiedOnly && opp.verificationStatus !== 'verified') {
+      // 2. Type / Category Filter
+      if (filters.type !== 'all') {
+        const typeStr = (opp.type || '').toLowerCase();
+        const catStr = (opp.category || '').toLowerCase();
+        const filterStr = filters.type.toLowerCase();
+        if (!typeStr.includes(filterStr) && !catStr.includes(filterStr)) {
           return false;
         }
+      }
 
-        // 4. College exclusive filter
-        if (filters.collegeExclusive && !opp.isCollegeExclusive) {
-          return false;
-        }
+      // 3. Work Mode Filter
+      if (filters.mode !== 'all') {
+        const oppMode = (opp.workMode || opp.mode || 'Remote').toLowerCase();
+        if (oppMode !== filters.mode.toLowerCase()) return false;
+      }
 
-        // 5. Search text matching (title, org, skills, description, type, source)
-        if (filters.search.trim()) {
-          const query = filters.search.toLowerCase();
-          const titleMatch = (opp.title || '').toLowerCase().includes(query);
-          const orgMatch = (opp.organization || '').toLowerCase().includes(query);
-          const descMatch = (opp.description || '').toLowerCase().includes(query);
-          const typeMatch = (opp.type || '').toLowerCase().includes(query);
-          const sourceMatch = (opp.sourceName || '').toLowerCase().includes(query);
-          const skillMatch = (opp.skills || []).some((s) => s.toLowerCase().includes(query));
+      // 4. Branch Filter
+      if (filters.branch !== 'all') {
+        const targetBranches = Array.isArray(opp.targetBranches || opp.branches)
+          ? (opp.targetBranches || opp.branches).map((b) => b.toLowerCase())
+          : ['all', 'cse', 'it', 'ece'];
+        const isEligible =
+          targetBranches.includes('all') ||
+          targetBranches.includes('all engineering branches') ||
+          targetBranches.includes(filters.branch.toLowerCase());
+        if (!isEligible) return false;
+      }
 
-          if (!titleMatch && !orgMatch && !descMatch && !typeMatch && !skillMatch && !sourceMatch) {
-            return false;
-          }
-        }
+      // 5. Year Filter
+      if (filters.year !== 'all') {
+        const targetYears = Array.isArray(opp.targetYears || opp.graduationYear)
+          ? (opp.targetYears || opp.graduationYear).map((y) => y.toLowerCase())
+          : ['all'];
+        const isEligible =
+          targetYears.includes('all') ||
+          targetYears.some((y) => y.includes(filters.year.toLowerCase()));
+        if (!isEligible) return false;
+      }
 
-        // 6. Type filter
-        if (filters.type !== 'all' && opp.type !== filters.type) {
-          return false;
-        }
+      // 6. Deadline Filter
+      if (filters.deadline !== 'all') {
+        const deadlineInfo = getDeadlineStatus(opp.deadline || opp.applicationDeadline);
+        if (deadlineInfo.isExpired) return false;
+        if (filters.deadline === 'today' && deadlineInfo.daysLeft > 1) return false;
+        if (filters.deadline === 'week' && deadlineInfo.daysLeft > 7) return false;
+        if (filters.deadline === 'month' && deadlineInfo.daysLeft > 30) return false;
+      }
 
-        // 7. Mode filter
-        const oppMode = opp.workMode || opp.work_mode || opp.mode;
-        if (filters.mode !== 'all' && oppMode !== filters.mode) {
-          return false;
+      // 7. Stipend Tier Filter
+      if (filters.stipendTier !== 'all') {
+        const amount = opp.stipendAmount || 0;
+        const stipendStr = opp.stipend || '';
+        if (filters.stipendTier === 'paid') {
+          if (!amount && (!stipendStr || stipendStr.toLowerCase().includes('unpaid'))) return false;
+        } else if (filters.stipendTier === '25k') {
+          if (amount < 25000 && !stipendStr.includes('25,000') && !stipendStr.includes('50,000') && !stipendStr.includes('Lakh')) return false;
+        } else if (filters.stipendTier === '50k') {
+          if (amount < 50000 && !stipendStr.includes('50,000') && !stipendStr.includes('80,000') && !stipendStr.includes('Lakh')) return false;
+        } else if (filters.stipendTier === '1lakh') {
+          if (amount < 100000 && !stipendStr.includes('Lakh') && !stipendStr.includes('1,00,000') && !stipendStr.includes('10,00,000')) return false;
         }
+      }
 
-        // 8. Branch filter
-        if (filters.branch !== 'all' && opp.targetBranches && opp.targetBranches.length > 0) {
-          const matches = opp.targetBranches.includes(filters.branch) || opp.targetBranches.includes('Other');
-          if (!matches) return false;
-        }
+      // 8. Verified Only Filter
+      if (filters.verifiedOnly && opp.verificationStatus !== 'verified' && (opp.verificationScore || 0) < 75) {
+        return false;
+      }
 
-        // 9. Year filter
-        if (filters.year !== 'all' && opp.targetYears && opp.targetYears.length > 0) {
-          const matches = opp.targetYears.includes(filters.year);
-          if (!matches) return false;
-        }
+      // Hide expired opportunities by default unless explicitly searching past listings
+      const deadlineInfo = getDeadlineStatus(opp.deadline || opp.applicationDeadline);
+      if (deadlineInfo.isExpired && filters.deadline !== 'expired') {
+        return false;
+      }
 
-        // 10. Deadline timeframe filter
-        if (filters.deadline !== 'all') {
-          const dl = getDeadlineStatus(opp.deadline);
-          if (dl.isExpired) return false;
-          if (filters.deadline === 'today' && dl.daysLeft > 1) return false;
-          if (filters.deadline === 'week' && dl.daysLeft > 7) return false;
-          if (filters.deadline === 'month' && dl.daysLeft > 30) return false;
-        }
-
-        return true;
-      })
-      .sort((a, b) => {
-        if (filters.sort === 'deadline_soon') {
-          return new Date(a.deadline) - new Date(b.deadline);
-        }
-        if (filters.sort === 'popular') {
-          return (b.views || 0) - (a.views || 0);
-        }
-        return new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0);
-      });
+      return true;
+    });
   }, [opportunities, filters]);
 
-  // Pagination calculation
-  const totalPages = Math.ceil(filteredOpportunities.length / ITEMS_PER_PAGE);
+  // Sorting Logic
+  const sortedOpportunities = useMemo(() => {
+    return [...filteredOpportunities].sort((a, b) => {
+      if (filters.sort === 'deadline_soon') {
+        const dateA = new Date(a.deadline || a.applicationDeadline || '2099-01-01').getTime();
+        const dateB = new Date(b.deadline || b.applicationDeadline || '2099-01-01').getTime();
+        return dateA - dateB;
+      }
+      if (filters.sort === 'highest_stipend') {
+        return (b.stipendAmount || 0) - (a.stipendAmount || 0);
+      }
+      if (filters.sort === 'popular') {
+        return (b.views || 0) - (a.views || 0);
+      }
+      // newest first
+      const dateA = new Date(a.postedDate || a.created_at || '2026-01-01').getTime();
+      const dateB = new Date(b.postedDate || b.created_at || '2026-01-01').getTime();
+      return dateB - dateA;
+    });
+  }, [filteredOpportunities, filters.sort]);
+
+  // Pagination Logic
+  const totalPages = Math.ceil(sortedOpportunities.length / ITEMS_PER_PAGE) || 1;
   const paginatedOpportunities = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredOpportunities.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredOpportunities, currentPage]);
-
-  const activeFilterPills = useMemo(() => {
-    const pills = [];
-    if (filters.search) pills.push({ key: 'search', label: `Search: "${filters.search}"` });
-    if (filters.type !== 'all') pills.push({ key: 'type', label: `Type: ${filters.type}` });
-    if (filters.mode !== 'all') pills.push({ key: 'mode', label: `Mode: ${filters.mode}` });
-    if (filters.branch !== 'all') pills.push({ key: 'branch', label: `Branch: ${filters.branch}` });
-    if (filters.year !== 'all') pills.push({ key: 'year', label: `Year: ${filters.year}` });
-    if (filters.deadline !== 'all') pills.push({ key: 'deadline', label: `Deadline: ${filters.deadline}` });
-    if (filters.verifiedOnly) pills.push({ key: 'verifiedOnly', label: '✓ Verified Only' });
-    if (filters.collegeExclusive) pills.push({ key: 'collegeExclusive', label: '🎓 College Exclusive' });
-    return pills;
-  }, [filters]);
-
-  const quickCategories = [
-    { id: 'all', label: 'All Opportunities' },
-    { id: 'Internship', label: 'Internships' },
-    { id: 'Hackathon', label: 'Hackathons' },
-    { id: 'Research', label: 'Research' },
-    { id: 'Fellowship', label: 'Fellowships' },
-    { id: 'Scholarship', label: 'Scholarships' },
-    { id: 'Job', label: 'Full-Time Jobs' }
-  ];
+    return sortedOpportunities.slice(start, start + ITEMS_PER_PAGE);
+  }, [sortedOpportunities, currentPage]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8 animate-fade-in">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-slate-200">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 border border-brand-200 text-brand-700 text-xs font-bold mb-2">
-            <Sparkles className="w-3.5 h-3.5 text-brand-600" />
-            <span>AI-Verified Opportunity Catalog</span>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-slate-200">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+            <span>Opportunity Intelligence Catalog</span>
+            <span>•</span>
+            <span className="text-emerald-600 font-semibold flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Live Feed
+            </span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-            Discover Opportunities
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            Explore Opportunities
           </h1>
-          <p className="text-sm text-slate-500 mt-1 font-medium">
-            Browse authentic internships, hackathons, research fellowships, and student programs verified by AI.
+          <p className="text-xs sm:text-sm text-slate-500 max-w-xl">
+            Filter through verified technical internships, scholarships, hackathons, and research fellowships.
           </p>
         </div>
 
-        {/* Results Counter & View Switcher */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-            {filteredOpportunities.length} Active {filteredOpportunities.length === 1 ? 'Opportunity' : 'Opportunities'}
-          </span>
-        </div>
-      </div>
-
-      {/* Quick Category Tab Pills */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-        {quickCategories.map((cat) => {
-          const isActive = filters.type === cat.id;
-          return (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => handleFilterChange('type', cat.id)}
-              className={`px-4 py-2 rounded-2xl text-xs font-extrabold whitespace-nowrap transition-all shadow-xs ${
-                isActive
-                  ? 'bg-slate-900 text-white shadow-md'
-                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/90'
-              }`}
-            >
-              {cat.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Top Search & Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+        {/* Global Search Bar */}
+        <div className="w-full md:w-96 relative">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             value={filters.search}
             onChange={(e) => handleFilterChange('search', e.target.value)}
-            placeholder="Search by title, organization, or skill (e.g., Python, GSoC, AICTE, React)..."
-            className="w-full pl-11 pr-10 py-3 text-sm bg-white border border-slate-200/90 rounded-2xl shadow-card text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
+            placeholder="Search keywords, skills, roles..."
+            className="w-full pl-10 pr-9 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 shadow-xs"
           />
           {filters.search && (
             <button
+              type="button"
               onClick={() => handleFilterChange('search', '')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
-
-        {/* Mobile Filter Trigger */}
-        <div className="flex items-center gap-2 lg:hidden">
-          <Button
-            variant="outline"
-            size="md"
-            icon={SlidersHorizontal}
-            onClick={() => setMobileFilterOpen(true)}
-            className="w-full sm:w-auto font-bold py-3 rounded-2xl"
-          >
-            Filters {activeFilterPills.length > 0 && `(${activeFilterPills.length})`}
-          </Button>
-        </div>
       </div>
 
-      {/* Active Filter Badges */}
-      {activeFilterPills.length > 0 && (
-        <div className="flex items-center flex-wrap gap-2 animate-fade-in">
-          <span className="text-xs font-bold text-slate-500">Active filters:</span>
-          {activeFilterPills.map((pill) => (
-            <span
-              key={pill.key}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200 shadow-subtle"
-            >
-              <span>{pill.label}</span>
+      {/* Main Layout: Sidebar Filters + Opportunities Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Desktop Sidebar Filter */}
+        <div className="hidden lg:block lg:col-span-1">
+          <div className="sticky top-24">
+            <OpportunityFilters
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              onResetFilters={handleResetFilters}
+              totalResults={sortedOpportunities.length}
+            />
+          </div>
+        </div>
+
+        {/* Mobile Filter Toggle Button */}
+        <div className="lg:hidden flex items-center justify-between gap-3 p-3 bg-white rounded-2xl border border-slate-200 shadow-xs">
+          <div className="text-xs font-bold text-slate-700">
+            {sortedOpportunities.length} {sortedOpportunities.length === 1 ? 'Opportunity' : 'Opportunities'}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            icon={Filter}
+            onClick={() => setMobileFilterOpen(true)}
+            className="text-xs font-bold"
+          >
+            Filters
+          </Button>
+        </div>
+
+        {/* Main Feed Content */}
+        <div className="lg:col-span-3 space-y-6">
+          {/* Active Filter Chips Bar */}
+          {(filters.type !== 'all' || filters.mode !== 'all' || filters.deadline !== 'all' || filters.stipendTier !== 'all' || filters.verifiedOnly) && (
+            <div className="flex flex-wrap items-center gap-2 pb-2">
+              <span className="text-xs text-slate-400 font-medium">Active:</span>
+              {filters.type !== 'all' && (
+                <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-semibold">
+                  <span>Type: {filters.type}</span>
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => handleFilterChange('type', 'all')} />
+                </span>
+              )}
+              {filters.mode !== 'all' && (
+                <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-semibold">
+                  <span>Mode: {filters.mode}</span>
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => handleFilterChange('mode', 'all')} />
+                </span>
+              )}
+              {filters.stipendTier !== 'all' && (
+                <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-semibold">
+                  <span>Stipend: {filters.stipendTier}</span>
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => handleFilterChange('stipendTier', 'all')} />
+                </span>
+              )}
+              {filters.verifiedOnly && (
+                <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
+                  <span>Verified Only</span>
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => handleFilterChange('verifiedOnly', false)} />
+                </span>
+              )}
               <button
                 type="button"
-                onClick={() =>
-                  handleFilterChange(
-                    pill.key,
-                    pill.key === 'search' ? '' : pill.key.includes('Only') || pill.key.includes('Exclusive') ? false : 'all'
-                  )
-                }
-                className="hover:text-brand-900"
+                onClick={handleResetFilters}
+                className="text-xs text-slate-400 hover:text-slate-800 font-semibold underline ml-1"
               >
-                <X className="w-3.5 h-3.5" />
+                Clear all
               </button>
-            </span>
-          ))}
-          <button
-            type="button"
-            onClick={handleResetFilters}
-            className="text-xs font-bold text-slate-500 hover:text-brand-600 ml-2 underline"
-          >
-            Clear all
-          </button>
-        </div>
-      )}
+            </div>
+          )}
 
-      {/* Main Content Layout: Left Filters + Right Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Desktop Sidebar Filters */}
-        <div className="hidden lg:block lg:col-span-1">
-          <OpportunityFilters
-            filters={filters}
-            onFilterChange={handleFilterChange}
-            onResetFilters={handleResetFilters}
-            totalResults={filteredOpportunities.length}
-          />
-        </div>
-
-        {/* Opportunities Grid Section */}
-        <div className="lg:col-span-3 space-y-6">
+          {/* Cards Grid */}
           {loading ? (
-            <LoadingSkeleton count={6} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-64 bg-slate-100 rounded-2xl animate-pulse" />
+              ))}
+            </div>
           ) : paginatedOpportunities.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {paginatedOpportunities.map((opp) => (
-                  <OpportunityCard key={opp.id} opportunity={opp} />
-                ))}
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {paginatedOpportunities.map((opp) => (
+                <OpportunityCard key={opp.id} opportunity={opp} />
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              title="No opportunities found"
+              description="No active listings match your selected search criteria. Try adjusting your filters or resetting."
+              actionLabel="Reset All Filters"
+              onAction={handleResetFilters}
+            />
+          )}
 
-              {/* Pagination */}
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="pt-6 border-t border-slate-100 flex justify-center">
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
-                onPageChange={(page) => {
-                  setCurrentPage(page);
+                onPageChange={(p) => {
+                  setCurrentPage(p);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               />
-            </>
-          ) : (
-            <EmptyState
-              title="No active opportunities match your criteria"
-              description="We couldn't find any opportunities matching your specific filters. Try clearing some filters or searching for different keywords."
-              actionLabel="Reset all filters"
-              onAction={handleResetFilters}
-            />
+            </div>
           )}
         </div>
       </div>
 
-      {/* Mobile Filters Slide-Over Drawer */}
+      {/* Mobile Filters Bottom Sheet / Drawer */}
       {mobileFilterOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden flex">
-          <div
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
-            onClick={() => setMobileFilterOpen(false)}
-          />
-          <div className="relative ml-auto w-full max-w-xs bg-white h-full p-6 shadow-2xl overflow-y-auto z-10 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
-                <h3 className="text-base font-bold text-slate-900">Filter Listings</h3>
-                <button
-                  onClick={() => setMobileFilterOpen(false)}
-                  className="p-1 text-slate-400 hover:text-slate-600 rounded-lg"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <OpportunityFilters
-                filters={filters}
-                onFilterChange={handleFilterChange}
-                onResetFilters={handleResetFilters}
-                totalResults={filteredOpportunities.length}
-              />
-            </div>
-
-            <div className="pt-6 border-t border-slate-100 mt-6">
-              <Button
-                variant="primary"
-                size="md"
-                className="w-full font-bold"
+        <div className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-t-3xl p-6 max-h-[85vh] overflow-y-auto space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="text-base font-bold text-slate-900">Filter Opportunities</div>
+              <button
+                type="button"
                 onClick={() => setMobileFilterOpen(false)}
+                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg"
               >
-                Apply Filters ({filteredOpportunities.length})
-              </Button>
+                <X className="w-5 h-5" />
+              </button>
             </div>
+
+            <OpportunityFilters
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              onResetFilters={handleResetFilters}
+              totalResults={sortedOpportunities.length}
+            />
+
+            <Button
+              variant="primary"
+              size="md"
+              className="w-full justify-center mt-4 bg-slate-900"
+              onClick={() => setMobileFilterOpen(false)}
+            >
+              Apply Filters ({sortedOpportunities.length})
+            </Button>
           </div>
         </div>
       )}

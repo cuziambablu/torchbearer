@@ -34,9 +34,9 @@ jobs:
       - name: 🚀 Deploy Updated Build to Live Website (InfinityFree FTP)
         run: node scripts/deploy-ftp.mjs
         env:
-          FTP_HOST: 'ftpupload.net'
-          FTP_USER: 'if0_42890832'
-          FTP_PASSWORD: 'kNSulAx3dHhQeG'
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
 
       - name: 💾 Commit & Push Updated Opportunity Catalog to Git
         run: |

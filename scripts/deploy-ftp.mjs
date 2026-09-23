@@ -10,10 +10,15 @@ async function deploy() {
   const client = new ftp.Client();
   client.ftp.verbose = false;
 
-  const host = process.env.FTP_HOST || 'ftpupload.net';
-  const user = process.env.FTP_USER || 'if0_42890832';
-  const password = process.env.FTP_PASSWORD || 'kNSulAx3dHhQeG';
+  const host = process.env.FTP_HOST;
+  const user = process.env.FTP_USER;
+  const password = process.env.FTP_PASSWORD;
   const distDir = path.resolve(process.cwd(), 'dist');
+
+  if (!host || !user || !password) {
+    console.warn('⚠️ FTP Deployment skipped: Missing FTP_HOST, FTP_USER, or FTP_PASSWORD environment variables.');
+    return;
+  }
 
   try {
     console.log(`Connecting to InfinityFree FTP (${host})...`);
