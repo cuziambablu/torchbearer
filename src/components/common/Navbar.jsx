@@ -202,16 +202,16 @@ export default function Navbar() {
                 <div className="flex items-center gap-2">
                   <Link
                     to="/login"
-                    className="text-xs font-semibold text-slate-700 hover:text-slate-950 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors"
+                    className="text-xs font-semibold text-slate-700 hover:text-slate-950 px-3 py-2 rounded-xl hover:bg-slate-100 transition-colors"
                   >
                     Log In
                   </Link>
 
                   <Link
                     to="/signup"
-                    className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-white bg-torch-gradient rounded-lg shadow-torch-button hover:opacity-95 transition-all transform active:scale-98"
+                    className="inline-flex items-center justify-center px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#FF2400] via-[#FF5A00] to-[#FF9500] rounded-xl shadow-[0_4px_14px_rgba(255,77,0,0.3)] hover:shadow-[0_6px_20px_rgba(255,77,0,0.4)] hover:brightness-105 transition-all transform active:scale-98"
                   >
-                    Get Started
+                    Create Account
                   </Link>
                 </div>
               )}
@@ -302,9 +302,9 @@ export default function Navbar() {
                 </Link>
                 <Link
                   to="/signup"
-                  className="w-full text-center py-2.5 text-sm font-semibold text-white bg-torch-gradient rounded-lg shadow-torch-button"
+                  className="w-full text-center py-2.5 text-sm font-bold text-white bg-gradient-to-r from-[#FF2400] via-[#FF5A00] to-[#FF9500] rounded-xl shadow-[0_4px_14px_rgba(255,77,0,0.3)]"
                 >
-                  Get Started
+                  Create Account
                 </Link>
               </div>
             )}
