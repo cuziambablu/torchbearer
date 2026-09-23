@@ -1,27 +1,24 @@
-import React, { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   Compass,
   Bookmark,
   Send,
-  PlusCircle,
   LayoutDashboard,
-  ShieldAlert,
   User,
   LogOut,
   Menu,
   X,
   Sparkles,
   ChevronDown,
-  UploadCloud,
-  FileText,
-  Bot,
-  Flame
+  Briefcase,
+  GraduationCap,
+  Code2,
+  HelpCircle,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useOpportunities } from '../../context/OpportunityContext';
 import NotificationBell from './NotificationBell';
-import Button from './Button';
 import BrandLogo from './BrandLogo';
 import AIGuideModal from './AIGuideModal';
 
@@ -31,13 +28,28 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [aiGuideOpen, setAiGuideOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+    setUserDropdownOpen(false);
+  }, [location.pathname]);
 
   const navLinkClass = ({ isActive }) =>
-    `text-sm font-semibold transition-colors px-3.5 py-2 rounded-xl flex items-center gap-1.5 ${
+    `text-sm font-medium transition-all px-3 py-1.5 rounded-lg flex items-center gap-1.5 ${
       isActive
-        ? 'text-amber-700 bg-amber-50 font-bold border border-amber-200/80 shadow-xs'
-        : 'text-slate-600 hover:text-slate-950 hover:bg-slate-100/80'
+        ? 'text-slate-950 font-semibold bg-slate-100/90'
+        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
     }`;
 
   const handleLogout = () => {
@@ -48,32 +60,40 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/90 transition-all">
+      <header
+        className={`sticky top-0 z-40 transition-all duration-200 ${
+          scrolled
+            ? 'bg-white/85 backdrop-blur-md border-b border-slate-200/80 shadow-subtle'
+            : 'bg-white/60 backdrop-blur-xs border-b border-transparent'
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Brand Logo */}
+            {/* Left: Brand Logo */}
             <div className="flex items-center gap-8">
               <BrandLogo size="md" href="/" />
 
-              {/* Desktop Navigation Links */}
-              <nav className="hidden md:flex items-center space-x-1">
+              {/* Center / Desktop Links */}
+              <nav className="hidden lg:flex items-center space-x-1">
                 <NavLink to="/opportunities" className={navLinkClass}>
                   <Compass className="w-4 h-4 text-slate-500" />
-                  <span>Explore</span>
+                  <span>Opportunities</span>
                 </NavLink>
 
-                {/* AI Guide Trigger */}
-                <button
-                  type="button"
-                  onClick={() => setAiGuideOpen(true)}
-                  className="text-sm font-semibold text-slate-600 hover:text-amber-700 hover:bg-amber-50/70 transition-colors px-3.5 py-2 rounded-xl flex items-center gap-1.5"
-                >
-                  <Sparkles className="w-4 h-4 text-amber-500" />
-                  <span>AI Guide</span>
-                  <span className="px-1.5 py-0.2 text-[9px] font-black uppercase bg-amber-500/10 text-amber-700 border border-amber-300 rounded-full">
-                    Ask
-                  </span>
-                </button>
+                <NavLink to="/opportunities?category=internship" className={navLinkClass}>
+                  <Briefcase className="w-4 h-4 text-slate-500" />
+                  <span>Internships</span>
+                </NavLink>
+
+                <NavLink to="/opportunities?category=scholarship" className={navLinkClass}>
+                  <GraduationCap className="w-4 h-4 text-slate-500" />
+                  <span>Scholarships</span>
+                </NavLink>
+
+                <NavLink to="/opportunities?category=hackathon" className={navLinkClass}>
+                  <Code2 className="w-4 h-4 text-slate-500" />
+                  <span>Hackathons</span>
+                </NavLink>
 
                 {isAuthenticated && isStudent && (
                   <>
@@ -86,7 +106,7 @@ export default function Navbar() {
                       <Bookmark className="w-4 h-4 text-slate-500" />
                       <span>Saved</span>
                       {savedIds.length > 0 && (
-                        <span className="ml-1 px-1.5 py-0.2 bg-amber-100 text-amber-800 text-[10px] font-bold rounded-full">
+                        <span className="ml-1 px-1.5 py-0.2 bg-torch-100 text-torch-800 text-[10px] font-bold rounded-full">
                           {savedIds.length}
                         </span>
                       )}
@@ -96,7 +116,7 @@ export default function Navbar() {
                       <Send className="w-4 h-4 text-slate-500" />
                       <span>Tracker</span>
                       {applications.length > 0 && (
-                        <span className="ml-1 px-1.5 py-0.2 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">
+                        <span className="ml-1 px-1.5 py-0.2 bg-slate-200 text-slate-800 text-[10px] font-bold rounded-full">
                           {applications.length}
                         </span>
                       )}
@@ -106,197 +126,194 @@ export default function Navbar() {
               </nav>
             </div>
 
-            {/* Right Action Hub */}
-            <div className="hidden md:flex items-center gap-3">
-              {/* In-App Notification Bell */}
-              {isAuthenticated && <NotificationBell />}
-
-              {/* Submit Opportunity Button */}
-              <Link to="/submit">
-                <Button variant="outline" size="sm" icon={PlusCircle} className="font-bold border-slate-300">
-                  Submit
-                </Button>
-              </Link>
-
-              {/* Auth Buttons or User Avatar */}
-              {isAuthenticated && user ? (
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                    className="flex items-center gap-2 p-1.5 rounded-2xl hover:bg-slate-100 transition"
-                  >
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                      {user?.name ? user.name.charAt(0).toUpperCase() : 'T'}
-                    </div>
-                    <div className="text-left hidden lg:block">
-                      <p className="text-xs font-bold text-slate-800 leading-none truncate max-w-[120px]">
-                        {user?.name || 'Student'}
-                      </p>
-                      <p className="text-[10px] text-slate-500 font-medium capitalize mt-0.5">
-                        {user?.role || 'student'}
-                      </p>
-                    </div>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                  </button>
-
-                  {userDropdownOpen && (
-                    <div
-                      className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 animate-scale-up"
-                      onClick={() => setUserDropdownOpen(false)}
-                    >
-                      <div className="px-4 py-2 border-b border-slate-100 mb-1">
-                        <p className="text-xs font-bold text-slate-900">{user?.name || 'Student'}</p>
-                        <p className="text-[11px] text-slate-500 truncate">{user?.email || ''}</p>
-                      </div>
-
-                      <Link
-                        to="/dashboard"
-                        className="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 transition"
-                      >
-                        <LayoutDashboard className="w-4 h-4 text-slate-400" />
-                        <span>Dashboard</span>
-                      </Link>
-                      <Link
-                        to="/profile"
-                        className="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 transition"
-                      >
-                        <User className="w-4 h-4 text-slate-400" />
-                        <span>Profile & Skills</span>
-                      </Link>
-
-                      <div className="border-t border-slate-100 mt-1 pt-1">
-                        <button
-                          onClick={handleLogout}
-                          className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 transition font-medium"
-                        >
-                          <LogOut className="w-4 h-4" />
-                          <span>Log Out</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Link to="/login">
-                    <Button variant="ghost" size="sm" className="font-bold">
-                      Log In
-                    </Button>
-                  </Link>
-                  <Link to="/register">
-                    <Button variant="primary" size="sm" className="font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-md shadow-amber-500/20 border-0">
-                      Get Started
-                    </Button>
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            {/* Mobile menu button */}
-            <div className="flex md:hidden items-center gap-2">
+            {/* Right: Actions */}
+            <div className="flex items-center gap-3">
+              {/* AI Guide Trigger */}
               <button
                 type="button"
                 onClick={() => setAiGuideOpen(true)}
-                className="p-2 rounded-xl text-amber-600 bg-amber-50 border border-amber-200"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors group"
               >
-                <Sparkles className="w-4 h-4" />
+                <Sparkles className="w-3.5 h-3.5 text-torch-500 group-hover:rotate-12 transition-transform" />
+                <span>AI Guide</span>
               </button>
+
+              {isAuthenticated ? (
+                <div className="flex items-center gap-2">
+                  <NotificationBell />
+
+                  {/* User Profile Menu */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                      className="flex items-center gap-2 p-1.5 text-slate-700 hover:text-slate-950 rounded-lg hover:bg-slate-100 transition-colors"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#FF2400] to-[#FFC400] p-[2px]">
+                        <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-xs font-bold text-slate-800">
+                          {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                        </div>
+                      </div>
+                      <ChevronDown className="w-3.5 h-3.5 text-slate-500 hidden sm:block" />
+                    </button>
+
+                    {userDropdownOpen && (
+                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-1 z-50 animate-fadeIn">
+                        <div className="px-4 py-2.5 border-b border-slate-100">
+                          <p className="text-xs font-semibold text-slate-900 truncate">
+                            {user?.name || 'Student'}
+                          </p>
+                          <p className="text-[11px] text-slate-500 truncate">{user?.email}</p>
+                        </div>
+
+                        {isStudent && (
+                          <>
+                            <Link
+                              to="/dashboard"
+                              className="flex items-center gap-2 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50"
+                            >
+                              <LayoutDashboard className="w-4 h-4 text-slate-400" />
+                              Dashboard
+                            </Link>
+                            <Link
+                              to="/profile"
+                              className="flex items-center gap-2 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50"
+                            >
+                              <User className="w-4 h-4 text-slate-400" />
+                              Profile & Match Settings
+                            </Link>
+                          </>
+                        )}
+
+                        <div className="border-t border-slate-100 my-1"></div>
+                        <button
+                          type="button"
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-2 px-4 py-2 text-xs text-red-600 hover:bg-red-50"
+                        >
+                          <LogOut className="w-4 h-4 text-red-500" />
+                          Sign Out
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Link
+                    to="/login"
+                    className="text-xs font-semibold text-slate-700 hover:text-slate-950 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors"
+                  >
+                    Log In
+                  </Link>
+
+                  <Link
+                    to="/signup"
+                    className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-white bg-torch-gradient rounded-lg shadow-torch-button hover:opacity-95 transition-all transform active:scale-98"
+                  >
+                    Get Started
+                  </Link>
+                </div>
+              )}
+
+              {/* Mobile Menu Button */}
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
+                className="lg:hidden p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors"
               >
-                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Mobile Navigation Menu */}
+        {/* Mobile Slide-Down Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-slate-100 bg-white px-4 py-5 space-y-3 animate-fade-in shadow-xl">
-            <NavLink
+          <div className="lg:hidden bg-white border-b border-slate-200 px-4 pt-2 pb-6 space-y-1 animate-fadeIn">
+            <Link
               to="/opportunities"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50"
+              className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              <Compass className="w-4 h-4 text-amber-500" />
-              <span>Explore Opportunities</span>
-            </NavLink>
-
-            <button
-              type="button"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                setAiGuideOpen(true);
-              }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-bold text-amber-800 bg-amber-50 border border-amber-200"
+              <Compass className="w-4 h-4 text-slate-500" />
+              Opportunities
+            </Link>
+            <Link
+              to="/opportunities?category=internship"
+              className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              <span className="flex items-center gap-2.5">
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                <span>Ask Torchbearer AI Guide</span>
-              </span>
-              <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-amber-200 rounded-md">
-                Live
-              </span>
-            </button>
+              <Briefcase className="w-4 h-4 text-slate-500" />
+              Internships
+            </Link>
+            <Link
+              to="/opportunities?category=scholarship"
+              className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <GraduationCap className="w-4 h-4 text-slate-500" />
+              Scholarships
+            </Link>
+            <Link
+              to="/opportunities?category=hackathon"
+              className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <Code2 className="w-4 h-4 text-slate-500" />
+              Hackathons
+            </Link>
 
-            {isAuthenticated && isStudent && (
+            {isAuthenticated && isStudent ? (
               <>
-                <NavLink
+                <div className="border-t border-slate-100 my-2 pt-2"></div>
+                <Link
                   to="/dashboard"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50"
+                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
                 >
-                  <LayoutDashboard className="w-4 h-4" />
-                  <span>Student Dashboard</span>
-                </NavLink>
-                <NavLink
+                  <LayoutDashboard className="w-4 h-4 text-slate-500" />
+                  Dashboard
+                </Link>
+                <Link
                   to="/saved"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50"
+                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
                 >
-                  <Bookmark className="w-4 h-4" />
-                  <span>Saved Opportunities ({savedIds.length})</span>
-                </NavLink>
+                  <Bookmark className="w-4 h-4 text-slate-500" />
+                  Saved ({savedIds.length})
+                </Link>
+                <Link
+                  to="/applications"
+                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  <Send className="w-4 h-4 text-slate-500" />
+                  Tracker ({applications.length})
+                </Link>
+                <Link
+                  to="/profile"
+                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  <User className="w-4 h-4 text-slate-500" />
+                  Profile
+                </Link>
               </>
-            )}
-
-            <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
-              <Link to="/submit" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="outline" size="sm" className="w-full font-bold">
-                  Submit an Opportunity
-                </Button>
-              </Link>
-              {!isAuthenticated ? (
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                    <Button variant="ghost" size="sm" className="w-full font-bold">
-                      Log In
-                    </Button>
-                  </Link>
-                  <Link to="/register" onClick={() => setMobileMenuOpen(false)}>
-                    <Button variant="primary" size="sm" className="w-full font-bold bg-amber-500 hover:bg-amber-600 text-white border-0">
-                      Get Started
-                    </Button>
-                  </Link>
-                </div>
-              ) : (
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl"
+            ) : (
+              <div className="pt-4 flex flex-col gap-2">
+                <Link
+                  to="/login"
+                  className="w-full text-center py-2.5 text-sm font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg"
                 >
-                  Log Out ({user?.name || 'Account'})
-                </button>
-              )}
-            </div>
+                  Log In
+                </Link>
+                <Link
+                  to="/signup"
+                  className="w-full text-center py-2.5 text-sm font-semibold text-white bg-torch-gradient rounded-lg shadow-torch-button"
+                >
+                  Get Started
+                </Link>
+              </div>
+            )}
           </div>
         )}
       </header>
 
-      {/* Interactive AI Guide Modal */}
-      <AIGuideModal isOpen={aiGuideOpen} onClose={() => setAiGuideOpen(false)} />
+      {/* AI Guide Interactive Modal */}
+      {aiGuideOpen && <AIGuideModal isOpen={aiGuideOpen} onClose={() => setAiGuideOpen(false)} />}
     </>
   );
 }

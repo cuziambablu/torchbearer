@@ -1,40 +1,35 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import {
-  Sparkles,
   Mail,
   Lock,
   User,
-  Building,
   ArrowRight,
+  AlertCircle,
+  Sparkles,
   ShieldCheck,
-  Compass,
-  CheckCircle2,
-  AlertCircle
+  Zap,
 } from 'lucide-react';
-import Button from '../../components/common/Button';
 import BrandLogo from '../../components/common/BrandLogo';
+import TorchbearerRing from '../../components/common/TorchbearerRing';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { BRANCHES, YEARS, MOCK_DEFAULT_STUDENT } from '../../data/mockOpportunities';
+import { BRANCHES, YEARS } from '../../data/mockOpportunities';
 
 export default function AuthLandingPage() {
-  const { user, isAuthenticated, isAdmin, login, register } = useAuth();
+  const { isAuthenticated, isAdmin, login, register } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
 
-  // If already logged in, route directly to the respective portal
   if (isAuthenticated) {
-    return <Navigate to={isAdmin ? '/admin/dashboard' : '/student/dashboard'} replace />;
+    return <Navigate to={isAdmin ? '/admin/dashboard' : '/dashboard'} replace />;
   }
 
-  const [activeTab, setActiveTab] = useState('login'); // 'login' | 'signup'
+  const [activeTab, setActiveTab] = useState('login');
 
-  // Login Form State
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
 
-  // Signup Form State
   const [signupData, setSignupData] = useState({
     name: '',
     email: '',
@@ -48,7 +43,6 @@ export default function AuthLandingPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Handle Login Submit
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
@@ -56,21 +50,20 @@ export default function AuthLandingPage() {
       setLoading(true);
       const user = await login(loginEmail, loginPassword, 'student');
       if (user?.role === 'admin') {
-        addToast(`Administrator session authenticated. Welcome back, ${user.name || 'Admin'}! 🛡️`, 'success');
+        addToast(`Administrator authenticated. Welcome, ${user.name || 'Admin'}!`, 'success');
         navigate('/admin/dashboard', { replace: true });
       } else {
-        addToast('Welcome back! Successfully logged into student portal.', 'success');
-        navigate('/student/dashboard', { replace: true });
+        addToast('Welcome back! Successfully logged in.', 'success');
+        navigate('/dashboard', { replace: true });
       }
     } catch (err) {
-      setErrorMsg(err.message || 'Invalid student email or password.');
+      setErrorMsg(err.message || 'Invalid email or password.');
       addToast('Login failed. Please check your credentials.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle Signup Submit
   const handleSignupSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
@@ -88,286 +81,259 @@ export default function AuthLandingPage() {
     try {
       setLoading(true);
       await register({
-        name: signupData.name,
         email: signupData.email,
+        password: signupData.password,
+        name: signupData.name,
         college: signupData.college,
         branch: signupData.branch,
         year: signupData.year,
-        password: signupData.password,
-        skills: ['Python', 'Web Development'],
-        interests: ['Internships', 'Hackathons']
+        role: 'student'
       });
 
       addToast('Account created successfully! Welcome to Torchbearer AI.', 'success');
-      navigate('/student/dashboard', { replace: true });
+      navigate('/dashboard', { replace: true });
     } catch (err) {
-      setErrorMsg(err.message || 'Registration failed. Please try again.');
+      setErrorMsg(err.message || 'Signup failed. Email may already be in use.');
+      addToast('Registration error.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col justify-center py-10 sm:px-6 lg:px-8 relative overflow-hidden selection:bg-brand-500 selection:text-white">
-      {/* Background Decorative Glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-gradient-to-tr from-brand-600/20 to-indigo-600/20 blur-[120px] pointer-events-none rounded-full" />
-
-      {/* Brand Header */}
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center relative z-10">
-        <div className="flex justify-center mb-3">
-          <BrandLogo size="lg" isDark={true} />
-        </div>
-        <p className="text-xs sm:text-sm text-slate-400 max-w-sm mx-auto">
-          Discover verified internships, hackathons, jobs, scholarships & career opportunities.
-        </p>
+    <div className="min-h-screen bg-[#FAFAFC] text-slate-900 relative flex flex-col justify-between items-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      {/* Background Luminous Torchbearer Aura */}
+      <div className="absolute top-[-140px] left-1/2 -translate-x-1/2 -z-10 opacity-70 pointer-events-none">
+        <TorchbearerRing size="hero" animated={true} withAura={true} />
       </div>
 
-      {/* Main Authentication Card */}
-      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0 relative z-10">
-        <div className="bg-slate-900/90 backdrop-blur-xl py-7 px-6 sm:px-9 rounded-3xl border border-slate-800 shadow-2xl space-y-5">
-          {/* Tab Switcher: Log In vs Create Account */}
-          <div className="grid grid-cols-2 p-1 bg-slate-950/80 rounded-2xl border border-slate-800">
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('login');
-                setErrorMsg('');
-              }}
-              className={`py-2 text-xs font-bold rounded-xl transition-all ${
-                activeTab === 'login'
-                  ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Sign In
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('signup');
-                setErrorMsg('');
-              }}
-              className={`py-2 text-xs font-bold rounded-xl transition-all ${
-                activeTab === 'signup'
-                  ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Create Account
-            </button>
-          </div>
+      {/* Subtle Grid Pattern */}
+      <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:24px_24px] -z-20 opacity-60 pointer-events-none" />
 
-          {/* Error Banner */}
-          {errorMsg && (
-            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-300 flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
-              <span>{errorMsg}</span>
+      {/* Top Header Logo */}
+      <div className="w-full max-w-md flex justify-center mb-6">
+        <BrandLogo size="lg" href="/" />
+      </div>
+
+      {/* Main Glass/White Card */}
+      <div className="w-full max-w-md bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200/90 shadow-[0_12px_40px_rgba(0,0,0,0.06)] p-7 sm:p-9 relative z-10">
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-950">
+            {activeTab === 'login' ? 'Welcome to Torchbearer AI' : 'Create your student account'}
+          </h1>
+          <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+            {activeTab === 'login'
+              ? 'Enter your credentials to access your dashboard & AI matches.'
+              : 'Join thousands of students discovering verified opportunities.'}
+          </p>
+        </div>
+
+        {/* Tab Switcher */}
+        <div className="grid grid-cols-2 p-1 bg-slate-100/90 rounded-2xl mb-6 text-xs font-semibold">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('login');
+              setErrorMsg('');
+            }}
+            className={`py-2 rounded-xl transition-all ${
+              activeTab === 'login'
+                ? 'bg-white text-slate-950 shadow-xs font-bold'
+                : 'text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            Log In
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('signup');
+              setErrorMsg('');
+            }}
+            className={`py-2 rounded-xl transition-all ${
+              activeTab === 'signup'
+                ? 'bg-white text-slate-950 shadow-xs font-bold'
+                : 'text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            Sign Up
+          </button>
+        </div>
+
+        {errorMsg && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-start gap-2 animate-fadeIn">
+            <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {/* Login Form */}
+        {activeTab === 'login' ? (
+          <form onSubmit={handleLoginSubmit} className="space-y-4">
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1.5">Email address</label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="email"
+                  required
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  placeholder="name@university.edu"
+                  className="w-full pl-10 pr-3.5 py-2.5 text-xs bg-slate-50/50 hover:bg-white focus:bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#FF5A00] focus:ring-4 focus:ring-[#FF5A00]/10 transition-all font-medium"
+                />
+              </div>
             </div>
-          )}
 
-          {/* ========================================================= */}
-          {/* TAB 1: SIGN IN FORM (STUDENT EMAIL + PASSWORD ONLY)        */}
-          {/* ========================================================= */}
-          {activeTab === 'login' && (
-            <form onSubmit={handleLoginSubmit} className="space-y-4 animate-fade-in">
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                  Student Email
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="email"
-                    required
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="student@example.com"
-                    className="w-full pl-10 pr-3.5 py-2.5 text-xs bg-slate-950/70 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
-                  />
-                </div>
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold text-slate-700">Password</label>
+                <a href="#forgot" className="text-[11px] font-semibold text-[#FF5A00] hover:text-[#FF3300]">
+                  Forgot password?
+                </a>
               </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300">
-                    Password
-                  </label>
-                  <Link
-                    to="/student/forgot-password"
-                    className="text-[11px] font-semibold text-brand-400 hover:text-brand-300"
-                  >
-                    Forgot?
-                  </Link>
-                </div>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="password"
-                    required
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full pl-10 pr-3.5 py-2.5 text-xs bg-slate-950/70 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
-                  />
-                </div>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="password"
+                  required
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full pl-10 pr-3.5 py-2.5 text-xs bg-slate-50/50 hover:bg-white focus:bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#FF5A00] focus:ring-4 focus:ring-[#FF5A00]/10 transition-all font-medium"
+                />
               </div>
+            </div>
 
-              <Button
-                type="submit"
-                variant="primary"
-                size="md"
-                loading={loading}
-                className="w-full justify-center shadow-lg shadow-brand-500/20 font-bold mt-2"
-              >
-                Sign In to Student Portal
-              </Button>
-            </form>
-          )}
-
-          {/* ========================================================= */}
-          {/* TAB 2: CREATE ACCOUNT FORM                                */}
-          {/* ========================================================= */}
-          {activeTab === 'signup' && (
-            <form onSubmit={handleSignupSubmit} className="space-y-3.5 animate-fade-in">
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    required
-                    value={signupData.name}
-                    onChange={(e) => setSignupData({ ...signupData, name: e.target.value })}
-                    placeholder="e.g. Alex Sharma"
-                    className="w-full pl-10 pr-3.5 py-2.5 text-xs bg-slate-950/70 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="email"
-                    required
-                    value={signupData.email}
-                    onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
-                    placeholder="alex@college.edu"
-                    className="w-full pl-10 pr-3.5 py-2.5 text-xs bg-slate-950/70 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                  College / Institute Name
-                </label>
-                <div className="relative">
-                  <Building className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    required
-                    value={signupData.college}
-                    onChange={(e) => setSignupData({ ...signupData, college: e.target.value })}
-                    placeholder="National Institute of Technology"
-                    className="w-full pl-10 pr-3.5 py-2.5 text-xs bg-slate-950/70 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                    Branch
-                  </label>
-                  <select
-                    value={signupData.branch}
-                    onChange={(e) => setSignupData({ ...signupData, branch: e.target.value })}
-                    className="w-full py-2.5 px-3 text-xs bg-slate-950/70 border border-slate-700/80 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
-                  >
-                    {BRANCHES.map((b) => (
-                      <option key={b} value={b}>
-                        {b}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                    Year
-                  </label>
-                  <select
-                    value={signupData.year}
-                    onChange={(e) => setSignupData({ ...signupData, year: e.target.value })}
-                    className="w-full py-2.5 px-3 text-xs bg-slate-950/70 border border-slate-700/80 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
-                  >
-                    {YEARS.map((y) => (
-                      <option key={y} value={y}>
-                        {y}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={signupData.password}
-                    onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
-                    placeholder="••••••"
-                    className="w-full px-3 py-2.5 text-xs bg-slate-950/70 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                    Confirm
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={signupData.confirmPassword}
-                    onChange={(e) => setSignupData({ ...signupData, confirmPassword: e.target.value })}
-                    placeholder="••••••"
-                    className="w-full px-3 py-2.5 text-xs bg-slate-950/70 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                  />
-                </div>
-              </div>
-
-              <Button
-                type="submit"
-                variant="primary"
-                size="md"
-                loading={loading}
-                className="w-full justify-center shadow-lg shadow-brand-500/20 font-bold mt-2"
-              >
-                Create Student Account & Enter
-              </Button>
-            </form>
-          )}
-
-          {/* Guest Explore Link */}
-          <div className="pt-3 border-t border-slate-800 text-center">
-            <Link
-              to="/opportunities"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-brand-400 transition"
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 text-xs font-bold text-white bg-gradient-to-r from-[#FF2400] via-[#FF5A00] to-[#FF9500] rounded-xl shadow-[0_4px_16px_rgba(255,77,0,0.28)] hover:shadow-[0_6px_22px_rgba(255,77,0,0.38)] hover:brightness-105 active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 mt-2"
             >
-              <Compass className="w-3.5 h-3.5" />
-              <span>Explore Opportunity Catalog as Guest →</span>
-            </Link>
-          </div>
+              <span>{loading ? 'Signing in...' : 'Continue to Dashboard'}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </form>
+        ) : (
+          /* Signup Form */
+          <form onSubmit={handleSignupSubmit} className="space-y-3.5">
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Full Name</label>
+              <div className="relative">
+                <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  required
+                  value={signupData.name}
+                  onChange={(e) => setSignupData({ ...signupData, name: e.target.value })}
+                  placeholder="Aarav Sharma"
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50/50 hover:bg-white focus:bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#FF5A00] focus:ring-4 focus:ring-[#FF5A00]/10"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Email</label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="email"
+                  required
+                  value={signupData.email}
+                  onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
+                  placeholder="aarav@university.edu"
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50/50 hover:bg-white focus:bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#FF5A00] focus:ring-4 focus:ring-[#FF5A00]/10"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Branch</label>
+                <select
+                  value={signupData.branch}
+                  onChange={(e) => setSignupData({ ...signupData, branch: e.target.value })}
+                  className="w-full px-3 py-2 text-xs bg-slate-50/50 hover:bg-white focus:bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#FF5A00]"
+                >
+                  {BRANCHES.map((b) => (
+                    <option key={b} value={b}>
+                      {b}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Year</label>
+                <select
+                  value={signupData.year}
+                  onChange={(e) => setSignupData({ ...signupData, year: e.target.value })}
+                  className="w-full px-3 py-2 text-xs bg-slate-50/50 hover:bg-white focus:bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#FF5A00]"
+                >
+                  {YEARS.map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Password</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="password"
+                  required
+                  value={signupData.password}
+                  onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
+                  placeholder="Min 6 characters"
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50/50 hover:bg-white focus:bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#FF5A00]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Confirm Password</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="password"
+                  required
+                  value={signupData.confirmPassword}
+                  onChange={(e) => setSignupData({ ...signupData, confirmPassword: e.target.value })}
+                  placeholder="Re-enter password"
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50/50 hover:bg-white focus:bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#FF5A00]"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 text-xs font-bold text-white bg-gradient-to-r from-[#FF2400] via-[#FF5A00] to-[#FF9500] rounded-xl shadow-[0_4px_16px_rgba(255,77,0,0.28)] hover:shadow-[0_6px_22px_rgba(255,77,0,0.38)] hover:brightness-105 active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 mt-2"
+            >
+              <span>{loading ? 'Creating Account...' : 'Complete Registration'}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </form>
+        )}
+      </div>
+
+      {/* Feature Highlights Footer */}
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500">
+        <div className="flex items-center gap-1.5">
+          <ShieldCheck className="w-4 h-4 text-emerald-600" />
+          <span>40+ Official Sources Audited</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Sparkles className="w-4 h-4 text-[#FF7300]" />
+          <span>AI Match Intelligence</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Zap className="w-4 h-4 text-amber-500" />
+          <span>100% Free for Students</span>
         </div>
       </div>
     </div>

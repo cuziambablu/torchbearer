@@ -1,294 +1,187 @@
-﻿import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
-  Bookmark,
-  MapPin,
   ExternalLink,
-  ArrowRight,
-  ShieldCheck,
-  IndianRupee,
-  Share2,
+  Bookmark,
+  Calendar,
+  MapPin,
   Clock,
   Sparkles,
+  Share2,
+  IndianRupee,
   CheckCircle2,
-  AlertCircle
+  ArrowRight,
 } from 'lucide-react';
-import OrganizationLogo from '../common/OrganizationLogo';
 import { useOpportunities } from '../../context/OpportunityContext';
-import { useToast } from '../../context/ToastContext';
-import { useAuth } from '../../context/AuthContext';
-import { getDeadlineStatus } from '../../utils/dateUtils';
 import { formatCompensation } from '../../utils/currencyUtils';
-import { formatRelativeVerificationTime } from '../../services/opportunityAgent/freshnessEngine';
 
-export default function OpportunityCard({ opportunity, showRecommendationBadge = false }) {
+export default function OpportunityCard({ opportunity, showMatchScore = false, matchScore = null }) {
   const { isSaved, toggleSave } = useOpportunities();
-  const { addToast } = useToast();
-  const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
+  const [imageError, setImageError] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   if (!opportunity) return null;
 
   const saved = isSaved(opportunity.id);
-  const workMode = opportunity.workMode || opportunity.mode || 'Remote';
-  const lastVerified = opportunity.lastVerifiedAt || opportunity.last_verified_at;
-  const deadlineInfo = getDeadlineStatus(opportunity.deadline || opportunity.applicationDeadline);
 
-  const orgName = opportunity.organization || opportunity.company || 'Official Organization';
-  const applyUrl = opportunity.applyUrl || opportunity.applicationUrl || opportunity.sourceUrl || '#';
-  const rawSkills = Array.isArray(opportunity.skills)
-    ? opportunity.skills
-    : typeof opportunity.skills === 'string'
-    ? opportunity.skills.split(',').map((s) => s.trim()).filter(Boolean)
-    : [];
+  // Formatting helpers
+  const orgName = opportunity.organization || opportunity.company || 'Verified Organization';
+  const title = opportunity.title || 'Untitled Opportunity';
+  const category = opportunity.category || opportunity.type || 'Internship';
+  const location = opportunity.location || (opportunity.is_remote ? 'Remote' : 'India');
+  const deadline = opportunity.deadline;
+  const verifiedAt = opportunity.last_verified_at || opportunity.verified_at;
 
-  const displaySkills = rawSkills.slice(0, 3);
-  const remainingSkillsCount = rawSkills.length - displaySkills.length;
-
-  const compensationDisplay = formatCompensation({
-    stipend: opportunity.stipend,
-    salary: opportunity.salary,
-    prize: opportunity.prize,
-    currency: opportunity.currency,
-    country: opportunity.country,
-    amount: opportunity.stipendAmount
-  });
-
-  const handleSaveClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!isAuthenticated) {
-      addToast('Sign in to bookmark and track opportunities.', 'info');
-      navigate('/student/login?redirect=/opportunities/' + opportunity.id);
-      return;
-    }
-
-    const willBeSaved = toggleSave(opportunity.id);
-    addToast(
-      willBeSaved
-        ? 'Saved "' + opportunity.title + '" to bookmarks'
-        : 'Removed "' + opportunity.title + '" from saved',
-      willBeSaved ? 'success' : 'info'
-    );
+  // Compute urgency
+  const getUrgency = () => {
+    if (!deadline) return { label: 'Open', color: 'bg-slate-100 text-slate-700' };
+    const diff = new Date(deadline).getTime() - Date.now();
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    if (days <= 0) return { label: 'Closed', color: 'bg-slate-100 text-slate-500' };
+    if (days <= 2) return { label: 'Closing Soon', color: 'bg-red-50 text-red-700 border border-red-200' };
+    if (days <= 7) return { label: `${days}d left`, color: 'bg-amber-50 text-amber-800 border border-amber-200' };
+    return { label: `${days}d left`, color: 'bg-slate-100 text-slate-700' };
   };
 
-  const handleShareClick = async (e) => {
+  const urgency = getUrgency();
+
+  // Compute relative verification string
+  const getRelativeVerification = () => {
+    if (!verifiedAt) return 'Recently verified';
+    const diffHours = Math.max(1, Math.round((Date.now() - new Date(verifiedAt).getTime()) / (1000 * 60 * 60)));
+    if (diffHours < 24) return `Verified ${diffHours}h ago`;
+    const diffDays = Math.round(diffHours / 24);
+    return `Verified ${diffDays}d ago`;
+  };
+
+  const handleShare = (e) => {
     e.preventDefault();
     e.stopPropagation();
-
-    const shareUrl = window.location.origin + '/opportunities/' + opportunity.id;
+    const shareUrl = `${window.location.origin}/opportunities/${opportunity.id}`;
     if (navigator.share) {
-      try {
-        await navigator.share({
-          title: opportunity.title + ' — Torchbearer AI',
-          text: 'Check out this opportunity at ' + orgName + ' on Torchbearer AI:',
-          url: shareUrl
-        });
-        return;
-      } catch (_) {}
-    }
-
-    navigator.clipboard.writeText(shareUrl);
-    addToast('Opportunity link copied to clipboard!', 'success');
-  };
-
-  const getTypeStyle = (type) => {
-    switch (type) {
-      case 'Internship':
-        return 'bg-blue-50 text-blue-700 border-blue-200/80';
-      case 'Hackathon':
-        return 'bg-purple-50 text-purple-700 border-purple-200/80';
-      case 'Job':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200/80';
-      case 'Scholarship':
-        return 'bg-teal-50 text-teal-700 border-teal-200/80';
-      case 'Fellowship':
-        return 'bg-amber-50 text-amber-800 border-amber-200/80';
-      case 'Research':
-        return 'bg-sky-50 text-sky-700 border-sky-200/80';
-      case 'Competition':
-      case 'Coding Contests':
-        return 'bg-indigo-50 text-indigo-700 border-indigo-200/80';
-      case 'Open Source':
-        return 'bg-orange-50 text-orange-800 border-orange-200/80';
-      default:
-        return 'bg-slate-100 text-slate-700 border-slate-200';
+      navigator.share({ title, url: shareUrl }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
+
+  const stipendDisplay = formatCompensation(opportunity.stipend || opportunity.salary || opportunity.reward);
 
   return (
-    <div className="group relative bg-white rounded-2xl border border-slate-200/90 hover:border-slate-300 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden">
-      {/* Optional Top Recommendation Match Bar */}
-      {showRecommendationBadge && opportunity.matchScore && (
-        <div className="bg-slate-900 px-4 py-1.5 text-white flex items-center justify-between text-xs font-semibold">
-          <span className="flex items-center gap-1.5 text-amber-400">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{opportunity.matchScore}% Match Signal</span>
-          </span>
-          <span className="text-[11px] text-slate-300 truncate max-w-[180px]">
-            {opportunity.matchReasons?.[0] || 'High Profile Alignment'}
-          </span>
-        </div>
-      )}
+    <div className="group relative bg-white rounded-2xl border border-slate-200/90 hover:border-torch-400 p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover flex flex-col justify-between">
+      <div>
+        {/* Header: Logo, Org & Badges */}
+        <div className="flex items-start justify-between gap-3 mb-3.5">
+          <div className="flex items-center gap-3">
+            {/* Org Logo / Avatar */}
+            <div className="w-11 h-11 rounded-xl bg-slate-100 border border-slate-200/80 flex items-center justify-center overflow-hidden flex-shrink-0 group-hover:border-torch-300 transition-colors">
+              {opportunity.logo_url && !imageError ? (
+                <img
+                  src={opportunity.logo_url}
+                  alt={orgName}
+                  onError={() => setImageError(true)}
+                  className="w-full h-full object-contain p-1.5"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-tr from-[#FF2400]/10 via-[#FF7300]/10 to-[#FFC400]/20 flex items-center justify-center text-sm font-extrabold text-torch-700">
+                  {orgName.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
 
-      {/* Main Body */}
-      <div className="p-5 sm:p-6 flex-1 flex flex-col">
-        {/* Top Badges & Actions */}
-        <div className="flex items-center justify-between gap-2 mb-3.5">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className={'text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md border ' + getTypeStyle(opportunity.type || opportunity.category)}>
-              {opportunity.type || opportunity.category || 'Opportunity'}
-            </span>
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider truncate max-w-[170px]">
+                {orgName}
+              </p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="text-[10px] font-medium text-slate-500 flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                  {getRelativeVerification()}
+                </span>
+              </div>
+            </div>
+          </div>
 
-            <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/60">
-              {workMode}
-            </span>
-
-            {/* Smart Urgency Pill */}
-            {deadlineInfo.isClosingSoon && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
-                {deadlineInfo.label}
+          {/* Top Actions: Match Score / Urgency / Save */}
+          <div className="flex items-center gap-1.5">
+            {showMatchScore && matchScore && (
+              <span className="px-2 py-0.5 text-[10px] font-bold bg-torch-gradient text-white rounded-md shadow-xs flex items-center gap-1">
+                <Sparkles className="w-2.5 h-2.5" />
+                {matchScore}% Match
               </span>
             )}
-          </div>
 
-          <div className="flex items-center gap-1">
+            <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-md ${urgency.color}`}>
+              {urgency.label}
+            </span>
+
             <button
               type="button"
-              onClick={handleShareClick}
-              aria-label="Share opportunity"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
-              title="Share"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleSave(opportunity.id);
+              }}
+              className={`p-1.5 rounded-lg border transition-colors ${
+                saved
+                  ? 'bg-torch-50 border-torch-200 text-torch-600'
+                  : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+              }`}
+              title={saved ? 'Remove Bookmark' : 'Save Opportunity'}
             >
-              <Share2 className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={handleSaveClick}
-              aria-label={saved ? 'Remove from bookmarks' : 'Save opportunity'}
-              className={'p-1.5 rounded-lg transition ' + (saved ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100')}
-              title={saved ? 'Saved' : 'Bookmark'}
-            >
-              <Bookmark className={'w-4 h-4 ' + (saved ? 'fill-current text-amber-600' : '')} />
+              <Bookmark className={`w-3.5 h-3.5 ${saved ? 'fill-torch-600' : ''}`} />
             </button>
           </div>
         </div>
 
-        {/* Opportunity Header: Logo + Title + Org */}
-        <div className="flex items-start gap-3.5 mb-3.5">
-          <OrganizationLogo
-            organization={orgName}
-            logoUrl={opportunity.organizationLogo || opportunity.companyLogo || opportunity.imageUrl}
-            websiteUrl={applyUrl}
-            size="md"
-            shape="rounded-xl"
-            className="flex-shrink-0 mt-0.5 border border-slate-200/90 shadow-2xs"
-          />
+        {/* Title */}
+        <Link to={`/opportunities/${opportunity.id}`} className="block group-hover:text-torch-600 transition-colors">
+          <h3 className="text-base font-bold text-slate-900 leading-snug line-clamp-2 mb-2">
+            {title}
+          </h3>
+        </Link>
 
-          <div className="flex-1 min-w-0">
-            <Link
-              to={'/opportunities/' + opportunity.id}
-              className="block group-hover:text-amber-600 transition-colors"
-            >
-              <h3 className="text-base font-bold text-slate-900 leading-snug tracking-tight line-clamp-2">
-                {opportunity.title}
-              </h3>
-            </Link>
-            <div className="text-xs text-slate-600 font-semibold mt-0.5 truncate">
-              {orgName}
-            </div>
-          </div>
-        </div>
-
-        {/* Key Info: Location + Compensation */}
-        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 mb-3">
-          <div className="flex items-center gap-1 text-slate-500">
-            <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-            <span className="truncate max-w-[150px]">{opportunity.location || 'Remote'}</span>
-          </div>
-
-          {compensationDisplay && (
-            <div className="flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50/90 px-2 py-0.5 rounded-md border border-emerald-200/80">
-              <IndianRupee className="w-3 h-3 flex-shrink-0" />
-              <span className="truncate">{compensationDisplay}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Short Summary Description */}
-        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-4 flex-1 font-normal">
-          {opportunity.aiSummary || opportunity.description}
-        </p>
-
-        {/* Skills & Eligibility Tags */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-1">
-          {opportunity.eligibility && (
-            <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/60 truncate max-w-[200px]">
-              🎓 {opportunity.eligibility}
-            </span>
-          )}
-
-          {displaySkills.map((skill, i) => (
-            <span
-              key={i}
-              className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 border border-slate-200/60"
-            >
-              {skill}
-            </span>
-          ))}
-
-          {remainingSkillsCount > 0 && (
-            <span className="text-[10px] font-semibold text-slate-400 px-1 py-0.5">
-              +{remainingSkillsCount}
-            </span>
-          )}
+        {/* Metadata Chips: Category, Mode, Location */}
+        <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-600 mb-4">
+          <span className="px-2 py-0.5 bg-slate-100 font-medium rounded-md text-slate-700">
+            {category}
+          </span>
+          <span className="px-2 py-0.5 bg-slate-100 font-medium rounded-md text-slate-600 flex items-center gap-1">
+            <MapPin className="w-3 h-3 text-slate-400" />
+            {location}
+          </span>
         </div>
       </div>
 
-      {/* Card Footer: Verification Status + Dual CTAs */}
-      <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-600">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-            <span className="truncate">
-              {lastVerified ? 'Verified ' + formatRelativeVerificationTime(lastVerified) : 'Verified source'}
-            </span>
-          </div>
-          {opportunity.deadline && (
-            <div className="text-[10px] text-slate-400 font-medium">
-              Deadline: {deadlineInfo.label}
-            </div>
-          )}
+      {/* Footer: Stipend + Action CTA */}
+      <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 mt-2">
+        <div>
+          <p className="text-[10px] text-slate-400 uppercase font-medium">Stipend / Value</p>
+          <p className="text-xs font-bold text-slate-900 flex items-center gap-0.5">
+            <IndianRupee className="w-3 h-3 text-slate-500" />
+            <span>{stipendDisplay}</span>
+          </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Link
-            to={'/opportunities/' + opportunity.id}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-200/70 transition"
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={handleShare}
+            className="p-2 text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors"
+            title="Share"
           >
-            Details
-          </Link>
+            <Share2 className="w-3.5 h-3.5" />
+          </button>
 
-          {applyUrl && applyUrl !== '#' ? (
-            <a
-              href={applyUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-xs"
-            >
-              <span>Apply</span>
-              <ExternalLink className="w-3 h-3" />
-            </a>
-          ) : (
-            <Link
-              to={'/opportunities/' + opportunity.id}
-              className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-xs"
-            >
-              <span>View</span>
-            </Link>
-          )}
+          <Link
+            to={`/opportunities/${opportunity.id}`}
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-slate-900 group-hover:bg-torch-gradient rounded-lg transition-all shadow-xs"
+          >
+            <span>Details</span>
+            <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
         </div>
       </div>
     </div>

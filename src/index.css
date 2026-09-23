@@ -5,34 +5,51 @@
 @layer base {
   body {
     font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
-    color: #0f172a;
-    background-color: #f8fafc;
+    color: #18181b;
+    background-color: #ffffff;
     overflow-x: hidden;
+    letter-spacing: -0.011em;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.025em;
   }
 }
 
-/* Custom Modern Animations */
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
+/* Torchbearer Glowing Ring Animation */
+@keyframes ringRotate {
+  0% {
+    transform: rotate(0deg);
   }
-  to {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ringPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.03);
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
+@keyframes lightSweep {
+  0% {
+    background-position: 0% 50%;
   }
-  to {
-    opacity: 1;
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
   }
 }
 
-@keyframes float {
+@keyframes floatGentle {
   0%, 100% {
     transform: translateY(0px);
   }
@@ -41,154 +58,53 @@
   }
 }
 
-@keyframes floatSlow {
-  0%, 100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-12px) rotate(1.5deg);
-  }
+.animate-ring-rotate {
+  animation: ringRotate 40s linear infinite;
 }
 
-@keyframes pulseGlow {
-  0%, 100% {
-    opacity: 0.4;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.8;
-    transform: scale(1.05);
-  }
+.animate-ring-pulse {
+  animation: ringPulse 8s ease-in-out infinite;
 }
 
-@keyframes scanline {
-  0% {
-    transform: translateY(-100%);
-  }
-  100% {
-    transform: translateY(1000%);
-  }
+.animate-float-gentle {
+  animation: floatGentle 6s ease-in-out infinite;
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
+/* Gradient Utilities */
+.bg-torch-gradient {
+  background: linear-gradient(135deg, #FF2400 0%, #FF5A00 30%, #FF9500 60%, #FFC400 82%, #FFE66D 100%);
 }
 
-.animate-fade-up {
-  animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.text-torch-gradient {
+  background: linear-gradient(135deg, #FF2400 0%, #FF5A00 30%, #FF9500 60%, #FFC400 82%, #FFE66D 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.4s ease-out forwards;
+.border-torch-gradient {
+  border-image: linear-gradient(135deg, #FF2400, #FF7300, #FFC400) 1;
 }
 
-.animate-float {
-  animation: float 4s ease-in-out infinite;
-}
-
-.animate-float-slow {
-  animation: floatSlow 6s ease-in-out infinite;
-}
-
-.animate-pulse-glow {
-  animation: pulseGlow 3s ease-in-out infinite;
-}
-
-.animate-shimmer {
-  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite;
-}
-
-/* Glassmorphism Styles */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.75);
+/* Frosted Glass */
+.glass-nav {
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-bottom: 1px solid rgba(228, 228, 231, 0.8);
 }
 
-.glass-card {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(226, 232, 240, 0.8);
-}
-
-.glass-dark {
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(51, 65, 85, 0.5);
-}
-
-/* Gradient Text Utilities */
-.text-gradient {
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-image: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #2563eb 100%);
-}
-
-.text-gradient-amber {
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-image: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-}
-
-.text-gradient-emerald {
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-image: linear-gradient(135deg, #10b981 0%, #059669 100%);
-}
-
-/* Card Glow Utility */
-.glow-brand {
-  box-shadow: 0 0 40px -10px rgba(99, 102, 241, 0.25);
-}
-
-.glow-emerald {
-  box-shadow: 0 0 35px -10px rgba(16, 185, 129, 0.2);
-}
-
-/* Custom modern scrollbars */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #f4f4f5;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #d4d4d8;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-/* Hide scrollbar for carousel controls */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* Respect Reduced Motion */
-@media (prefers-reduced-motion: reduce) {
-  *, ::before, ::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
+  background: #a1a1aa;
 }

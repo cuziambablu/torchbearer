@@ -1,5 +1,5 @@
-﻿import React from 'react';
-import { Filter, RotateCcw, Check, ArrowUpDown, ShieldCheck, IndianRupee } from 'lucide-react';
+import React from 'react';
+import { Filter, RotateCcw, ArrowUpDown, ShieldCheck, IndianRupee } from 'lucide-react';
 import { BRANCHES, YEARS, MODES } from '../../data/mockOpportunities';
 
 export default function OpportunityFilters({
@@ -19,29 +19,25 @@ export default function OpportunityFilters({
     { id: 'newest', label: 'Newest First' },
     { id: 'deadline_soon', label: 'Closing Soonest' },
     { id: 'highest_stipend', label: 'Highest Compensation' },
-    { id: 'popular', label: 'Most Viewed' }
   ];
 
   const stipendOptions = [
     { id: 'all', label: 'All Compensations' },
-    { id: 'paid', label: 'Paid Only' },
+    { id: 'paid', label: 'Paid / Funded Only' },
     { id: '25k', label: '> ₹25,000 / month' },
     { id: '50k', label: '> ₹50,000 / month' },
-    { id: '1lakh', label: '> ₹1,00,000 Total / mo' }
   ];
 
   const categoryOptions = [
-    'all',
-    'Internships',
-    'Scholarships',
-    'Hackathons',
-    'Fellowships',
-    'Research',
-    'Open Source',
-    'AI / ML',
-    'Software Development',
-    'Competitions',
-    'Government Programs'
+    { id: 'all', label: 'All Categories' },
+    { id: 'internship', label: 'Internships' },
+    { id: 'scholarship', label: 'Scholarships' },
+    { id: 'hackathon', label: 'Hackathons' },
+    { id: 'fellowship', label: 'Fellowships' },
+    { id: 'research', label: 'Research' },
+    { id: 'opensource', label: 'Open Source / GSoC' },
+    { id: 'aiml', label: 'AI / ML' },
+    { id: 'government', label: 'Gov & PSU' },
   ];
 
   const hasActiveFilters =
@@ -55,13 +51,13 @@ export default function OpportunityFilters({
     filters.search !== '';
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs space-y-6">
+    <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-card space-y-6">
       {/* Filter Header */}
       <div className="flex items-center justify-between pb-3 border-b border-slate-100">
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-slate-700" />
           <h2 className="text-sm font-bold text-slate-900">Filters</h2>
-          <span className="text-[11px] bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full">
+          <span className="text-[11px] bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded-full">
             {totalResults}
           </span>
         </div>
@@ -88,7 +84,7 @@ export default function OpportunityFilters({
             type="checkbox"
             checked={Boolean(filters.verifiedOnly)}
             onChange={(e) => onFilterChange('verifiedOnly', e.target.checked)}
-            className="rounded text-slate-900 focus:ring-slate-900 w-4 h-4"
+            className="rounded text-torch-600 focus:ring-torch-500 w-4 h-4"
           />
         </label>
       </div>
@@ -99,149 +95,114 @@ export default function OpportunityFilters({
           <ArrowUpDown className="w-3.5 h-3.5" />
           <span>Sort Order</span>
         </label>
-        <div className="space-y-1">
+        <select
+          value={filters.sort || 'newest'}
+          onChange={(e) => onFilterChange('sort', e.target.value)}
+          className="w-full text-xs font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-torch-500"
+        >
           {sortOptions.map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => onFilterChange('sort', opt.id)}
-              className={'w-full text-left text-xs px-3 py-2 rounded-xl transition flex items-center justify-between ' + (filters.sort === opt.id ? 'bg-slate-900 text-white font-bold' : 'text-slate-600 hover:bg-slate-50')}
-            >
-              <span>{opt.label}</span>
-              {filters.sort === opt.id && <Check className="w-3.5 h-3.5 text-white" />}
-            </button>
+            <option key={opt.id} value={opt.id}>
+              {opt.label}
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
-      {/* Category / Type Filter */}
+      {/* Categories */}
       <div>
         <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2 block">
-          Opportunity Type
+          Category
         </label>
-        <div className="space-y-1">
-          {categoryOptions.map((cat) => {
-            const isSelected = filters.type === cat;
+        <div className="flex flex-wrap gap-1.5">
+          {categoryOptions.map((opt) => {
+            const isSelected = filters.type?.toLowerCase() === opt.id.toLowerCase() || (opt.id === 'all' && filters.type === 'all');
             return (
               <button
-                key={cat}
+                key={opt.id}
                 type="button"
-                onClick={() => onFilterChange('type', cat)}
-                className={'w-full text-left text-xs px-3 py-2 rounded-xl transition flex items-center justify-between ' + (isSelected ? 'bg-slate-900 text-white font-bold' : 'text-slate-600 hover:bg-slate-50')}
+                onClick={() => onFilterChange('type', opt.id)}
+                className={`text-xs px-2.5 py-1.5 rounded-lg font-medium transition-all ${
+                  isSelected
+                    ? 'bg-torch-gradient text-white font-semibold shadow-xs'
+                    : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+                }`}
               >
-                <span>{cat === 'all' ? 'All Types' : cat}</span>
-                {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                {opt.label}
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Compensation (INR) Filter */}
+      {/* Stipend Tiers */}
       <div>
         <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1">
-          <IndianRupee className="w-3 h-3" />
-          <span>Compensation (INR)</span>
+          <IndianRupee className="w-3 h-3 text-slate-400" />
+          <span>Stipend / Value</span>
         </label>
-        <div className="space-y-1">
-          {stipendOptions.map((st) => {
-            const isSelected = (filters.stipendTier || 'all') === st.id;
+        <div className="space-y-1.5">
+          {stipendOptions.map((opt) => {
+            const isSelected = (filters.stipendTier || 'all') === opt.id;
             return (
               <button
-                key={st.id}
+                key={opt.id}
                 type="button"
-                onClick={() => onFilterChange('stipendTier', st.id)}
-                className={'w-full text-left text-xs px-3 py-2 rounded-xl transition flex items-center justify-between ' + (isSelected ? 'bg-slate-900 text-white font-bold' : 'text-slate-600 hover:bg-slate-50')}
+                onClick={() => onFilterChange('stipendTier', opt.id)}
+                className={`w-full text-left text-xs px-3 py-2 rounded-xl transition-colors flex items-center justify-between ${
+                  isSelected
+                    ? 'bg-torch-50 border border-torch-200 text-torch-700 font-bold'
+                    : 'hover:bg-slate-50 text-slate-700'
+                }`}
               >
-                <span>{st.label}</span>
-                {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                <span>{opt.label}</span>
+                {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-torch-600"></span>}
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Work Mode Filter */}
+      {/* Deadline */}
+      <div>
+        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2 block">
+          Deadline
+        </label>
+        <div className="grid grid-cols-2 gap-1.5">
+          {deadlineOptions.map((opt) => {
+            const isSelected = (filters.deadline || 'all') === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => onFilterChange('deadline', opt.id)}
+                className={`text-xs p-2 rounded-xl text-center font-medium border transition-colors ${
+                  isSelected
+                    ? 'bg-torch-50 border-torch-300 text-torch-800 font-bold'
+                    : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Work Mode */}
       <div>
         <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2 block">
           Work Mode
         </label>
-        <div className="grid grid-cols-3 gap-1.5">
-          <button
-            type="button"
-            onClick={() => onFilterChange('mode', 'all')}
-            className={'text-xs py-2 px-1 text-center rounded-xl font-semibold border transition ' + (filters.mode === 'all' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50')}
-          >
-            All
-          </button>
-          {MODES.map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              onClick={() => onFilterChange('mode', mode)}
-              className={'text-xs py-2 px-1 text-center rounded-xl font-semibold border transition ' + (filters.mode === mode ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50')}
-            >
-              {mode}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Target Engineering Branch */}
-      <div>
-        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2 block">
-          Target Branch
-        </label>
         <select
-          value={filters.branch}
-          onChange={(e) => onFilterChange('branch', e.target.value)}
-          className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium"
+          value={filters.mode || 'all'}
+          onChange={(e) => onFilterChange('mode', e.target.value)}
+          className="w-full text-xs font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-torch-500"
         >
-          <option value="all">All Branches</option>
-          {BRANCHES.map((b) => (
-            <option key={b} value={b}>
-              {b}
-            </option>
-          ))}
+          <option value="all">Any Work Mode</option>
+          <option value="Remote">Remote</option>
+          <option value="Hybrid">Hybrid</option>
+          <option value="On-site">On-site</option>
         </select>
-      </div>
-
-      {/* Eligible Year */}
-      <div>
-        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2 block">
-          Eligible Year
-        </label>
-        <select
-          value={filters.year}
-          onChange={(e) => onFilterChange('year', e.target.value)}
-          className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium"
-        >
-          <option value="all">All Years (1st - 4th)</option>
-          {YEARS.map((y) => (
-            <option key={y} value={y}>
-              {y}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Closing Deadline */}
-      <div>
-        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2 block">
-          Deadline Urgency
-        </label>
-        <div className="grid grid-cols-2 gap-1.5">
-          {deadlineOptions.map((d) => (
-            <button
-              key={d.id}
-              type="button"
-              onClick={() => onFilterChange('deadline', d.id)}
-              className={'text-xs py-2 px-1 text-center rounded-xl font-medium border transition ' + (filters.deadline === d.id ? 'bg-slate-900 text-white border-slate-900 font-bold' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50')}
-            >
-              {d.label}
-            </button>
-          ))}
-        </div>
       </div>
     </div>
   );

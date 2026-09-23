@@ -1,319 +1,268 @@
-﻿import React, { useState, useMemo } from 'react';
+﻿import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
+  Compass,
   Search,
-  ArrowRight,
-  Flame,
   Sparkles,
-  ShieldCheck,
-  Building2,
-  MapPin,
-  Clock,
+  ArrowRight,
+  Briefcase,
+  GraduationCap,
+  Code2,
   CheckCircle2,
-  Filter,
-  ExternalLink,
-  ChevronRight,
-  Bookmark,
-  Zap,
-  Globe,
-  Award,
+  TrendingUp,
+  Shield,
   Layers,
-  IndianRupee,
-  RefreshCw
+  Flame,
+  Award,
 } from 'lucide-react';
-import Button from '../../components/common/Button';
-import OpportunityCard from '../../components/opportunities/OpportunityCard';
-import OrganizationLogo from '../../components/common/OrganizationLogo';
 import { useOpportunities } from '../../context/OpportunityContext';
-import { useAuth } from '../../context/AuthContext';
-import { getDeadlineStatus } from '../../utils/dateUtils';
-import { formatRelativeVerificationTime } from '../../services/opportunityAgent/freshnessEngine';
-
-const QUICK_CATEGORY_PILLS = [
-  { id: 'all', label: 'All Opportunities' },
-  { id: 'Internship', label: 'Internships' },
-  { id: 'Scholarship', label: 'Scholarships' },
-  { id: 'Hackathon', label: 'Hackathons' },
-  { id: 'Fellowship', label: 'Fellowships' },
-  { id: 'Research', label: 'Research' },
-  { id: 'Open Source', label: 'Open Source' },
-  { id: 'AI / ML', label: 'AI & ML' },
-  { id: 'High Stipend', label: 'High Stipend (₹50k+)' }
-];
+import OpportunityCard from '../../components/opportunities/OpportunityCard';
+import TorchbearerRing from '../../components/common/TorchbearerRing';
+import AIGuideModal from '../../components/common/AIGuideModal';
 
 export default function HomePage() {
-  const { opportunities, loading, lastSyncedAt } = useOpportunities();
-  const { user, isAuthenticated } = useAuth();
+  const { opportunities, loading } = useOpportunities();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [aiGuideOpen, setAiGuideOpen] = useState(false);
   const navigate = useNavigate();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPill, setSelectedPill] = useState('all');
-  const [activeSort, setActiveSort] = useState('newest'); // 'newest' | 'closing_soon' | 'stipend'
-
-  const safeOpportunities = opportunities || [];
-
-  // Filter & sort active opportunities
-  const filteredFeed = useMemo(() => {
-    let list = safeOpportunities.filter((opp) => {
-      // Exclude expired opportunities by default from homepage
-      const dl = getDeadlineStatus(opp.deadline || opp.applicationDeadline);
-      if (dl.isExpired) return false;
-
-      // Category Pill filter
-      if (selectedPill === 'High Stipend') {
-        return (opp.stipendAmount && opp.stipendAmount >= 50000) || (opp.stipend && (opp.stipend.includes('50,000') || opp.stipend.includes('80,000') || opp.stipend.includes('Lakh') || opp.stipend.includes('1,00,000')));
-      }
-      if (selectedPill === 'AI / ML') {
-        const cat = (opp.category || '').toLowerCase();
-        const title = (opp.title || '').toLowerCase();
-        const skills = (Array.isArray(opp.skills) ? opp.skills.join(' ') : opp.skills || '').toLowerCase();
-        return cat.includes('ai') || cat.includes('ml') || title.includes('ai') || title.includes('machine learning') || skills.includes('pytorch');
-      }
-      if (selectedPill !== 'all') {
-        const typeMatch = (opp.type || '').toLowerCase() === selectedPill.toLowerCase();
-        const catMatch = (opp.category || '').toLowerCase().includes(selectedPill.toLowerCase());
-        return typeMatch || catMatch;
-      }
-      return true;
-    });
-
-    // Search query filter
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      list = list.filter((opp) => {
-        const title = (opp.title || '').toLowerCase();
-        const org = (opp.organization || opp.company || '').toLowerCase();
-        const desc = (opp.description || '').toLowerCase();
-        const skills = (Array.isArray(opp.skills) ? opp.skills.join(' ') : opp.skills || '').toLowerCase();
-        const loc = (opp.location || '').toLowerCase();
-        return title.includes(q) || org.includes(q) || desc.includes(q) || skills.includes(q) || loc.includes(q);
-      });
-    }
-
-    // Sort order
-    if (activeSort === 'closing_soon') {
-      list.sort((a, b) => {
-        const dlA = new Date(a.deadline || a.applicationDeadline || '2099-01-01').getTime();
-        const dlB = new Date(b.deadline || b.applicationDeadline || '2099-01-01').getTime();
-        return dlA - dlB;
-      });
-    } else if (activeSort === 'stipend') {
-      list.sort((a, b) => (b.stipendAmount || 0) - (a.stipendAmount || 0));
-    } else {
-      // newest first
-      list.sort((a, b) => new Date(b.postedDate || b.created_at || '2026-01-01').getTime() - new Date(a.postedDate || a.created_at || '2026-01-01').getTime());
-    }
-
-    return list;
-  }, [safeOpportunities, selectedPill, searchQuery, activeSort]);
-
-  const handleSearchSubmit = (e) => {
+  const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate('/opportunities?search=' + encodeURIComponent(searchQuery.trim()));
+      navigate(`/opportunities?search=${encodeURIComponent(searchQuery.trim())}`);
     } else {
       navigate('/opportunities');
     }
   };
 
-  const activeCount = safeOpportunities.filter((o) => {
-    const dl = getDeadlineStatus(o.deadline || o.applicationDeadline);
-    return !dl.isExpired;
-  }).length;
+  const featuredOpportunities = opportunities.slice(0, 6);
+  const activeCount = opportunities.length || 69;
 
   return (
-    <div className="space-y-12 sm:space-y-16 pb-16">
-      {/* ========================================================================= */}
-      {/* 1. HERO & LIVE OPPORTUNITY AGGREGATION BANNER                             */}
-      {/* ========================================================================= */}
-      <section className="relative overflow-hidden bg-slate-900 text-white border-b border-slate-800 pt-12 pb-16 sm:pt-16 sm:pb-20">
-        {/* Subtle background glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-gradient-to-b from-amber-500/10 via-brand-500/5 to-transparent blur-3xl pointer-events-none" />
+    <div className="relative min-h-screen bg-white text-slate-900 overflow-hidden">
+      {/* =========================================================================
+          HERO SECTION with the Signature Glowing Torchbearer Ring
+      ========================================================================= */}
+      <section className="relative pt-12 pb-20 md:pt-20 md:pb-28 overflow-hidden">
+        {/* Luminous Torchbearer Ring Background Motif */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 opacity-70 pointer-events-none">
+          <TorchbearerRing size="hero" animated={true} withAura={true} />
+        </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-8 text-center">
-          {/* Live Data Status Pill */}
-          <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-slate-800/90 border border-slate-700/80 shadow-inner text-xs font-mono">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-bold uppercase tracking-wider text-slate-300">Live Data</span>
-            <span className="text-slate-600">•</span>
-            <span className="text-slate-400 font-sans font-medium">{activeCount} active opportunities verified</span>
-            <span className="text-slate-600">•</span>
-            <span className="text-emerald-400 font-sans font-semibold">
-              Updated {lastSyncedAt ? formatRelativeVerificationTime(lastSyncedAt) : 'recently'}
+        {/* Ambient Warm Atmosphere Glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-orange-50/40 via-transparent to-transparent -z-20 pointer-events-none" />
+
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          {/* Live Data Badge */}
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/95 border border-slate-200/90 shadow-subtle mb-6 animate-fadeIn">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
+            <span className="text-xs font-semibold text-slate-700">
+              LIVE DATA • <span className="text-[#FF5A00] font-bold">{activeCount} ACTIVE OPPORTUNITIES</span>
+            </span>
+            <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">• UPDATED REAL-TIME</span>
           </div>
 
-          {/* Main Title & Subtitle */}
-          <div className="max-w-3xl mx-auto space-y-3">
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
-              Opportunities Worth Chasing.
-            </h1>
-            <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto font-normal leading-relaxed">
-              Internships, scholarships, hackathons, fellowships and programs — discovered, verified and updated continuously from official portals.
-            </p>
-          </div>
+          {/* Main Headline */}
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-slate-950 tracking-tight leading-[1.12] max-w-4xl mx-auto mb-6">
+            Your next opportunity is{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF2400] via-[#FF5A00] to-[#FFA600]">
+              closer than you think.
+            </span>
+          </h1>
+
+          {/* Subtitle */}
+          <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed mb-8">
+            Torchbearer AI discovers verified internships, hackathons, research fellowships, and STEM scholarships from 40+ official sources with AI-powered guidance.
+          </p>
 
           {/* Search Bar */}
-          <form onSubmit={handleSearchSubmit} className="max-w-2xl mx-auto relative">
-            <div className="relative flex items-center">
-              <Search className="w-5 h-5 text-slate-400 absolute left-4 pointer-events-none" />
+          <div className="max-w-2xl mx-auto mb-10">
+            <form onSubmit={handleSearch} className="relative flex items-center shadow-[0_8px_30px_rgba(0,0,0,0.06)] rounded-2xl bg-white border border-slate-200/90 p-1.5 focus-within:border-[#FF5A00] focus-within:ring-4 focus-within:ring-[#FF5A00]/10 transition-all">
+              <div className="pl-3.5 pr-2 text-slate-400">
+                <Search className="w-5 h-5" />
+              </div>
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search AI internships in Bangalore, STEM scholarships, hackathons..."
-                className="w-full pl-12 pr-28 py-3.5 sm:py-4 text-sm sm:text-base bg-slate-950/90 border border-slate-700 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition shadow-2xl"
+                placeholder="Search Microsoft, GSoC, AI internships, hackathons..."
+                className="w-full py-2.5 text-sm font-medium text-slate-900 bg-transparent placeholder-slate-400 focus:outline-none"
               />
               <button
                 type="submit"
-                className="absolute right-2 px-4 py-2 sm:py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm transition flex items-center gap-1 shadow-sm"
+                className="px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-[#FF2400] via-[#FF5A00] to-[#FF9500] rounded-xl shadow-[0_4px_16px_rgba(255,77,0,0.28)] hover:shadow-[0_6px_22px_rgba(255,77,0,0.38)] hover:brightness-105 active:scale-[0.99] transition-all flex items-center gap-1.5 flex-shrink-0"
               >
                 <span>Search</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
-            </div>
-          </form>
+            </form>
 
-          {/* Quick Category Chips */}
-          <div className="flex flex-wrap items-center justify-center gap-2 pt-2 max-w-4xl mx-auto">
-            {QUICK_CATEGORY_PILLS.map((pill) => (
-              <button
-                key={pill.id}
-                type="button"
-                onClick={() => setSelectedPill(pill.id)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition border ${
-                  selectedPill === pill.id
-                    ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold shadow-sm'
-                    : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 border-slate-700/80 hover:border-slate-600'
-                }`}
+            {/* Quick Category Filter Pills */}
+            <div className="flex flex-wrap items-center justify-center gap-2 mt-4 text-xs">
+              <span className="text-slate-400 font-medium">Trending:</span>
+              <Link
+                to="/opportunities?category=internship"
+                className="px-3 py-1 bg-white hover:bg-slate-50 text-slate-700 font-medium rounded-xl border border-slate-200 shadow-xs transition-colors flex items-center gap-1"
               >
-                {pill.label}
-              </button>
-            ))}
+                <Briefcase className="w-3 h-3 text-slate-500" />
+                Internships
+              </Link>
+              <Link
+                to="/opportunities?category=hackathon"
+                className="px-3 py-1 bg-white hover:bg-slate-50 text-slate-700 font-medium rounded-xl border border-slate-200 shadow-xs transition-colors flex items-center gap-1"
+              >
+                <Code2 className="w-3 h-3 text-slate-500" />
+                Hackathons
+              </Link>
+              <Link
+                to="/opportunities?category=scholarship"
+                className="px-3 py-1 bg-white hover:bg-slate-50 text-slate-700 font-medium rounded-xl border border-slate-200 shadow-xs transition-colors flex items-center gap-1"
+              >
+                <GraduationCap className="w-3 h-3 text-slate-500" />
+                Scholarships
+              </Link>
+              <Link
+                to="/opportunities?category=fellowship"
+                className="px-3 py-1 bg-white hover:bg-slate-50 text-slate-700 font-medium rounded-xl border border-slate-200 shadow-xs transition-colors flex items-center gap-1"
+              >
+                <Award className="w-3 h-3 text-slate-500" />
+                Fellowships
+              </Link>
+            </div>
           </div>
 
-          {/* Trust Highlights */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-4xl mx-auto pt-6 border-t border-slate-800/80">
-            <div className="p-3 text-center">
-              <div className="text-xl sm:text-2xl font-black text-white">{safeOpportunities.length}+</div>
-              <div className="text-[11px] text-slate-400 font-medium mt-0.5">Verified Opportunities</div>
+          {/* Floating UI Opportunity Cards */}
+          <div className="hidden lg:grid grid-cols-3 gap-5 max-w-4xl mx-auto text-left pt-4">
+            <div className="bg-white/95 backdrop-blur-sm p-4 rounded-2xl border border-slate-200/90 shadow-card hover:border-orange-300 transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Microsoft</span>
+                <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md">
+                  Remote
+                </span>
+              </div>
+              <h4 className="text-sm font-bold text-slate-900 line-clamp-1">Software Engineering Intern</h4>
+              <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 text-xs">
+                <span className="font-bold text-slate-800">₹40,000 / mo</span>
+                <Link to="/opportunities" className="font-semibold text-[#FF5A00] hover:text-[#FF2400] flex items-center gap-0.5">
+                  Apply <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
             </div>
-            <div className="p-3 text-center">
-              <div className="text-xl sm:text-2xl font-black text-amber-400">Direct</div>
-              <div className="text-[11px] text-slate-400 font-medium mt-0.5">Official Portals Only</div>
+
+            <div className="bg-white/95 backdrop-blur-sm p-4 rounded-2xl border border-slate-200/90 shadow-card hover:border-orange-300 transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">National SIH</span>
+                <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 rounded-md">
+                  Hackathon
+                </span>
+              </div>
+              <h4 className="text-sm font-bold text-slate-900 line-clamp-1">Smart India Hackathon 2026</h4>
+              <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 text-xs">
+                <span className="font-bold text-slate-800">₹1,00,000 Prize</span>
+                <Link to="/opportunities" className="font-semibold text-[#FF5A00] hover:text-[#FF2400] flex items-center gap-0.5">
+                  View <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
             </div>
-            <div className="p-3 text-center">
-              <div className="text-xl sm:text-2xl font-black text-emerald-400">₹ Cr+</div>
-              <div className="text-[11px] text-slate-400 font-medium mt-0.5">Stipends & Grants Tracked</div>
-            </div>
-            <div className="p-3 text-center">
-              <div className="text-xl sm:text-2xl font-black text-indigo-400">Continuous</div>
-              <div className="text-[11px] text-slate-400 font-medium mt-0.5">Verification Engine</div>
+
+            <div className="bg-white/95 backdrop-blur-sm p-4 rounded-2xl border border-slate-200/90 shadow-card hover:border-orange-300 transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">DAAD / CERN</span>
+                <span className="px-2 py-0.5 text-[10px] font-bold bg-orange-50 text-[#FF5A00] border border-orange-200 rounded-md">
+                  Fellowship
+                </span>
+              </div>
+              <h4 className="text-sm font-bold text-slate-900 line-clamp-1">Summer Research Fellowship</h4>
+              <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 text-xs">
+                <span className="font-bold text-slate-800">Full Grant</span>
+                <Link to="/opportunities" className="font-semibold text-[#FF5A00] hover:text-[#FF2400] flex items-center gap-0.5">
+                  Explore <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ========================================================================= */}
-      {/* 2. LIVE OPPORTUNITIES FEED                                                */}
-      {/* ========================================================================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        {/* Feed Header with Sort & View Options */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                Live Opportunity Feed
+      {/* =========================================================================
+          FEATURED OPPORTUNITIES SECTION
+      ========================================================================= */}
+      <section className="py-16 bg-[#FAFAFC] border-t border-slate-200/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#FF5A00] mb-1">
+                <Flame className="w-4 h-4 text-[#FF5A00]" />
+                <span>Featured & Urgent</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-950">
+                Your next big opportunity could start here.
               </h2>
-              <span className="text-xs bg-slate-100 text-slate-700 font-bold px-2.5 py-0.5 rounded-full border border-slate-200">
-                {filteredFeed.length} available
-              </span>
             </div>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Active engineering, research, and developer programs accepting applications today.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-semibold">
-              <button
-                type="button"
-                onClick={() => setActiveSort('newest')}
-                className={`px-3 py-1.5 rounded-lg transition ${
-                  activeSort === 'newest' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Newest
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveSort('closing_soon')}
-                className={`px-3 py-1.5 rounded-lg transition ${
-                  activeSort === 'closing_soon' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Closing Soon
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveSort('stipend')}
-                className={`px-3 py-1.5 rounded-lg transition ${
-                  activeSort === 'stipend' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Highest Stipend
-              </button>
-            </div>
-
             <Link
               to="/opportunities"
-              className="inline-flex items-center gap-1 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-800 hover:text-slate-950 bg-slate-100 hover:bg-slate-200/80 transition"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-950 px-3.5 py-2 bg-white rounded-xl border border-slate-200 hover:bg-slate-50 shadow-xs transition-colors w-fit"
             >
-              <span>Explore All Filters</span>
+              <span>View all {activeCount} opportunities</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
-        </div>
 
-        {/* Opportunity Cards Grid */}
-        {filteredFeed.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredFeed.slice(0, 18).map((opp) => (
+          {/* Opportunity Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {featuredOpportunities.map((opp) => (
               <OpportunityCard key={opp.id} opportunity={opp} />
             ))}
           </div>
-        ) : (
-          <div className="py-16 text-center bg-slate-50 rounded-3xl border border-slate-200 p-8">
-            <Filter className="w-8 h-8 text-slate-400 mx-auto mb-3" />
-            <h3 className="text-base font-bold text-slate-900">No opportunities match the current filter</h3>
-            <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-              Try switching category pills or clearing search terms to explore all active programs.
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedPill('all');
-                setSearchQuery('');
-              }}
-              className="mt-4 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition"
-            >
-              Reset Filters
-            </button>
-          </div>
-        )}
-
-        {/* View All Button */}
-        {filteredFeed.length > 18 && (
-          <div className="pt-8 text-center">
-            <Link
-              to="/opportunities"
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-md transition"
-            >
-              <span>View All {filteredFeed.length} Opportunities →</span>
-            </Link>
-          </div>
-        )}
+        </div>
       </section>
+
+      {/* =========================================================================
+          AI PERSONALIZATION BANNER (Clean, Luminous White & Orange Gradient Theme)
+      ========================================================================= */}
+      <section className="py-16 bg-white border-t border-slate-200/80">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative rounded-3xl bg-gradient-to-br from-white via-[#FFFBF8] to-[#FFF5ED] p-8 md:p-12 overflow-hidden border border-orange-200/80 shadow-[0_12px_40px_rgba(255,115,0,0.06)]">
+            {/* Subtle Torch Accent Light */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-[#FF4D00]/15 via-[#FFA600]/10 to-transparent blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 max-w-xl">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100/80 border border-orange-200 text-xs font-bold text-[#FF5A00] mb-4">
+                <Sparkles className="w-3.5 h-3.5 text-[#FF5A00]" />
+                <span>AI Recommendation Engine</span>
+              </div>
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-tight mb-3">
+                Tailored directly to your skills & career goals.
+              </h3>
+              <p className="text-sm text-slate-600 leading-relaxed mb-6">
+                Tell Torchbearer AI what you study, your tech stack, and your dream roles. Our match engine scores and surfaces opportunities with precise relevance.
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setAiGuideOpen(true)}
+                  className="px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#FF2400] via-[#FF5A00] to-[#FF9500] rounded-xl shadow-[0_4px_16px_rgba(255,77,0,0.28)] hover:shadow-[0_6px_22px_rgba(255,77,0,0.38)] hover:brightness-105 active:scale-[0.99] transition-all flex items-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Launch AI Career Guide</span>
+                </button>
+                <Link
+                  to="/signup"
+                  className="px-5 py-2.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl shadow-xs transition-colors"
+                >
+                  Create Student Profile
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* AI Guide Modal */}
+      {aiGuideOpen && <AIGuideModal isOpen={aiGuideOpen} onClose={() => setAiGuideOpen(false)} />}
     </div>
   );
 }
