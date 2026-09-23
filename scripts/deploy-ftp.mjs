@@ -29,9 +29,23 @@ async function deploy() {
       secure: false
     });
 
-    console.log(`Uploading ${distDir} to /htdocs...`);
-    await client.uploadFromDir(distDir, '/htdocs');
-    console.log('✅ Successfully deployed updated build to InfinityFree!');
+    // Detect target directory: check if specific domain folder exists
+    let targetDir = process.env.FTP_DIR;
+    if (!targetDir) {
+      const rootList = await client.list('/');
+      const domainFolder = rootList.find(item => item.name === 'torchbearer.free.nf');
+      if (domainFolder) {
+        targetDir = '/torchbearer.free.nf/htdocs';
+      } else {
+        targetDir = '/htdocs';
+      }
+    }
+
+    console.log(`Targeting remote directory: ${targetDir}`);
+    await client.ensureDir(targetDir);
+    console.log(`Uploading ${distDir} to ${targetDir}...`);
+    await client.uploadFromDir(distDir, targetDir);
+    console.log(`✅ Successfully deployed updated build to InfinityFree (${targetDir}) for torchbearer.free.nf!`);
   } catch (err) {
     console.error('❌ FTP Upload Failed:', err);
     process.exit(1);
