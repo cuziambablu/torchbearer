@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Search,
@@ -7,6 +7,9 @@ import {
   Compass,
   CheckCircle2,
   Sparkles,
+  Globe,
+  ExternalLink,
+  ArrowRight
 } from 'lucide-react';
 import OpportunityCard from '../../components/opportunities/OpportunityCard';
 import OpportunityFilters from '../../components/opportunities/OpportunityFilters';
@@ -14,6 +17,7 @@ import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import EmptyState from '../../components/common/EmptyState';
 import Pagination from '../../components/common/Pagination';
 import { useOpportunities } from '../../context/OpportunityContext';
+import { discoverLiveOpportunitiesWithOcten } from '../../services/octenService';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -23,6 +27,9 @@ export default function OpportunitiesPage() {
 
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState('catalog'); // 'catalog' | 'live_web'
+  const [liveWebResults, setLiveWebResults] = useState([]);
+  const [liveWebLoading, setLiveWebLoading] = useState(false);
 
   // Parse filters from URL search params
   const [filters, setFilters] = useState({
@@ -51,6 +58,20 @@ export default function OpportunitiesPage() {
       verifiedOnly: searchParams.get('verified') === 'true'
     }));
   }, [searchParams]);
+
+  // If live web tab is selected, query Octen Search
+  const handleLiveWebSearch = async (query) => {
+    setActiveTab('live_web');
+    setLiveWebLoading(true);
+    try {
+      const results = await discoverLiveOpportunitiesWithOcten(query || 'student internships hackathons 2026');
+      setLiveWebResults(results);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLiveWebLoading(false);
+    }
+  };
 
   const handleFilterChange = (key, value) => {
     const nextFilters = { ...filters, [key]: value };
@@ -83,12 +104,12 @@ export default function OpportunitiesPage() {
     setFilters(defaultFilters);
     setSearchParams(new URLSearchParams());
     setCurrentPage(1);
+    setActiveTab('catalog');
   };
 
   // Filter & Sort Pipeline
   const filteredOpportunities = useMemo(() => {
     return opportunities.filter((opp) => {
-      // Search
       if (filters.search) {
         const q = filters.search.toLowerCase();
         const matchesTitle = opp.title?.toLowerCase().includes(q);
@@ -97,7 +118,6 @@ export default function OpportunitiesPage() {
         if (!matchesTitle && !matchesOrg && !matchesDesc) return false;
       }
 
-      // Category / Type
       if (filters.type && filters.type !== 'all') {
         const oppCat = (opp.category || opp.type || '').toLowerCase();
         const filterCat = filters.type.toLowerCase();
@@ -111,13 +131,11 @@ export default function OpportunitiesPage() {
         if (filterCat === 'government' && !oppCat.includes('gov') && !oppCat.includes('psu') && !oppCat.includes('aicte')) return false;
       }
 
-      // Mode
       if (filters.mode && filters.mode !== 'all') {
         if (filters.mode === 'Remote' && !opp.is_remote && opp.work_mode !== 'Remote') return false;
         if (filters.mode === 'On-site' && opp.is_remote) return false;
       }
 
-      // Verified Only
       if (filters.verifiedOnly && !opp.verified) return false;
 
       return true;
@@ -129,7 +147,6 @@ export default function OpportunitiesPage() {
     });
   }, [opportunities, filters]);
 
-  // Pagination
   const totalPages = Math.ceil(filteredOpportunities.length / ITEMS_PER_PAGE) || 1;
   const paginatedOpportunities = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -137,14 +154,14 @@ export default function OpportunitiesPage() {
   }, [filteredOpportunities, currentPage]);
 
   return (
-    <div className="min-h-screen bg-slate-50/60 text-slate-900 pb-20">
+    <div className="min-h-screen bg-[#FAFAFC] text-slate-900 pb-20">
       {/* Header */}
       <div className="bg-white border-b border-slate-200/80 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-torch-600 mb-1">
-                <Compass className="w-4 h-4 text-torch-500" />
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#FF5A00] mb-1">
+                <Compass className="w-4 h-4 text-[#FF5A00]" />
                 <span>Opportunity Discovery Engine</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-950">
@@ -152,25 +169,30 @@ export default function OpportunitiesPage() {
               </h1>
             </div>
 
-            {/* Live Count Badge */}
-            <div className="flex items-center gap-2 self-start md:self-auto">
+            {/* Live Count & Octen Status */}
+            <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-xs font-semibold text-slate-700">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>{filteredOpportunities.length} Active Listings</span>
+                <span>{filteredOpportunities.length} Verified in Catalog</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 border border-orange-200 text-xs font-semibold text-orange-800">
+                <Globe className="w-3.5 h-3.5 text-[#FF5A00]" />
+                <span>Octen Live Web Search Active</span>
               </span>
             </div>
           </div>
 
-          {/* Top Search Bar */}
-          <div className="mt-6 flex items-center gap-3">
+          {/* Search Bar & Mode Selector */}
+          <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <div className="relative flex-1">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && (activeTab === 'live_web' ? handleLiveWebSearch(filters.search) : null)}
                 placeholder="Search by title, company, skills (e.g. Python, Microsoft, GSoC)..."
-                className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-torch-500 focus:ring-2 focus:ring-torch-500/20 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#FF5A00] focus:ring-4 focus:ring-[#FF5A00]/10 transition-all font-medium"
               />
               {filters.search && (
                 <button
@@ -183,13 +205,40 @@ export default function OpportunitiesPage() {
               )}
             </div>
 
-            {/* Mobile Filter Toggle Button */}
+            {/* Source Tab Toggle: Catalog vs Octen Live Web */}
+            <div className="flex items-center p-1 bg-slate-100 rounded-xl text-xs font-semibold self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setActiveTab('catalog')}
+                className={`px-3.5 py-2 rounded-lg transition-all ${
+                  activeTab === 'catalog'
+                    ? 'bg-white text-slate-900 shadow-xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Verified Catalog
+              </button>
+              <button
+                type="button"
+                onClick={() => handleLiveWebSearch(filters.search)}
+                className={`px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 ${
+                  activeTab === 'live_web'
+                    ? 'bg-gradient-to-r from-[#FF2400] via-[#FF5A00] to-[#FF9500] text-white shadow-xs font-bold'
+                    : 'text-slate-600 hover:text-orange-600'
+                }`}
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span>Live Web (Octen)</span>
+              </button>
+            </div>
+
+            {/* Mobile Filter Toggle */}
             <button
               type="button"
               onClick={() => setMobileFilterOpen(true)}
-              className="lg:hidden px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 shadow-xs"
+              className="lg:hidden px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center justify-center gap-2 shadow-xs"
             >
-              <SlidersHorizontal className="w-4 h-4 text-torch-500" />
+              <SlidersHorizontal className="w-4 h-4 text-[#FF5A00]" />
               <span>Filters</span>
             </button>
           </div>
@@ -198,59 +247,96 @@ export default function OpportunitiesPage() {
 
       {/* Main Content Layout */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Left Sidebar: Filters */}
-          <div className="hidden lg:block lg:col-span-1">
-            <div className="sticky top-24">
-              <OpportunityFilters
-                filters={filters}
-                onFilterChange={handleFilterChange}
-                onResetFilters={handleResetFilters}
-                totalResults={filteredOpportunities.length}
-              />
+        {activeTab === 'live_web' ? (
+          /* Live Web Search Results from Octen */
+          <div className="space-y-6">
+            <div className="p-4 bg-orange-50/70 border border-orange-200 rounded-2xl flex items-center justify-between">
+              <div className="flex items-center gap-2.5 text-xs text-orange-900">
+                <Globe className="w-4 h-4 text-[#FF5A00] flex-shrink-0" />
+                <span>
+                  Showing real-time web opportunities discovered via <strong>Octen Search API</strong> for: <em>"{filters.search || 'Latest Student Opportunities'}"</em>
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleLiveWebSearch(filters.search)}
+                className="text-xs font-bold text-[#FF5A00] hover:underline"
+              >
+                Re-scan Web
+              </button>
             </div>
-          </div>
 
-          {/* Right: Opportunities Grid */}
-          <div className="lg:col-span-3">
-            {loading ? (
+            {liveWebLoading ? (
               <LoadingSkeleton count={6} />
-            ) : paginatedOpportunities.length > 0 ? (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                  {paginatedOpportunities.map((opp) => (
-                    <OpportunityCard key={opp.id} opportunity={opp} />
-                  ))}
-                </div>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="mt-10">
-                    <Pagination
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={(page) => {
-                        setCurrentPage(page);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }}
-                    />
-                  </div>
-                )}
-              </>
+            ) : liveWebResults.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {liveWebResults.map((opp) => (
+                  <OpportunityCard key={opp.id} opportunity={opp} />
+                ))}
+              </div>
             ) : (
               <EmptyState
-                icon={Compass}
-                title="No opportunities found"
-                description="Try tweaking your search keywords or resetting filters to discover available openings."
-                actionLabel="Reset All Filters"
-                onAction={handleResetFilters}
+                icon={Globe}
+                title="No live web results found"
+                description="Try a different query or switch back to the verified catalog."
+                actionLabel="View Verified Catalog"
+                onAction={() => setActiveTab('catalog')}
               />
             )}
           </div>
-        </div>
+        ) : (
+          /* Catalog View */
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="hidden lg:block lg:col-span-1">
+              <div className="sticky top-24">
+                <OpportunityFilters
+                  filters={filters}
+                  onFilterChange={handleFilterChange}
+                  onResetFilters={handleResetFilters}
+                  totalResults={filteredOpportunities.length}
+                />
+              </div>
+            </div>
+
+            <div className="lg:col-span-3">
+              {loading ? (
+                <LoadingSkeleton count={6} />
+              ) : paginatedOpportunities.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                    {paginatedOpportunities.map((opp) => (
+                      <OpportunityCard key={opp.id} opportunity={opp} />
+                    ))}
+                  </div>
+
+                  {totalPages > 1 && (
+                    <div className="mt-10">
+                      <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={(page) => {
+                          setCurrentPage(page);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                      />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <EmptyState
+                  icon={Compass}
+                  title="No opportunities found"
+                  description="Try tweaking your search keywords or search the live web via Octen AI."
+                  actionLabel="Search Live Web via Octen"
+                  onAction={() => handleLiveWebSearch(filters.search)}
+                />
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Mobile Filters Drawer */}
+      {/* Mobile Drawer */}
       {mobileFilterOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
           <div
@@ -281,7 +367,7 @@ export default function OpportunitiesPage() {
               <button
                 type="button"
                 onClick={() => setMobileFilterOpen(false)}
-                className="w-full py-2.5 text-xs font-semibold text-white bg-torch-gradient rounded-xl shadow-torch-button"
+                className="w-full py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#FF2400] via-[#FF5A00] to-[#FF9500] rounded-xl shadow-xs"
               >
                 View {filteredOpportunities.length} Results
               </button>
